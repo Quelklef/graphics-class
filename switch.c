@@ -2,6 +2,8 @@
 #include <FPT.h>
 #include <float.h>
 
+#include "M2d_matrix_tools.c"
+
 void arrayMin(double *ns, int n,
               double *min) {
   *min = DBL_MAX;
@@ -18,7 +20,7 @@ void arrayMax(double *ns, int n,
   }
 }
 
-void displayPolygon(char *filename, double sWidth, double sHeight) {
+void displayPolygon(char *filename, double rotAmt, double sWidth, double sHeight) {
   G_rgb(1, 1, 1);
   G_clear();
 
@@ -70,6 +72,11 @@ void displayPolygon(char *filename, double sWidth, double sHeight) {
     ys[i] *= scaleFactor;
   }
 
+  // Rotate the polygon
+  double rotMat[3][3];
+  M2d_make_rotation_radians(rotMat, rotAmt);
+  M2d_mat_mult_points(xs, ys, rotMat, xs, ys, pointCount); 
+
   // Distance from center of poly to center of screen
   double diffX = (midX * scaleFactor - sWidth / 2);
   double diffY = (midY * scaleFactor - sHeight / 2);
@@ -118,8 +125,19 @@ int main(int argc, char **argv) {
 
   int numeralOneKeyCode = 49;
   int keyCode = numeralOneKeyCode;
+  int prevKeyCode = -1;
+  double rotAmt = 0;
+
   while (1) {
-    displayPolygon(argv[1 + keyCode - numeralOneKeyCode], sWidth, sHeight);
+    displayPolygon(argv[1 + keyCode - numeralOneKeyCode], rotAmt, sWidth, sHeight);
+
+    prevKeyCode = keyCode;
     keyCode = G_wait_key();
+
+    if (keyCode == prevKeyCode) {
+      rotAmt += 0.1;
+    } else {
+      rotAmt = 0;
+    }
   }
 }

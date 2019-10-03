@@ -90,22 +90,8 @@ return 1;
 
 int M2d_make_rotation_radians (double a[3][3],  double radians)
 {
-//double rot[][];
-int i;
-int j;
-double copyA[3][3];
-M2d_copy_mat(copyA, a); 
-double r;
-
-for(j = 0; j < 3; j++){
-r = sqrt(pow(copyA[j][0],2)+pow(copyA[j][1],2));
-a[0][j] = r*(cos(copyA[j][0]) - sin(copyA[j][1]));    
-a[1][j] = r*(sin(copyA[j][0]) + cos(copyA[j][1]));
-
-
-    }	 
-
-return 1;
+    M2d_make_rotation_cs(a, cos(radians), sin(radians));
+    return 1;
 }
 
 
@@ -125,6 +111,9 @@ return 1;
 int M2d_make_rotation_cs (double a[3][3], double cs, double sn)
 // this one assumes cosine and sine are already known
 {
+    a[0][0] = cs;   a[0][1] = -sn;   a[0][2] = 0;
+    a[1][0] = sn;   a[1][1] =  cs;   a[1][2] = 0;
+    a[2][0] =  0;   a[2][1] =   0;   a[2][2] = 1;
 return 1;
 }
 
@@ -186,21 +175,20 @@ int M2d_mat_mult_points (double X[], double Y[],
 
 // SAFE, user may make a call like M2d_mat_mult_points (x,y, m, x,y, n) ;
 {
-double copyX[numpoints];
-double copyY[numpoints];
-int i;
-int j;
+    double copyX[numpoints];
+    double copyY[numpoints];
+    int i;
+    int j;
 
-for(i = 0; i < numpoints; i++){
-    copyX[i] = x[i];
-    copyY[i] = y[i];
+    for (i = 0; i < numpoints; i++) {
+        copyX[i] = x[i];
+        copyY[i] = y[i];
+    }
 
-}
+    for (j = 0; j < numpoints; j++) {
+        X[j] = m[0][0]*copyX[j]+m[0][1]*copyY[j]+m[0][2];
+        Y[j] = m[1][0]*copyX[j]+m[1][1]*copyY[j]+m[1][2];
 
-for(j = 0; j < numpoints; j++){
-    X[j] = m[0][0]*copyX[j]+m[0][1]*copyY[j]+m[0][2];
-    Y[j] = m[1][0]*copyX[j]+m[1][1]*copyY[j]+m[1][2];
-
-}
-return 1;
+    }
+    return 1;
 }
