@@ -77,10 +77,17 @@ int M2d_make_translation (double a[3][3], double dx, double dy)
 
 int M2d_make_scaling (double a[3][3], double sx, double sy)
 {
-double b[3][3];
-M2d_make_identity(b);
-b[0][0] = sx;
-b[1][1] = sy;
+  int r,c ;
+  for (r = 0 ; r < 3 ; r++ ) {
+      for (c = 0 ; c < 3 ; c++ ) {
+           if (r == c) a[r][c] = 1.0 ;
+               else    a[r][c] = 0.0 ;
+      }
+  }
+
+
+a[0][0] = sx;
+a[1][1] = sy;
 return 1;
 }
 
@@ -90,8 +97,18 @@ return 1;
 
 int M2d_make_rotation_radians (double a[3][3],  double radians)
 {
-    M2d_make_rotation_cs(a, cos(radians), sin(radians));
-    return 1;
+a[0][0] = cos(radians);
+a[0][1] = -sin(radians);
+a[0][2] = 0;
+a[1][0] = sin(radians);
+a[1][1] = cos(radians);
+a[1][2] = 0;
+a[2][0] = 0;
+a[2][1] = 0;
+a[2][2] = 1;
+
+
+return 1;
 }
 
 
@@ -101,6 +118,8 @@ int M2d_make_rotation_radians (double a[3][3],  double radians)
 
 int M2d_make_rotation_degrees (double a[3][3],  double degrees)
 {
+	
+//M2d_make_rotation_cs(a, cos(radians), sin(radians));
 return 1;
 }
 
@@ -136,7 +155,7 @@ int i;
 int j;
 for(i = 0; i < 3; i++) {
     for(j = 0; j < 3; j++){
-	res[i][j] = u[i][0]*v[j][0]+u[i][1]*v[j][1]+u[i][2]*v[j][2];
+	res[i][j] = u[i][0]*v[0][j]+u[i][1]*v[1][j]+u[i][2]*v[2][j];
 
 }
 }
@@ -174,7 +193,7 @@ int M2d_mat_mult_points (double X[], double Y[],
 // | 1  1  1 ...|       | 1  1  1 ...|
 
 // SAFE, user may make a call like M2d_mat_mult_points (x,y, m, x,y, n) ;
-{
+ {
     double copyX[numpoints];
     double copyY[numpoints];
     int i;
