@@ -2,221 +2,221 @@
 #include <FPT.h>
 #include <float.h>
 
-#include "M2d_matrix_tools.c"
+#include "M2d_mat_tools.c"
 
-double oldRot[3][3];
-int polygonCount;
-double storageMat[3][3];
+#define ENOUGH 200
 
-// Array of the actual points in each polygon
-double polygonXs[10000][10000];
-double polygonYs[10000][10000];
+const int screen_width = 800;
+const int screen_height = 800;
 
-// Array of the number of points in each polygon
-int polygonPointCounts[1000];
+typedef struct {
+  double xs[ENOUGH];
+  double ys[ENOUGH];
+  int point_count;
 
-//colors
+  double red, green, blue;
+} SimplePoly;
 
+typedef struct {
+  SimplePoly simples[ENOUGH];
+  int simple_count;
 
-double colors[10000][3];
+  // Each polygon also gets a matrix that will rotate
+  // it a small amount
+  double rotation_mat[3][3];
+} Poly;
 
-// Color & display the polygon
-FILE *file;
-void colorPoly(){  
-G_rgb(1,1,1);
-G_clear();
-  for (int i = 0; i < polygonCount; i++) {
-    G_rgb(colors[i][0], colors[i][1], colors[i][2]);
-    G_fill_polygon(polygonXs[i], polygonYs[i], polygonPointCounts[i]);
+Poly polys[ENOUGH];
+int poly_count;
+
+void calc_poly_center(double *center_x, double *center_y, Poly *poly) {
+  double min_x = DBL_MAX;
+  double max_x = DBL_MIN;
+  double min_y = DBL_MAX;
+  double max_y = DBL_MIN;
+
+  for (int simple_idx = 0; simple_idx < poly->simple_count; simple_idx++) {
+    SimplePoly *simple = &poly->simples[simple_idx];
+
+    for (int point_idx = 0; point_idx < poly->simples[simple_idx].point_count; point_idx++) {
+      const int x = simple->xs[point_idx];
+      const int y = simple->ys[point_idx];
+
+      if      (x < min_x) min_x = x;
+      else if (x > max_x) max_x = x;
+
+      if      (y < min_y) min_y = y;
+      else if (y > max_y) max_y = y;
+    }
   }
+
+  *center_x = (min_x + max_x) / 2;
+  *center_y = (min_y + max_y) / 2;
 }
 
-
-void arrayMin(double *ns, int n,
-              double *min) {
-  *min = DBL_MAX;
-  for (int i = 0; i < n; i++) {
-    if (ns[i] < *min) *min = ns[i];
-  }
-}
-
-void arrayMax(double *ns, int n,
-              double *max) {
-  *max = DBL_MIN;
-  for (int i = 0; i < n; i++) {
-    if (ns[i] > *max) *max = ns[i];
-  }
-}
-
-void displayPolygon(char *filename, double rotAmt, double sWidth, double sHeight) {
-  G_rgb(1, 1, 1);
-  G_clear();
-
-   file = fopen(filename, "r");
+void load_poly(const char *filename, const int poly_idx) {
+  FILE *file = fopen(filename, "r");
 
   if (file == NULL) {
     printf("Can not open file: %s\n", filename);
-    exit(0);
+    exit(1);
   }
 
-  int pointCount;  // Number of points in polygon
-  fscanf(file, "%d", &pointCount);
+  int point_count;
+  fscanf(file, "%d", &point_count);
 
   // Initialize (x, y) arrays to store points
-  double xs[pointCount];
-  double ys[pointCount];
+  double xs[point_count];
+  double ys[point_count];
 
-  for (int i = 0; i < pointCount; i++) {
-     fscanf(file, "%lf %lf", &xs[i], &ys[i]);
+  for (int point_idx = 0; point_idx < point_count; point_idx++) {
+     fscanf(file, "%lf %lf", &xs[point_idx], &ys[point_idx]);
   }
 
-  // Find the bounding box
-  double minX, maxX, minY, maxY;
-  arrayMin(xs, pointCount, &minX);
-  arrayMax(xs, pointCount, &maxX);
-  arrayMin(ys, pointCount, &minY);
-  arrayMax(ys, pointCount, &maxY);
+  Poly poly;
+  fscanf(file, "%d", &poly.simple_count);
 
-  double midX = (maxX + minX) / 2;
-  double midY = (maxY + minY) / 2;
+  for (int simple_idx = 0; simple_idx < poly.simple_count; simple_idx++) {
+    SimplePoly simple;
+    fscanf(file, "%d", &simple.point_count);
 
-  double width = maxX - minX;
-  double height = maxY - minY;
+    for (int point_idx = 0; point_idx < simple.point_count; point_idx++) {
+      int point_crossref_idx;
+      fscanf(file, "%d", &point_crossref_idx);
 
-  // How much of the screen should the polygon take up
-  // (slightly more complicated than that)
-  double relPolygonSize = 0.6;
+      simple.xs[point_idx] = xs[point_crossref_idx];
+      simple.ys[point_idx] = ys[point_crossref_idx];
+    }
 
-  double scaleFactor;
-  if (width > height) {
-    scaleFactor = relPolygonSize * sWidth / width;
-  } else {
-    scaleFactor = relPolygonSize * sHeight / height;
+    poly.simples[simple_idx] = simple;
+  }
+   
+  for (int simple_idx = 0; simple_idx < poly.simple_count; simple_idx++) {
+    fscanf(file, "%lf %lf %lf",
+           &poly.simples[simple_idx].red,
+           &poly.simples[simple_idx].green,
+           &poly.simples[simple_idx].blue);
   }
 
-  // Scale the polygon
-  /*
-  for (int i = 0; i < pointCount; i++) {
-    xs[i] *= scaleFactor;
-    ys[i] *= scaleFactor;
-  }
-  */
-  //Scaling with Matrices
-  double scaleMatrix[3][3];
-  M2d_make_scaling(scaleMatrix, scaleFactor, scaleFactor);
 
-  // Rotate the polygon
-  double rotMat[3][3];
-  M2d_make_rotation_radians(rotMat, rotAmt);
+  { // Center the polygon
+    double center_x, center_y;
+    calc_poly_center(&center_x, &center_y, &poly);
 
-  //M2d_mat_mult_points(xs, ys, rotMat, xs, ys, pointCount); 
+    double translate_to_origin_mat[3][3];
+    M2d_make_translation(translate_to_origin_mat, -center_x, -center_y);
 
-  // Distance from center of poly to center of screen
-  double diffX = (midX * scaleFactor - sWidth / 2);
-  double diffY = (midY * scaleFactor - sHeight / 2);
+    double translate_to_center_mat[3][3];
+    M2d_make_translation(translate_to_center_mat, screen_width / 2, screen_height / 2);
 
-  // Move polygon to center of screen
-  /*
-  for (int i = 0; i < pointCount; i++) {
-    xs[i] -= diffX;
-    ys[i] -= diffY;
-  }
-  */
-  double centerMat[3][3];
-  M2d_make_translation(centerMat, diffX, diffY);
+    double composed[3][3];
+    M2d_make_identity(composed);
+    M2d_mat_mult(composed, translate_to_origin_mat, composed);
+    M2d_mat_mult(composed, translate_to_center_mat, composed);
 
-  fscanf(file, "%d", &polygonCount);
-
-
-  // Populate these arrays
-  for (int i = 0; i < polygonCount; i++) {
-    fscanf(file, "%d", &polygonPointCounts[i]);
-    for (int j = 0; j < polygonPointCounts[i]; j++) {
-      int pointIdx;
-      fscanf(file, "%d", &pointIdx);
-      polygonXs[i][j] = xs[pointIdx];
-      polygonYs[i][j] = ys[pointIdx];
+    for (int simple_idx = 0; simple_idx < poly.simple_count; simple_idx++) {
+      SimplePoly *simple = &poly.simples[simple_idx];
+      M2d_mat_mult_points(simple->xs, simple->ys,
+                          composed,
+                          simple->xs, simple->ys, simple->point_count);
     }
   }
-  
-  
-  double toCenter[3][3];
-  M2d_make_translation(toCenter, sWidth/2, sHeight/2);
-  double toOrigin[3][3];
-  M2d_make_translation(toOrigin, -midX, -midY);
 
-  //--------------------------------------------------------------------------
-  //Matrix Operations here!
+  { // Make the rotation matrix
+    double center_x, center_y;
+    calc_poly_center(&center_x, &center_y, &poly);
 
-  M2d_print_mat(toCenter);
-  //M2d_print_mat(rotMat);
-  M2d_mat_mult(storageMat, toCenter, scaleMatrix);
-  //M2d_print_mat(storageMat);
-  M2d_mat_mult(storageMat, storageMat, toOrigin);
-  for(int i = 0; i < polygonCount; i++){
-    M2d_mat_mult_points(polygonXs[i], polygonYs[i], storageMat, polygonXs[i], polygonYs[i], polygonPointCounts[i]);
+    double translate_to_origin_mat[3][3];
+    M2d_make_translation(translate_to_origin_mat, -center_x, -center_y);
 
+    double rotation_mat[3][3];
+    M2d_make_rotation_degrees(rotation_mat, 1);
+
+    double translate_from_origin_mat[3][3];
+    M2d_make_translation(translate_from_origin_mat, center_x, center_y);
+
+    M2d_make_identity(poly.rotation_mat);
+    M2d_mat_mult(poly.rotation_mat, translate_to_origin_mat, poly.rotation_mat);
+    M2d_mat_mult(poly.rotation_mat, rotation_mat, poly.rotation_mat);
+    M2d_mat_mult(poly.rotation_mat, translate_from_origin_mat, poly.rotation_mat);
   }
 
-
-  double centerToOrigin[3][3];
-  M2d_make_translation(centerToOrigin, -400, -400);
-  //Creating General Rotation Matrix
-  M2d_mat_mult(oldRot, toCenter, rotMat);
-  M2d_mat_mult(oldRot, oldRot, centerToOrigin);
-
-  //M2d_print_mat(toCenter);
- // M2d_print_mat(toOrigin);
-  M2d_print_mat(rotMat);
-  
-  //M2d_print_mat(scaleMatrix);
-  //M2d_print_mat(toOrigin);
-
-double r, g, b;
-  for (int i = 0; i < polygonCount; i++) {
-    fscanf(file, "%lf %lf %lf", &r, &g, &b);
-    colors[i][0] = r;
-    colors[i][1] = g;
-    colors[i][2] = b;
-  }
-
-  colorPoly();
+  polys[poly_idx] = poly;
 }
-  //--------------------------------------------------------------------------
 
+void rotate_poly(Poly *poly) {
+  for (int simple_idx = 0; simple_idx < poly->simple_count; simple_idx++) {
+    SimplePoly *simple = &poly->simples[simple_idx];
+
+    M2d_mat_mult_points(simple->xs, simple->ys,
+                        poly->rotation_mat,
+                        simple->xs, simple->ys, simple->point_count);
+  }
+}
+
+void display_poly(Poly *poly) {
+  G_rgb(0, 0, 0);
+  G_clear();
+
+  G_rgb(1, 0, 0);
+  G_fill_rectangle(0, 0, screen_width, 1);
+  G_fill_rectangle(screen_width - 1, 0, 1, screen_height);
+  G_fill_rectangle(0, screen_height - 1, screen_width, 1);
+  G_fill_rectangle(0, 0, 1, screen_height);
+
+  for (int simple_idx = 0; simple_idx < poly->simple_count; simple_idx++) {
+    SimplePoly *simple = &poly->simples[simple_idx];
+
+    G_rgb(simple->red, simple->blue, simple->green);
+    G_fill_polygon(simple->xs, simple->ys, simple->point_count);
+  }
+}
+
+void on_input(int poly_idx) {
+  static int current_poly_idx = 0;
+  static int prev_poly_idx;
+
+  prev_poly_idx = current_poly_idx;  
+  current_poly_idx = poly_idx;
+
+  Poly *poly = &polys[current_poly_idx];
+  if (current_poly_idx == prev_poly_idx) {
+    rotate_poly(poly);
+  }
+  display_poly(poly);
+}
 
 int main(int argc, char **argv) {
-  // Define screen width and height
-  double sWidth = 800;
-  double sHeight = 800;
-  G_init_graphics(sWidth, sHeight);
+  if (argc == 1) {
+    printf("Give me .xy files!!\n");
+    exit(1);
+  }
 
-  int numeralOneKeyCode = 49;
-  int keyCode = numeralOneKeyCode;
-  int prevKeyCode = -1;
-  double rotAmt = 0.1;
+  G_init_graphics(screen_width, screen_height);
 
+  poly_count = argc - 1;
+
+  for (int poly_idx = 0; poly_idx < poly_count; poly_idx++) {
+    char *filename = argv[1 + poly_idx];
+    load_poly(filename, poly_idx);
+  }
+
+  const int numeral_one_key_code = 49;
+
+
+  on_input(0);
   while (1) {
-    if(keyCode != prevKeyCode){ 
-	displayPolygon(argv[1 + keyCode - numeralOneKeyCode], rotAmt, sWidth, sHeight);
+    int got_key_code = G_wait_key();
+    // press e for exit
+    if (got_key_code == 101) {
+      exit(0);
     }
 
-    if (keyCode == prevKeyCode) {
-      printf("yesssssss\n");
-      
-      for(int i = 0; i < polygonCount; i++){
-	printf("here\n");
-	      M2d_mat_mult_points(polygonXs[i], polygonYs[i], oldRot, polygonXs[i], polygonYs[i], polygonPointCounts[i]);
-} 
-       printf("plz\n");
-       colorPoly();
-       M2d_print_mat(oldRot);
-
+    int poly_idx = got_key_code - numeral_one_key_code;
+    if (0 <= poly_idx && poly_idx < poly_count) {
+      on_input(poly_idx);
     } else {
-      rotAmt = 0.1;
+      printf("Requested polygon out of bounds...\n");
     }
-	
-    prevKeyCode = keyCode;	
-    keyCode = G_wait_key();
   }
 }

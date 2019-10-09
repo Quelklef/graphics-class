@@ -16,9 +16,11 @@ instead of (x',y',1) = (x,y,1) * M
 void M2d_print_mat (double a[3][3]) {
   int r, c;
   for (r = 0; r < 3; r++) {
+    printf("|");
     for (c = 0; c < 3; c++) {
-      printf(" %12.4lf ",a[r][c]);
+      printf(" %12.4lf ", a[r][c]);
     }
+    printf("|");
     printf("\n");
   }
 } 
@@ -66,13 +68,11 @@ void M2d_make_rotation_cs(double a[3][3], double cs, double sn) {
 }
 
 void M2d_make_rotation_radians(double a[3][3], double radians) {
-  a[0][0] =  cos(radians); a[1][0] = sin(radians); a[2][0] = 0;
-  a[0][1] = -sin(radians); a[1][1] = cos(radians); a[2][1] = 0;
-  a[0][2] =  0           ; a[1][2] = 0           ; a[2][2] = 1;
+  M2d_make_rotation_cs(a, cos(radians), sin(radians));
 }
 
 void M2d_make_rotation_degrees(double a[3][3], double degrees) {
-  M2d_make_rotation_cs(a, cos(degrees), sin(degrees));
+  M2d_make_rotation_radians(a, degrees * M_PI / 180);
 }
 
 void M2d_mat_mult(double res[3][3], double a[3][3], double b[3][3]) {
@@ -93,15 +93,6 @@ void M2d_mat_mult(double res[3][3], double a[3][3], double b[3][3]) {
   }
 }
 
-void M2d_mult(int count, double res[3][3], ...) {
-  va_list ap;
-  va_start(ap, res);
-  for (int i = 0; i < count; i++) {
-    M2d_mat_mult(res, res, va_arg(ap, double[3][3]));
-  }
-  va_end(ap);
-}
-
 void M2d_mat_mult_pt(double P[2], double m[3][3], double Q[2]) {
   // P = m*Q
   // SAFE, user may make a call like M2d_mat_mult_pt (W, m,W);
@@ -116,8 +107,8 @@ void M2d_mat_mult_pt(double P[2], double m[3][3], double Q[2]) {
 }
 
 void M2d_mat_mult_points(double X[], double Y[],
-                        double m[3][3],
-                        double x[], double y[], int numpoints) {
+                         double m[3][3],
+                         double x[], double y[], int numpoints) {
   // |X0 X1 X2 ...|       |x0 x1 x2 ...|
   // |Y0 Y1 Y2 ...| = m * |y0 y1 y2 ...|
   // | 1  1  1 ...|       | 1  1  1 ...|
