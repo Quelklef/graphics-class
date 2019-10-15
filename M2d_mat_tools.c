@@ -13,7 +13,7 @@ instead of (x',y',1) = (x,y,1) * M
 
 */
 
-void M2d_print_mat (double a[3][3]) {
+void M2d_print_mat(double a[3][3]) {
   int r, c;
   for (r = 0; r < 3; r++) {
     printf("|");
