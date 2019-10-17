@@ -4,25 +4,25 @@
 
 #include "poly.h"
 
-void display_poly(Poly *poly) {
+void draw_poly(Poly *poly, Clip *clip) {
   G_rgb(0, 0, 0);
   G_clear();
 
-  G_rgb(1, 0, 0);
-  G_fill_rectangle(0, 0, screen_width, 1);
-  G_fill_rectangle(screen_width - 1, 0, 1, screen_height);
-  G_fill_rectangle(0, screen_height - 1, screen_width, 1);
-  G_fill_rectangle(0, 0, 1, screen_height);
+  draw_bounding_box();
 
   for (int simple_idx = 0; simple_idx < poly->simple_count; simple_idx++) {
     SimplePoly *simple = poly->simples[simple_idx];
 
+    SimplePoly clipped;
+    clip_simple(simple, clip, &clipped);
+
     G_rgb(simple->red, simple->blue, simple->green);
-    G_fill_polygon(simple->xs, simple->ys, simple->point_count);
+    G_fill_polygon(clipped.xs, clipped.ys, clipped.point_count);
+    //G_fill_polygon(simple->xs, simple->ys, simple->point_count);
   }
 }
 
-void on_input(int poly_idx) {
+void on_input(int poly_idx, Clip *clip) {
   static int current_poly_idx = 0;
   static int prev_poly_idx;
 
@@ -33,7 +33,18 @@ void on_input(int poly_idx) {
   if (current_poly_idx == prev_poly_idx) {
     rotate_poly(poly);
   }
-  display_poly(poly);
+  draw_poly(poly, clip);
+
+  // Draw clip
+  G_rgb(1, 0, 0);
+  for (int point_idx = 0; point_idx < clip->point_count; point_idx++) {
+    double x0 = clip->xs[point_idx];
+    double y0 = clip->ys[point_idx];
+    double xf = clip->xs[(point_idx + 1) % clip->point_count];
+    double yf = clip->ys[(point_idx + 1) % clip->point_count];
+
+    G_line(x0, y0, xf, yf);
+  }
 }
 
 int main(int argc, char **argv) {
@@ -53,9 +64,13 @@ int main(int argc, char **argv) {
     load_poly(filename, poly_idx);
   }
 
+  draw_click_bar();
+  draw_bounding_box();
+  Clip *clip = click_and_save_simple();
+
   const int numeral_one_key_code = 49;
 
-  on_input(0);
+  on_input(0, clip);
   while (1) {
     int got_key_code = G_wait_key();
     // press e for exit
@@ -65,7 +80,7 @@ int main(int argc, char **argv) {
 
     int poly_idx = got_key_code - numeral_one_key_code;
     if (0 <= poly_idx && poly_idx < poly_count) {
-      on_input(poly_idx);
+      on_input(poly_idx, clip);
     } else {
       printf("Requested polygon out of bounds...\n");
     }
