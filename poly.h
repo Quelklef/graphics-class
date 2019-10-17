@@ -3,10 +3,10 @@
 
 #include "M2d_mat_tools.c"
 
-#define ENOUGH 200
+#define screen_width 800
+#define screen_height 800
 
-const int screen_width = 800;
-const int screen_height = 800;
+#define ENOUGH 200
 
 typedef struct {
   double xs[ENOUGH];
@@ -151,6 +151,59 @@ void rotate_poly(Poly *poly) {
                         poly->rotation_mat,
                         simple->xs, simple->ys, simple->point_count);
   }
+}
+
+
+
+
+
+const int click_bar_width = screen_width;
+const int click_bar_height = 10;
+
+void init_gfx(int do_click_bar) {
+  G_init_graphics(screen_width, screen_height);
+
+  G_rgb(0, 0, 0);
+  G_clear();
+
+  if (do_click_bar) {
+    // Make clickable bottom bar
+    G_rgb(1, 0, 0);
+    G_fill_rectangle(0, 0, click_bar_width, click_bar_height);
+    G_rgb(0, 0, 0);
+  }
+}
+
+Poly *click_and_save_simple() {
+  /* Allow the user to click several points, and return the resultant
+   * polygon. Assumes that the user has outlined a simple polygon. */
+
+  SimplePoly *simple = malloc(sizeof(SimplePoly));
+  simple->point_count = 0;
+
+  while (1) {
+    double click[2];
+    G_wait_click(click);
+
+    if (click[0] < click_bar_width && click[1] < click_bar_height) {
+      break;
+    } else {
+      simple->xs[simple->point_count] = click[0];
+      simple->ys[simple->point_count] = click[1];
+      simple->point_count++;
+
+      if (simple->point_count > 1) {
+        G_line(simple->xs[simple->point_count - 1], simple->ys[simple->point_count - 1],
+               click[0], click[1]);
+      }
+    }
+  }
+
+  Poly* poly = malloc(sizeof(Poly));
+  poly->simples[0] = simple;
+  poly->simple_count = 1;
+
+  return poly;
 }
 
 #endif // poly_h_INCLUDED

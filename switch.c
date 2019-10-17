@@ -42,7 +42,7 @@ int main(int argc, char **argv) {
     exit(1);
   }
 
-  G_init_graphics(screen_width, screen_height);
+  init_gfx(0);
 
   poly_count = argc - 1;
 
@@ -52,7 +52,6 @@ int main(int argc, char **argv) {
   }
 
   const int numeral_one_key_code = 49;
-
 
   on_input(0);
   while (1) {
