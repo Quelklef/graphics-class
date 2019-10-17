@@ -37,6 +37,8 @@ void on_input(int poly_idx) {
 }
 
 int main(int argc, char **argv) {
+  printf("Press e to exit.\n");
+
   if (argc == 1) {
     printf("Give me .xy files!!\n");
     exit(1);
