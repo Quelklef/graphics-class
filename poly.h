@@ -3,8 +3,8 @@
 
 #include "M2d_mat_tools.c"
 
-#define screen_width 800
-#define screen_height 800
+#define screen_width 400
+#define screen_height 400
 
 #define ENOUGH 200
 
@@ -374,8 +374,80 @@ void TEST_find_lines_intersection() {
   }
 }
 
-void clip_simple(SimplePoly *simple, Clip *clip, SimplePoly *clipped) {
-  // TODO
+double avg(double *xs, int n) {
+  double r = 0;
+  for (int i = 0; i < n; i++) r += xs[i];
+  return r / n;
+}
+
+void clip_simple(SimplePoly *arg_simple, Clip *clip, SimplePoly *clipped) {
+  // We'll overwrite our pointer to the simple poly, so we want it
+  // to be different from the argument pointer--dont want to overwrite that!
+  SimplePoly *simple = malloc(sizeof(SimplePoly));
+  memcpy(simple, arg_simple, sizeof(SimplePoly));
+
+  // Create a point in the polygon
+  double in_x = avg(clip->xs, clip->point_count);
+  double in_y = avg(clip->ys, clip->point_count);
+
+  // For each slice to make
+  for (int i = 0; i < clip->point_count; i++) {
+    // Reset clipped
+    clipped->point_count = 0;
+
+    double cx0 = clip->xs[i];
+    double cy0 = clip->ys[i];
+    double cxf = clip->xs[(i + 1) % clip->point_count];
+    double cyf = clip->ys[(i + 1) % clip->point_count];
+
+    int good_side = side(cx0, cy0, cxf, cyf, in_x, in_y);
+
+    // Make the slice:
+    // For each line in the simple polygon...
+    for (int j = 0; j < simple->point_count; j++) {
+      double sx0 = simple->xs[j];
+      double sy0 = simple->ys[j];
+      double sxf = simple->xs[(j + 1) % simple->point_count];
+      double syf = simple->ys[(j + 1) % simple->point_count];
+
+      int s0_good = good_side == side(cx0, cy0, cxf, cyf, sx0, sy0);
+      int sf_good = good_side == side(cx0, cy0, cxf, cyf, sxf, syf);
+
+      if (s0_good && sf_good) {
+
+        SimplePoly_add_point(clipped, sx0, sy0);
+
+      } else if (s0_good && !sf_good) {
+
+        double ts[2];
+        double intsn[2];
+        find_lines_intersection(cx0, cy0, cxf, cyf,
+                                sx0, sy0, sxf, syf,
+                                ts, intsn);
+        SimplePoly_add_point(clipped, sx0, sy0);
+        SimplePoly_add_point(clipped, intsn[0], intsn[1]);
+
+      } else if (!s0_good && sf_good) {
+
+        double ts[2];
+        double intsn[2];
+        find_lines_intersection(cx0, cy0, cxf, cyf,
+                                sx0, sy0, sxf, syf,
+                                ts, intsn);
+        SimplePoly_add_point(clipped, intsn[0], intsn[1]);
+
+      } else {  // !s0_good && !sf_good
+
+        // Do nothing
+
+      }
+    }
+
+    // Clone clipped into simple in order to make next slice
+    memcpy(simple, clipped, sizeof(SimplePoly));
+  }
+
+  free(simple);
 }
 
 #endif // poly_h_INCLUDED

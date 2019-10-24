@@ -5,9 +5,6 @@
 #include "poly.h"
 
 void draw_poly(Poly *poly, Clip *clip) {
-  G_rgb(0, 0, 0);
-  G_clear();
-
   draw_bounding_box();
 
   for (int simple_idx = 0; simple_idx < poly->simple_count; simple_idx++) {
@@ -29,6 +26,9 @@ void on_input(int poly_idx, Clip *clip) {
   prev_poly_idx = current_poly_idx;  
   current_poly_idx = poly_idx;
 
+  G_rgb(0, 0, 0);
+  G_clear();
+
   Poly *poly = &polys[current_poly_idx];
   if (current_poly_idx == prev_poly_idx) {
     rotate_poly(poly);
@@ -43,17 +43,18 @@ void on_input(int poly_idx, Clip *clip) {
     double xf = clip->xs[(point_idx + 1) % clip->point_count];
     double yf = clip->ys[(point_idx + 1) % clip->point_count];
 
+    G_fill_rectangle(x0 - 2, y0 - 2, 4, 4);
     G_line(x0, y0, xf, yf);
   }
 }
 
 int main(int argc, char **argv) {
-  printf("Press e to exit.\n");
-
   if (argc == 1) {
     printf("Give me .xy files!!\n");
     exit(1);
   }
+
+  printf("Press e to exit.\n");
 
   init_gfx(0);
 
