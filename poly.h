@@ -3,10 +3,10 @@
 
 #include "M2d_mat_tools.c"
 
-#define screen_width 400
-#define screen_height 400
+#define screen_width 800
+#define screen_height 800
 
-#define ENOUGH 200
+#define ENOUGH 1000
 
 typedef struct {
   double xs[ENOUGH];
