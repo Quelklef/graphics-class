@@ -10,7 +10,7 @@ void add_model(Model *model) {
   model_count++;
 }
 
-int main(const char **argv, const int argc) {
+int main(const int argc, const char **argv) {
   if (argc == 1) {
     printf("Give my .xyz files!!!");
     exit(1);
