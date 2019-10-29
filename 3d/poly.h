@@ -2,6 +2,7 @@
 #define poly_h_INCLUDED
 
 #include <stdlib.h>
+#include <math.h>
 
 #include "M3d_mat_tools.h"
 
@@ -49,12 +50,12 @@ Model *load_model(const char *filename) {
   FILE *file = fopen(filename, "r");
 
   if (file == NULL) {
-    printf("Cannot open file %S", filename);
+    printf("Cannot open file %s", filename);
     exit(1);
   }
 
   int number_of_indexed_points;
-  fscanf(file, "%d", number_of_indexed_points);
+  fscanf(file, "%d", &number_of_indexed_points);
 
   double xs[number_of_indexed_points];
   double ys[number_of_indexed_points];
@@ -92,6 +93,26 @@ Model *load_model(const char *filename) {
 
   return model;
 
+}
+
+#define half_angle (M_PI / 4)
+
+void display_point(double x, double y, double z) {
+  double t = 1 / z;
+  double x_prime = t * x;
+  double y_prime = t * y;
+
+  G_rgb(1, 0, 0);
+  G_fill_rectangle(x_prime - 1, y_prime -1, 2, 2);
+}
+
+void Model_display(Model *model) {
+  for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
+    Poly *poly = model->polys[poly_idx];
+    for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+      display_point(poly->xs[point_idx], poly->ys[point_idx], poly->zs[point_idx]);
+    }
+  }
 }
 
 #endif // poly_h_INCLUDED

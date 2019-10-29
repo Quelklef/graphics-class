@@ -107,6 +107,7 @@ void M2d_mat_mult(double res[4][4], double a[4][4], double b[4][4]) {
 		+ u[i][3] * v[3][j];
     }
   }
+}
 
 void M2d_mat_mult_pt(double P[3], double m[4][4], double Q[3]) {
   // P = m*Q
