@@ -16,7 +16,7 @@ instead of (x',y',1) = (x,y,1) * M
 
 */
 
-void M2d_print_mat(double a[4][4]) {
+void M3d_print_mat(double a[4][4]) {
   int r, c;
   for (r = 0; r < 4; r++) {
     printf("|");
@@ -28,7 +28,7 @@ void M2d_print_mat(double a[4][4]) {
   }
 } 
 
-void M2d_copy_mat(double dest[4][4], double src[4][4]) {
+void M3d_copy_mat(double dest[4][4], double src[4][4]) {
   for (int i = 0; i < 4; i++) { 
     for (int j = 0; j < 4; j++) {
       dest[i][j] = src[i][j];
@@ -36,7 +36,7 @@ void M2d_copy_mat(double dest[4][4], double src[4][4]) {
   }
 } 
 
-void M2d_make_identity(double a[4][4]) {
+void M3d_make_identity(double a[4][4]) {
   for (int r = 0; r < 4; r++) {
     for (int c = 0; c < 4; c++) {
       if (r == c) a[r][c] = 1.0;
@@ -45,14 +45,14 @@ void M2d_make_identity(double a[4][4]) {
   }
 } 
 
-void M2d_make_translation(double a[4][4], double dx, double dy, double dz) {
-  M2d_make_identity(a);
+void M3d_make_translation(double a[4][4], double dx, double dy, double dz) {
+  M3d_make_identity(a);
   a[0][3] = dx;
   a[1][3] = dy;
   a[2][3] = dz;
 }
 
-void M2d_make_scaling(double a[4][4], double sx, double sy, double sz) {
+void M3d_make_scaling(double a[4][4], double sx, double sy, double sz) {
   for (int r = 0; r < 3; r++) {
       for (int c = 0; c < 3; c++) {
            if (r == c) a[r][c] = 1.0;
@@ -65,7 +65,7 @@ void M2d_make_scaling(double a[4][4], double sx, double sy, double sz) {
   a[2][2] = sz;
 }
 
-void M2d_make_x_rotation_cs(double a[4][4], double cs, double sn) {
+void M3d_make_x_rotation_cs(double a[4][4], double cs, double sn) {
   // this one assumes cosine and sine are already known
   a[0][0] = cs;   a[0][1] = -sn;   a[0][2] =  0;   a[0][3] =  0;
   a[1][0] = sn;   a[1][1] =  cs;   a[1][2] =  0;   a[1][3] =  0;
@@ -73,7 +73,7 @@ void M2d_make_x_rotation_cs(double a[4][4], double cs, double sn) {
   a[3][0] =  0;   a[3][1] =   0;   a[3][2] =  0;   a[3][3] =  1;
 }
 
-void M2d_make_y_rotation_cs(double a[4][4], double cs, double sn) {
+void M3d_make_y_rotation_cs(double a[4][4], double cs, double sn) {
   // this one assumes cosine and sine are already known
   a[0][0] =  1;   a[0][1] =   0;   a[0][2] =   0;   a[0][3] =  0;
   a[1][0] =  0;   a[1][1] =  cs;   a[1][2] = -sn;   a[1][3] =  0;
@@ -81,7 +81,7 @@ void M2d_make_y_rotation_cs(double a[4][4], double cs, double sn) {
   a[3][0] =  0;   a[3][1] =   0;   a[3][2] =   0;   a[3][3] =  1;
 }
 
-void M2d_make_z_rotation_cs(double a[4][4], double cs, double sn) {
+void M3d_make_z_rotation_cs(double a[4][4], double cs, double sn) {
   // this one assumes cosine and sine are already known
   a[0][0] =  1;   a[0][1] =   0;   a[0][2] =   0;   a[0][3] =   0;
   a[1][0] =  0;   a[1][1] =   1;   a[1][2] =   0;   a[1][3] =   0;
@@ -90,14 +90,14 @@ void M2d_make_z_rotation_cs(double a[4][4], double cs, double sn) {
 }
 
 
-void M2d_mat_mult(double res[4][4], double a[4][4], double b[4][4]) {
+void M3d_mat_mult(double res[4][4], double a[4][4], double b[4][4]) {
   // res = a * b
   // this is SAFE, i.e. the user can make a call such as 
   // M2d_mat_mult(p,  p,q) or M2d_mat_mult(p,  q,p) or  M2d_mat_mult(p, p,p)
   double u[4][4];
   double v[4][4];
-  M2d_copy_mat(u, a);
-  M2d_copy_mat(v, b);
+  M3d_copy_mat(u, a);
+  M3d_copy_mat(v, b);
 
   for(int i = 0; i < 4; i++) {
     for(int j = 0; j < 4; j++) {
@@ -109,7 +109,7 @@ void M2d_mat_mult(double res[4][4], double a[4][4], double b[4][4]) {
   }
 }
 
-void M2d_mat_mult_pt(double P[3], double m[4][4], double Q[3]) {
+void M3d_mat_mult_pt(double P[3], double m[4][4], double Q[3]) {
   // P = m*Q
   // SAFE, user may make a call like M2d_mat_mult_pt (W, m,W);
   double u[2];
@@ -122,7 +122,7 @@ void M2d_mat_mult_pt(double P[3], double m[4][4], double Q[3]) {
   }
 }
 
-void M2d_mat_mult_points(double X[], double Y[], double Z[],
+void M3d_mat_mult_points(double X[], double Y[], double Z[],
                          double m[4][4],
                          double x[], double y[], double z[], int numpoints) {
   // |X0 X1 X2 ...|       |x0 x1 x2 ...|
