@@ -1,9 +1,11 @@
 #ifndef poly_h_INCLUDED
 #define poly_h_INCLUDED
 
-#include "M3d_mat_tools"
+#include <stdlib.h>
 
-# ENOUGH 1000
+#include "M3d_mat_tools.h"
+
+#define ENOUGH 1000
 
 typedef struct {
   double xs[ENOUGH];
@@ -36,15 +38,15 @@ Model *Model_new() {
   return model;
 }
 
-void Model_add_poly(Poly *poly) {
-  model->polys[model->point_count] = poly;
+void Model_add_poly(Model *model, Poly *poly) {
+  model->polys[model->poly_count] = poly;
   model->poly_count++;
 }
 
 
-Poly *load_model(const char *filename) {
+Model *load_model(const char *filename) {
 
-  FILE file = fopen(filename, "r");
+  FILE *file = fopen(filename, "r");
 
   if (file == NULL) {
     printf("Cannot open file %S", filename);
@@ -58,7 +60,7 @@ Poly *load_model(const char *filename) {
   double ys[number_of_indexed_points];
   double zs[number_of_indexed_points];
 
-  for (int point_idx = 0; point_idx < point_count; point_idx++) {
+  for (int point_idx = 0; point_idx < number_of_indexed_points; point_idx++) {
     fscanf(file, "%lf", &xs[point_idx]);
     fscanf(file, "%lf", &ys[point_idx]);
     fscanf(file, "%lf", &zs[point_idx]);
@@ -82,13 +84,14 @@ Poly *load_model(const char *filename) {
       fscanf(file, "%d", &y_idx);
       fscanf(file, "%d", &y_idx);
 
-      Poly_add_point(poly, x, y, z);
+      Poly_add_point(poly, xs[x_idx], ys[y_idx], zs[z_idx]);
     }
 
-    Model_add_poly(poly);
+    Model_add_poly(model, poly);
   }
 
   return model;
+
 }
 
 #endif // poly_h_INCLUDED
