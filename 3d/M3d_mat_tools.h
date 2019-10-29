@@ -1,3 +1,6 @@
+#ifndef M3d_mat_tools_INCLUDED
+#define M3d_mat_tools_INCLUDED
+
 #include <stdio.h>
 #include <math.h>
 #include <stdarg.h>
@@ -144,3 +147,5 @@ void M2d_mat_mult_points(double X[], double Y[], double Z[],
 
   }
 }
+
+#endif // M3d_mat_tools_INCLUDED
