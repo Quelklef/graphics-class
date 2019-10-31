@@ -22,12 +22,6 @@ int main(const int argc, const char **argv) {
   const int screen_height = 400;
   G_init_graphics(screen_width, screen_height);
 
-  G_rgb(1, 0, 0);
-  G_fill_rectangle(0               , 0                , screen_width, 1            );
-  G_fill_rectangle(screen_width - 1, 0                , 1           , screen_height);
-  G_fill_rectangle(0               , screen_height - 1, screen_width, 1            );
-  G_fill_rectangle(0               , 0                , 1           , screen_height);
-
   for (int i = 1; i < argc; i++) {
     const char *filename = argv[i];
     add_model(load_model(filename));
@@ -51,23 +45,32 @@ int main(const int argc, const char **argv) {
   double mat_translate_down[4][4];
   M3d_make_translation(mat_translate_down, 0, -1, 0);
 
-  while (1) {
-    int key = G_wait_key();
+  int model_idx;
+  char key = '1';
+  do {
+    G_rgb(0, 0, 0);
+    G_clear();
+    G_rgb(1, 0, 0);
+    G_fill_rectangle(0               , 0                , screen_width, 1            );
+    G_fill_rectangle(screen_width - 1, 0                , 1           , screen_height);
+    G_fill_rectangle(0               , screen_height - 1, screen_width, 1            );
+    G_fill_rectangle(0               , 0                , 1           , screen_height);
 
-    int model_idx = key - '1';
     if (0 <= key - '1' && key - '1' < model_count) {
       model_idx = key - '1';
     }
 
     Model *model = models[model_idx];
 
-    if (key == 'e') {
-      exit(0);
-    } else if (key == 's') {
-      Model_transform(model, mat_translate_forwards);
-    }
+         if (key == 'e') exit(0);
+    else if (key == 's') Model_transform(model, mat_translate_forwards);
+    else if (key == 'w') Model_transform(model, mat_translate_backwards);
+    else if (key == 'a') Model_transform(model, mat_translate_right);
+    else if (key == 'd') Model_transform(model, mat_translate_left);
+    else if (key == 'r') Model_transform(model, mat_translate_down);
+    else if (key == 'f') Model_transform(model, mat_translate_up);
 
     Model_display(model, screen_width, screen_height);
 
-  }
+  } while (key = G_wait_key());
 }

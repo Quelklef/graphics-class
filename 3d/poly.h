@@ -44,12 +44,12 @@ void Model_add_poly(Model *model, Poly *poly) {
   model->poly_count++;
 }
 
-void Model_transform(Model *model, const double mat[4][4]) {
+void Model_transform(Model *model, const double transformation[4][4]) {
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
     Poly *poly = model->polys[poly_idx];
     M3d_mat_mult_points(
       poly->xs, poly->ys, poly->zs,
-      mat,
+      transformation,
       poly->xs, poly->ys, poly->zs,
       poly->point_count
     );
