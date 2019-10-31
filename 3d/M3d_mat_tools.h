@@ -146,8 +146,8 @@ void M3d_mat_mult_points(double X[], double Y[], double Z[],
     X[j] = m[0][0] * copyX[j] + m[0][1] * copyY[j] + m[0][2];
     Y[j] = m[1][0] * copyX[j] + m[1][1] * copyY[j] + m[1][2];
     Z[j] = m[2][0] * copyX[j] + m[2][2] * copyZ[j] + m[2][2];
-
   }
+
 }
 
 #endif // M3d_mat_tools_INCLUDED

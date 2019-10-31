@@ -110,17 +110,21 @@ Model *load_model(const char *filename) {
 
 void pixel_coords(
       const double x, const double y, const double z,
-      const double screen_width, const double screen_height,
-      double *pixel_x, double *pixel_y
+      double *pixel_x, double *pixel_y,
+      const double screen_width, const double screen_height
     ) {
+  /* Find the pixel coordinates on the screen of a given
+   * (x, y, z) point. */
 
-  const double t = 1 / z;
-  const double x_prime = t * x;
-  const double y_prime = t * y;
+  const double x_bar = x / z;
+  const double y_bar = y / z;
 
   const double H = tan(half_angle);
-  *pixel_x = (screen_width  / 2) / H * x_prime + (screen_width  / 2);
-  *pixel_y = (screen_height / 2) / H * y_prime + (screen_height / 2);
+  const double x_bar_bar = x_bar / H * (screen_width  / 2);
+  const double y_bar_bar = y_bar / H * (screen_height / 2);
+
+  *pixel_x = x_bar_bar + screen_width  / 2;
+  *pixel_y = y_bar_bar + screen_height / 2;
 }
 
 void display_line(
@@ -130,8 +134,8 @@ void display_line(
     ) {
 
   double pixel_x0, pixel_y0, pixel_xf, pixel_yf;
-  pixel_coords(x0, y0, z0, screen_width, screen_height, &pixel_x0, &pixel_y0);
-  pixel_coords(xf, yf, zf, screen_width, screen_height, &pixel_xf, &pixel_yf);
+  pixel_coords(x0, y0, z0, &pixel_x0, &pixel_y0, screen_width, screen_height);
+  pixel_coords(xf, yf, zf, &pixel_xf, &pixel_yf, screen_width, screen_height);
 
   G_line(pixel_x0, pixel_y0, pixel_xf, pixel_yf);
 }
