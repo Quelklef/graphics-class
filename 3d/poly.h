@@ -44,6 +44,18 @@ void Model_add_poly(Model *model, Poly *poly) {
   model->poly_count++;
 }
 
+void Model_transform(Model *model, const double mat[4][4]) {
+  for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
+    Poly *poly = model->polys[poly_idx];
+    M3d_mat_mult_points(
+      poly->xs, poly->ys, poly->zs,
+      mat,
+      poly->xs, poly->ys, poly->zs,
+      poly->point_count
+    );
+  }
+}
+
 
 Model *load_model(const char *filename) {
 
@@ -96,9 +108,10 @@ Model *load_model(const char *filename) {
 
 #define half_angle (M_PI / 4)
 
-void display_point(
+void pixel_coords(
       const double x, const double y, const double z,
-      const double screen_width, const double screen_height
+      const double screen_width, const double screen_height,
+      double *pixel_x, double *pixel_y
     ) {
 
   const double t = 1 / z;
@@ -106,11 +119,21 @@ void display_point(
   const double y_prime = t * y;
 
   const double H = tan(half_angle);
-  const double pixel_x = (screen_width  / 2) / H * x_prime + (screen_width  / 2);
-  const double pixel_y = (screen_height / 2) / H * y_prime + (screen_height / 2);
+  *pixel_x = (screen_width  / 2) / H * x_prime + (screen_width  / 2);
+  *pixel_y = (screen_height / 2) / H * y_prime + (screen_height / 2);
+}
 
-  printf("%lf, %lf, %lf -> %lf, %lf\n", x, y, z, pixel_x, pixel_y);
-  G_fill_rectangle(pixel_x - 2, pixel_y - 2, 4, 4);
+void display_line(
+      const double x0, const double y0, const double z0,
+      const double xf, const double yf, const double zf,
+      const double screen_width, const double screen_height
+    ) {
+
+  double pixel_x0, pixel_y0, pixel_xf, pixel_yf;
+  pixel_coords(x0, y0, z0, screen_width, screen_height, &pixel_x0, &pixel_y0);
+  pixel_coords(xf, yf, zf, screen_width, screen_height, &pixel_xf, &pixel_yf);
+
+  G_line(pixel_x0, pixel_y0, pixel_xf, pixel_yf);
 }
 
 void Model_display(const Model *model, const double screen_width, const double screen_height) {
@@ -118,8 +141,15 @@ void Model_display(const Model *model, const double screen_width, const double s
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
     Poly *poly = model->polys[poly_idx];
     for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-      display_point(
-        poly->xs[point_idx], poly->ys[point_idx], poly->zs[point_idx],
+      display_line(
+        poly->xs[point_idx],
+        poly->ys[point_idx],
+        poly->zs[point_idx],
+
+        poly->xs[(point_idx + 1) % poly->point_count],
+        poly->ys[(point_idx + 1) % poly->point_count],
+        poly->zs[(point_idx + 1) % poly->point_count],
+
         screen_width, screen_height
       );
     }
@@ -127,4 +157,3 @@ void Model_display(const Model *model, const double screen_width, const double s
 }
 
 #endif // poly_h_INCLUDED
-

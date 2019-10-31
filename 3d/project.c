@@ -18,7 +18,7 @@ int main(const int argc, const char **argv) {
 
   printf("Press e to exit.\n");
 
-  const int screen_width = 400;
+  const int screen_width = 800;
   const int screen_height = 400;
   G_init_graphics(screen_width, screen_height);
 
@@ -33,20 +33,41 @@ int main(const int argc, const char **argv) {
     add_model(load_model(filename));
   }
 
+  double mat_translate_backwards[4][4];
+  M3d_make_translation(mat_translate_backwards, -1, 0, 0);
+
+  double mat_translate_forwards[4][4];
+  M3d_make_translation(mat_translate_forwards, 1, 0, 0);
+
+  double mat_translate_left[4][4];
+  M3d_make_translation(mat_translate_left, 0, 0, -1);
+
+  double mat_translate_right[4][4];
+  M3d_make_translation(mat_translate_right, 0, 0, 1);
+
+  double mat_translate_up[4][4];
+  M3d_make_translation(mat_translate_up, 0, 1, 0);
+
+  double mat_translate_down[4][4];
+  M3d_make_translation(mat_translate_down, 0, -1, 0);
+
   while (1) {
-    int key_code = G_wait_key();
+    int key = G_wait_key();
 
-    // Press e to exit
-    if (key_code == 101) {
+    int model_idx = key - '1';
+    if (0 <= key - '1' && key - '1' < model_count) {
+      model_idx = key - '1';
+    }
+
+    Model *model = models[model_idx];
+
+    if (key == 'e') {
       exit(0);
+    } else if (key == 's') {
+      Model_transform(model, mat_translate_forwards);
     }
 
-    const int numeral_one_key_code = 49;
-    int model_idx = key_code - numeral_one_key_code;
-    if (0 <= model_idx && model_idx < model_count) {
-      Model_display(models[model_idx], screen_width, screen_height);
-    } else {
-      printf("Requested model out of bounds...\n");
-    }
+    Model_display(model, screen_width, screen_height);
+
   }
 }
