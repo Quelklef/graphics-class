@@ -21,7 +21,7 @@ Poly *Poly_new() {
   return poly;
 }
 
-void Poly_add_point(Poly *poly, double x, double y, double z) {
+void Poly_add_point(Poly *poly, const double x, const double y, const double z) {
   poly->xs[poly->point_count] = x;
   poly->ys[poly->point_count] = y;
   poly->zs[poly->point_count] = z;
@@ -96,20 +96,32 @@ Model *load_model(const char *filename) {
 
 #define half_angle (M_PI / 4)
 
-void display_point(double x, double y, double z) {
-  double t = 1 / z;
-  double x_prime = t * x;
-  double y_prime = t * y;
+void display_point(
+      const double x, const double y, const double z,
+      const double screen_width, const double screen_height
+    ) {
 
-  G_rgb(1, 0, 0);
-  G_fill_rectangle(x_prime - 1, y_prime -1, 2, 2);
+  const double t = 1 / z;
+  const double x_prime = t * x;
+  const double y_prime = t * y;
+
+  const double H = tan(half_angle);
+  const double pixel_x = (screen_width  / 2) / H * x_prime + (screen_width  / 2);
+  const double pixel_y = (screen_height / 2) / H * y_prime + (screen_height / 2);
+
+  printf("%lf, %lf, %lf -> %lf, %lf\n", x, y, z, pixel_x, pixel_y);
+  G_fill_rectangle(pixel_x - 2, pixel_y - 2, 4, 4);
 }
 
-void Model_display(Model *model) {
+void Model_display(const Model *model, const double screen_width, const double screen_height) {
+  G_rgb(1, 0, 0);
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
     Poly *poly = model->polys[poly_idx];
     for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-      display_point(poly->xs[point_idx], poly->ys[point_idx], poly->zs[point_idx]);
+      display_point(
+        poly->xs[point_idx], poly->ys[point_idx], poly->zs[point_idx],
+        screen_width, screen_height
+      );
     }
   }
 }
