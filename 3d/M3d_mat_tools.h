@@ -143,9 +143,9 @@ void M3d_mat_mult_points(double X[], double Y[], double Z[],
   }
 
   for (int j = 0; j < numpoints; j++) {
-    X[j] = m[0][0] * copyX[j] + m[0][1] * copyY[j] + m[0][2] * copyZ[j];
-    Y[j] = m[1][0] * copyX[j] + m[1][1] * copyY[j] + m[1][2] * copyZ[j];
-    Z[j] = m[2][0] * copyX[j] + m[2][1] * copyY[j] + m[2][2] * copyZ[j];
+    X[j] = m[0][0] * copyX[j] + m[0][1] * copyY[j] + m[0][2] * copyZ[j] + m[0][3];
+    Y[j] = m[1][0] * copyX[j] + m[1][1] * copyY[j] + m[1][2] * copyZ[j] + m[1][3];
+    Z[j] = m[2][0] * copyX[j] + m[2][1] * copyY[j] + m[2][2] * copyZ[j] + m[2][3];
   }
 
 }

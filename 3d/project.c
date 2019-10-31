@@ -27,18 +27,18 @@ int main(const int argc, const char **argv) {
     add_model(load_model(filename));
   }
 
-  const int speed = 10;
+  const double speed = 1.5;
   double mat_translate_backwards[4][4];
-  M3d_make_translation(mat_translate_backwards, -speed, 0     , 0     );
+  M3d_make_translation(mat_translate_backwards, 0     , 0     , speed );
 
   double mat_translate_forwards[4][4];
-  M3d_make_translation(mat_translate_forwards , speed , 0     , 0     );
+  M3d_make_translation(mat_translate_forwards , 0     , 0     , -speed);
 
   double mat_translate_left[4][4];
-  M3d_make_translation(mat_translate_left     , 0     , 0     , -speed);
+  M3d_make_translation(mat_translate_left     , speed , 0     , 0     );
 
   double mat_translate_right[4][4];
-  M3d_make_translation(mat_translate_right    , 0     , 0     , speed );
+  M3d_make_translation(mat_translate_right    , -speed, 0     , 0     );
 
   double mat_translate_up[4][4];
   M3d_make_translation(mat_translate_up       , 0     , speed , 0     );
