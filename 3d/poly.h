@@ -6,7 +6,7 @@
 
 #include "M3d_mat_tools.h"
 
-#define ENOUGH 1000
+#define ENOUGH 5000
 
 typedef struct {
   double xs[ENOUGH];
@@ -67,7 +67,6 @@ Model *load_model(const char *filename) {
     fscanf(file, "%lf", &zs[point_idx]);
   }
 
-
   Model *model = Model_new();
 
   int model_poly_count;
@@ -83,7 +82,7 @@ Model *load_model(const char *filename) {
       int x_idx, y_idx, z_idx;
       fscanf(file, "%d", &x_idx);
       fscanf(file, "%d", &y_idx);
-      fscanf(file, "%d", &y_idx);
+      fscanf(file, "%d", &z_idx);
 
       Poly_add_point(poly, xs[x_idx], ys[y_idx], zs[z_idx]);
     }
