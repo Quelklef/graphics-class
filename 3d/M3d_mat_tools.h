@@ -53,13 +53,7 @@ void M3d_make_translation(double a[4][4], const double dx, const double dy, cons
 }
 
 void M3d_make_scaling(double a[4][4], const double sx, const double sy, const double sz) {
-  for (int r = 0; r < 3; r++) {
-      for (int c = 0; c < 3; c++) {
-           if (r == c) a[r][c] = 1.0;
-           else        a[r][c] = 0.0;
-      }
-  }
-
+  M3d_make_identity(a);
   a[0][0] = sx;
   a[1][1] = sy;
   a[2][2] = sz;
@@ -67,26 +61,26 @@ void M3d_make_scaling(double a[4][4], const double sx, const double sy, const do
 
 void M3d_make_x_rotation_cs(double a[4][4], const double cs, const double sn) {
   // this one assumes cosine and sine are already known
-  a[0][0] = cs;   a[0][1] = -sn;   a[0][2] =  0;   a[0][3] =  0;
-  a[1][0] = sn;   a[1][1] =  cs;   a[1][2] =  0;   a[1][3] =  0;
-  a[2][0] =  0;   a[2][1] =   0;   a[2][2] =  1;   a[2][3] =  0;
-  a[3][0] =  0;   a[3][1] =   0;   a[3][2] =  0;   a[3][3] =  1;
+  a[0][0] =  cs;   a[0][1] = -sn;   a[0][2] =   0;   a[0][3] =   0;
+  a[1][0] =  sn;   a[1][1] =  cs;   a[1][2] =   0;   a[1][3] =   0;
+  a[2][0] =   0;   a[2][1] =   0;   a[2][2] =   1;   a[2][3] =   0;
+  a[3][0] =   0;   a[3][1] =   0;   a[3][2] =   0;   a[3][3] =   1;
 }
 
 void M3d_make_y_rotation_cs(double a[4][4], const double cs, const double sn) {
   // this one assumes cosine and sine are already known
-  a[0][0] =  1;   a[0][1] =   0;   a[0][2] =   0;   a[0][3] =  0;
-  a[1][0] =  0;   a[1][1] =  cs;   a[1][2] = -sn;   a[1][3] =  0;
-  a[2][0] =  0;   a[2][1] =  sn;   a[2][2] =  cs;   a[2][3] =  0;
-  a[3][0] =  0;   a[3][1] =   0;   a[3][2] =   0;   a[3][3] =  1;
+  a[0][0] =   1;   a[0][1] =   0;   a[0][2] =   0;   a[0][3] =   0;
+  a[1][0] =   0;   a[1][1] =  cs;   a[1][2] = -sn;   a[1][3] =   0;
+  a[2][0] =   0;   a[2][1] =  sn;   a[2][2] =  cs;   a[2][3] =   0;
+  a[3][0] =   0;   a[3][1] =   0;   a[3][2] =   0;   a[3][3] =   1;
 }
 
 void M3d_make_z_rotation_cs(double a[4][4], const double cs, const double sn) {
   // this one assumes cosine and sine are already known
-  a[0][0] =  1;   a[0][1] =   0;   a[0][2] =   0;   a[0][3] =   0;
-  a[1][0] =  0;   a[1][1] =   1;   a[1][2] =   0;   a[1][3] =   0;
-  a[2][0] =  0;   a[2][1] =   0;   a[2][2] =  cs;   a[2][3] = -sn;
-  a[3][0] =  0;   a[3][1] =   0;   a[3][2] =  sn;   a[3][3] =  cs;
+  a[0][0] =  cs;   a[0][1] =   0;   a[0][2] =  sn;   a[0][3] =   0;
+  a[1][0] =   0;   a[1][1] =   1;   a[1][2] =   0;   a[1][3] =   0;
+  a[2][0] = -sn;   a[2][1] =   0;   a[2][2] =  cs;   a[2][3] =   0;
+  a[3][0] =   0;   a[3][1] =   0;   a[3][2] =   0;   a[3][3] =   1;
 }
 
 
@@ -95,8 +89,8 @@ void M3d_mat_mult(double res[4][4], const double a[4][4], const double b[4][4]) 
   // this is SAFE, i.e. the user can make a call such as 
   // M2d_mat_mult(p,  p,q) or M2d_mat_mult(p,  q,p) or  M2d_mat_mult(p, p,p)
   double u[4][4];
-  double v[4][4];
   M3d_copy_mat(u, a);
+  double v[4][4];
   M3d_copy_mat(v, b);
 
   for(int i = 0; i < 4; i++) {
@@ -104,7 +98,7 @@ void M3d_mat_mult(double res[4][4], const double a[4][4], const double b[4][4]) 
       res[i][j] = u[i][0] * v[0][j]
                 + u[i][1] * v[1][j]
                 + u[i][2] * v[2][j]
-		+ u[i][3] * v[3][j];
+            		+ u[i][3] * v[3][j];
     }
   }
 }

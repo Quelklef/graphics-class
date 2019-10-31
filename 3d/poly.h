@@ -3,6 +3,7 @@
 
 #include <stdlib.h>
 #include <math.h>
+#include <float.h>
 
 #include "M3d_mat_tools.h"
 
@@ -56,6 +57,36 @@ void Model_transform(Model *model, const double transformation[4][4]) {
   }
 }
 
+void Model_calc_center(const Model *model, double *center_x, double *center_y, double *center_z) {
+  /* Calculates the center of the bounding box */
+  double min_x = DBL_MAX;
+  double max_x = DBL_MIN;
+  double min_y = DBL_MAX;
+  double max_y = DBL_MIN;
+  double min_z = DBL_MAX;
+  double max_z = DBL_MIN;
+
+  for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
+    Poly *poly = model->polys[poly_idx];
+    for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+      double x = poly->xs[point_idx];
+      double y = poly->ys[point_idx];
+      double z = poly->zs[point_idx];
+
+      if (x < min_x) min_x = x;
+      if (x > max_x) max_x = x;
+      if (y < min_y) min_y = y;
+      if (y > max_y) max_y = y;
+      if (z < min_z) min_z = z;
+      if (z > max_z) max_z = z;
+    }
+  }
+
+  *center_x = (min_x + max_x) / 2;
+  *center_y = (min_y + max_y) / 2;
+  *center_z = (min_z + max_z) / 2;
+}
+
 
 Model *load_model(const char *filename) {
 
@@ -91,12 +122,9 @@ Model *load_model(const char *filename) {
     fscanf(file, "%d", &poly_point_count);
 
     for (int point_idx = 0; point_idx < poly_point_count; point_idx++) {
-      int x_idx, y_idx, z_idx;
-      fscanf(file, "%d", &x_idx);
-      fscanf(file, "%d", &y_idx);
-      fscanf(file, "%d", &z_idx);
-
-      Poly_add_point(poly, xs[x_idx], ys[y_idx], zs[z_idx]);
+      int crossref_idx;
+      fscanf(file, "%d", &crossref_idx);
+      Poly_add_point(poly, xs[crossref_idx], ys[crossref_idx], zs[crossref_idx]);
     }
 
     Model_add_poly(model, poly);
@@ -119,12 +147,17 @@ void pixel_coords(
   const double x_bar = x / z;
   const double y_bar = y / z;
 
-  const double H = tan(half_angle);
-  const double x_bar_bar = x_bar / H * (screen_width  / 2);
-  const double y_bar_bar = y_bar / H * (screen_height / 2);
+  // Scale with respect to only width OR height, because
+  // scaling with respect to both will deform the object
+  // by stretching it.
+  const double minor = fmin(screen_width, screen_height);
 
-  *pixel_x = x_bar_bar + screen_width  / 2;
-  *pixel_y = y_bar_bar + screen_height / 2;
+  const double H = tan(half_angle);
+  const double x_bar_bar = x_bar / H * (minor / 2);
+  const double y_bar_bar = y_bar / H * (minor / 2);
+
+  *pixel_x = x_bar_bar + minor / 2;
+  *pixel_y = y_bar_bar + minor / 2;
 }
 
 void display_line(
