@@ -17,7 +17,7 @@ int main(const int argc, const char **argv) {
   }
 
   printf("Press e to exit.\n");
-  printf("Use WASD to strafe.\n");
+  printf("Use WASD to strafe on an xz plane and RF to strafe up and down.\n");
   printf("Rotate the object with the following keys:\n");
   printf("\tx: op\n\ty: kl\n\tz: m,\n");
   printf("Use [brackets] to scale.\n");
@@ -34,7 +34,7 @@ int main(const int argc, const char **argv) {
   int model_idx;
   char key = '1';
   do {
-    G_rgb(0, 0, 0);
+    G_rgb(1, 1, 1);
     G_clear();
     G_rgb(1, 0, 0);
     G_fill_rectangle(0               , 0                , screen_width, 1            );
