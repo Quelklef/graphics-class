@@ -82,9 +82,9 @@ void Model_calc_center(const Model *model, double *center_x, double *center_y, d
     }
   }
 
-  *center_x = (min_x + max_x) / 2;
-  *center_y = (min_y + max_y) / 2;
-  *center_z = (min_z + max_z) / 2;
+  *center_x = min_x / 2 + max_x / 2;
+  *center_y = min_y / 2 + max_y / 2;
+  *center_z = min_z / 2 + max_z / 2;
 }
 
 
