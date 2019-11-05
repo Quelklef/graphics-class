@@ -23,7 +23,7 @@ int main(const int argc, const char **argv) {
   printf("Use [brackets] to scale.\n");
 
   const int screen_width = 800;
-  const int screen_height = 400;
+  const int screen_height = 800;
   G_init_graphics(screen_width, screen_height);
 
   for (int i = 1; i < argc; i++) {
@@ -80,7 +80,7 @@ int main(const int argc, const char **argv) {
   M3d_mat_mult(name, name, mat_translate_to_origin); \
   M3d_mat_mult(name, mat_translate_from_origin, name);
 
-    const double scale_amt = 0.1;
+    const double scale_amt = 0.001;
 
     double mat_scale_up[4][4];
     M3d_make_scaling(mat_scale_up, 1 + scale_amt, 1 + scale_amt, 1 + scale_amt);
@@ -91,12 +91,10 @@ int main(const int argc, const char **argv) {
     make_rel_to_origin(mat_scale_down);
 
     const double angle = M_PI / 16;
-    const double cs = cos(angle);
-    const double sn = sin(angle);
 
 #define make_rot_with_sign(name, axis, sign) \
   double name[4][4]; \
-  M3d_make_ ## axis ## _rotation_cs(name, sign * cs, sign * sn); \
+  M3d_make_ ## axis ## _rotation_cs(name, cos(sign * angle), sin(sign * angle)); \
   make_rel_to_origin(name)
 
 #define make_rot_mats(axis) \
@@ -106,6 +104,10 @@ int main(const int argc, const char **argv) {
     make_rot_mats(x);
     make_rot_mats(y);
     make_rot_mats(z);
+
+    double mat_do_fucking_nothing[4][4];
+    M3d_make_identity(mat_do_fucking_nothing);
+    make_rel_to_origin(mat_do_fucking_nothing)
 
     switch(key) {
       case 'e': exit(0); break;
@@ -127,6 +129,8 @@ int main(const int argc, const char **argv) {
 
       case '[': Model_transform(model, mat_scale_down         ); break;
       case ']': Model_transform(model, mat_scale_up           ); break;
+
+      case '0': Model_transform(model, mat_do_fucking_nothing ); break;
     }
 
     Model_display(model, screen_width, screen_height);

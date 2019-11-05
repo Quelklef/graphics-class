@@ -95,7 +95,7 @@ void M3d_mat_mult(double res[4][4], const double a[4][4], const double b[4][4]) 
       res[i][j] = u[i][0] * v[0][j]
                 + u[i][1] * v[1][j]
                 + u[i][2] * v[2][j]
-            		+ u[i][3] * v[3][j];
+            	+ u[i][3] * v[3][j];
     }
   }
 }
@@ -134,9 +134,9 @@ void M3d_mat_mult_points(double X[], double Y[], double Z[],
   }
 
   for (int j = 0; j < numpoints; j++) {
-    X[j] = m[0][0] * copyX[j] + m[0][1] * copyY[j] + m[0][2] * copyZ[j] + m[0][3];
-    Y[j] = m[1][0] * copyX[j] + m[1][1] * copyY[j] + m[1][2] * copyZ[j] + m[1][3];
-    Z[j] = m[2][0] * copyX[j] + m[2][1] * copyY[j] + m[2][2] * copyZ[j] + m[2][3];
+    X[j] = m[0][0] * copyX[j] + m[0][1] * copyY[j] + m[0][2] * copyZ[j] + m[0][3] * 1;
+    Y[j] = m[1][0] * copyX[j] + m[1][1] * copyY[j] + m[1][2] * copyZ[j] + m[1][3] * 1;
+    Z[j] = m[2][0] * copyX[j] + m[2][1] * copyY[j] + m[2][2] * copyZ[j] + m[2][3] * 1;
   }
 
 }
