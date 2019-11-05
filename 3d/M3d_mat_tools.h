@@ -59,24 +59,21 @@ void M3d_make_scaling(double a[4][4], const double sx, const double sy, const do
   a[2][2] = sz;
 }
 
-void M3d_make_x_rotation_cs(double a[4][4], const double cs, const double sn) {
-  // this one assumes cosine and sine are already known
+void M3d_make_z_rotation_cs(double a[4][4], const double cs, const double sn) {
   a[0][0] =  cs;   a[0][1] = -sn;   a[0][2] =   0;   a[0][3] =   0;
   a[1][0] =  sn;   a[1][1] =  cs;   a[1][2] =   0;   a[1][3] =   0;
   a[2][0] =   0;   a[2][1] =   0;   a[2][2] =   1;   a[2][3] =   0;
   a[3][0] =   0;   a[3][1] =   0;   a[3][2] =   0;   a[3][3] =   1;
 }
 
-void M3d_make_y_rotation_cs(double a[4][4], const double cs, const double sn) {
-  // this one assumes cosine and sine are already known
+void M3d_make_x_rotation_cs(double a[4][4], const double cs, const double sn) {
   a[0][0] =   1;   a[0][1] =   0;   a[0][2] =   0;   a[0][3] =   0;
   a[1][0] =   0;   a[1][1] =  cs;   a[1][2] = -sn;   a[1][3] =   0;
   a[2][0] =   0;   a[2][1] =  sn;   a[2][2] =  cs;   a[2][3] =   0;
   a[3][0] =   0;   a[3][1] =   0;   a[3][2] =   0;   a[3][3] =   1;
 }
 
-void M3d_make_z_rotation_cs(double a[4][4], const double cs, const double sn) {
-  // this one assumes cosine and sine are already known
+void M3d_make_y_rotation_cs(double a[4][4], const double cs, const double sn) {
   a[0][0] =  cs;   a[0][1] =   0;   a[0][2] =  sn;   a[0][3] =   0;
   a[1][0] =   0;   a[1][1] =   1;   a[1][2] =   0;   a[1][3] =   0;
   a[2][0] = -sn;   a[2][1] =   0;   a[2][2] =  cs;   a[2][3] =   0;
