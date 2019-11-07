@@ -106,8 +106,6 @@ int main(const int argc, const char **argv) {
   printf("\tx: op\n\ty: kl\n\tz: m,\n");
   printf("Use [brackets] to scale.\n");
 
-  const int screen_width = 800;
-  const int screen_height = 800;
   G_init_graphics(screen_width, screen_height);
 
   for (int i = 1; i < argc; i++) {
@@ -133,7 +131,7 @@ int main(const int argc, const char **argv) {
 
     Model *model = models[model_idx];
     on_key_do_transform(model, key);
-    Model_display(model, screen_width, screen_height);
+    Model_display(model);
 
   } while ((key = G_wait_key()));
 }
