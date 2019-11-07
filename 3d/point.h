@@ -10,7 +10,7 @@ typedef struct {
 void Point_init(Point *point, const double x, const double y, const double z) {
   point->x = x;
   point->y = y;
-  point->z - z;
+  point->z = z;
 }
 
 Point *Point_new(const double x, const double y, const double z) {

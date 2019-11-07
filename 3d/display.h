@@ -38,7 +38,9 @@ void display_line(const Point *p0, const Point *pf) {
 }
 
 void display_vec(const Point *p0, const Vec *v) {
-  display_line(p0, Point_new(p0->x + v->x, p0->y + v->y, p0->z + v->z));
+  Point end;
+  Point_init(&end, p0->x + v->x, p0->y + v->y, p0->z + v->z);
+  display_line(p0, &end);
 }
 
 int shouldnt_display(const Poly *poly) {
