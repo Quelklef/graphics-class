@@ -10,7 +10,7 @@ void add_model(Model *model) {
   model_count++;
 }
 
-void on_key_do_transform(const Model *model, const char key) {
+void on_key_do_transform(Model *model, const char key) {
   double model_center_x, model_center_y, model_center_z;
   Model_calc_center(model, &model_center_x, &model_center_y, &model_center_z);
 
