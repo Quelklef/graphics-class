@@ -62,7 +62,7 @@ void Model_display(const Model *model) {
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
     Poly *poly = model->polys[poly_idx];
 
-    //if (shouldnt_display(poly)) continue;
+    if (shouldnt_display(poly)) continue;
 
     for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
       const Point *p0 = poly->points[point_idx];
