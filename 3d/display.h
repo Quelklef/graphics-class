@@ -3,19 +3,18 @@
 
 // Functions relating to displaying stuff
 
+#include <math.h>
+
 #include "poly.h"
 #include "model.h"
-#include "vec3.h"
+#include "vector.h"
 
-void pixel_coords(
-      const double x, const double y, const double z,
-      double *pixel_x, double *pixel_y
-    ) {
+void pixel_coords_M(double *result_x, double *result_y, const Point *point) {
   /* Find the pixel coordinates on the screen of a given
    * (x, y, z) point. */
 
-  const double x_bar = x / z;
-  const double y_bar = y / z;
+  const double x_bar = point->x / point->z;
+  const double y_bar = point->y / point->z;
 
   // Scale with respect to only width OR height, because
   // scaling with respect to both will deform the object
@@ -26,32 +25,34 @@ void pixel_coords(
   const double x_bar_bar = x_bar / H * (minor / 2);
   const double y_bar_bar = y_bar / H * (minor / 2);
 
-  *pixel_x = x_bar_bar + minor / 2;
-  *pixel_y = y_bar_bar + minor / 2;
+  *result_x = x_bar_bar + minor / 2;
+  *result_y = y_bar_bar + minor / 2;
 }
 
-void display_line(
-      const double x0, const double y0, const double z0,
-      const double xf, const double yf, const double zf
-    ) {
-
+void display_line(const Point *p0, const Point *pf) {
   double pixel_x0, pixel_y0, pixel_xf, pixel_yf;
-  pixel_coords(x0, y0, z0, &pixel_x0, &pixel_y0);
-  pixel_coords(xf, yf, zf, &pixel_xf, &pixel_yf);
+  pixel_coords_M(&pixel_x0, &pixel_y0, p0);
+  pixel_coords_M(&pixel_xf, &pixel_yf, pf);
 
   G_line(pixel_x0, pixel_y0, pixel_xf, pixel_yf);
 }
 
-void display_vec(const double x0, const double y0, const double z0, const Vec3 *A) {
-  display_line(x0, y0, z0, x0 + A->x, y0 + A->y, z0 + A->z);
+void display_vec(const Point *p0, const Vec *v) {
+  display_line(p0, Point_new(p0->x + v->x, p0->y + v->y, p0->z + v->z));
 }
 
 int shouldnt_display(const Poly *poly) {
   // Implements backface elimination
-  const Vec3 *T = Vec3_between(0, 0, 0, poly->xs[0], poly->ys[0], poly->zs[0]);
-  const Vec3 *N = plane_normal(poly->xs, poly->ys, poly->zs, poly->point_count);
+  Point Point_origin;
+  Point_init(&Point_origin, 0, 0, 0);
 
-  return Vec3_dot(T, N) < 0;
+  Vec T;
+  Vec_between_M(&T, &Point_origin, poly->points[0]);
+
+  Vec N;
+  Poly_normal_M(&N, poly);
+
+  return Vec_dot(&T, &N) < 0;
 }
 
 void Model_display(const Model *model) {
@@ -59,18 +60,12 @@ void Model_display(const Model *model) {
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
     Poly *poly = model->polys[poly_idx];
 
-    if (shouldnt_display(poly)) continue;
+    //if (shouldnt_display(poly)) continue;
 
     for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-      display_line(
-        poly->xs[point_idx],
-        poly->ys[point_idx],
-        poly->zs[point_idx],
-
-        poly->xs[(point_idx + 1) % poly->point_count],
-        poly->ys[(point_idx + 1) % poly->point_count],
-        poly->zs[(point_idx + 1) % poly->point_count]
-      );
+      const Point *p0 = poly->points[point_idx];
+      const Point *pf = poly->points[(point_idx + 1) % poly->point_count];
+      display_line(p0, pf);
     }
   }
 }

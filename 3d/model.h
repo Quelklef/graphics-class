@@ -5,6 +5,7 @@
 
 #include <float.h>
 
+#include "point.h"
 #include "poly.h"
 #include "matrix.h"
 
@@ -13,10 +14,22 @@ typedef struct {
   int poly_count;
 } Model;
 
+void Model_init(Model *model) {
+  model->poly_count = 0;
+}
+
 Model *Model_new() {
   Model *model = malloc(sizeof(Model));
-  model->poly_count = 0;
+  Model_init(model);
   return model;
+}
+
+char *Model_print(const Model *model) {
+  printf("MODEL [\n");
+  for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
+    Poly_print(model->polys[poly_idx]);
+  }
+  printf("] MODEL\n");
 }
 
 void Model_add_poly(Model *model, Poly *poly) {
@@ -27,16 +40,11 @@ void Model_add_poly(Model *model, Poly *poly) {
 void Model_transform(Model *model, const double transformation[4][4]) {
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
     Poly *poly = model->polys[poly_idx];
-    M3d_mat_mult_points(
-      poly->xs, poly->ys, poly->zs,
-      transformation,
-      poly->xs, poly->ys, poly->zs,
-      poly->point_count
-    );
+    Poly_transform(poly, transformation);
   }
 }
 
-void Model_calc_center(const Model *model, double *center_x, double *center_y, double *center_z) {
+void Model_center_M(Point *result, const Model *model) {
   /* Calculates the center of the bounding box */
   double min_x = DBL_MAX;
   double max_x = DBL_MIN;
@@ -48,9 +56,10 @@ void Model_calc_center(const Model *model, double *center_x, double *center_y, d
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
     Poly *poly = model->polys[poly_idx];
     for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-      double x = poly->xs[point_idx];
-      double y = poly->ys[point_idx];
-      double z = poly->zs[point_idx];
+      const Point *point = poly->points[point_idx];
+      double x = point->x;
+      double y = point->y;
+      double z = point->z;
 
       if (x < min_x) min_x = x;
       if (x > max_x) max_x = x;
@@ -61,9 +70,9 @@ void Model_calc_center(const Model *model, double *center_x, double *center_y, d
     }
   }
 
-  *center_x = min_x / 2 + max_x / 2;
-  *center_y = min_y / 2 + max_y / 2;
-  *center_z = min_z / 2 + max_z / 2;
+  result->x = min_x / 2 + max_x / 2;
+  result->y = min_y / 2 + max_y / 2;
+  result->z = min_z / 2 + max_z / 2;
 }
 
 Model *load_model(const char *filename) {
@@ -102,7 +111,9 @@ Model *load_model(const char *filename) {
     for (int point_idx = 0; point_idx < poly_point_count; point_idx++) {
       int crossref_idx;
       fscanf(file, "%d", &crossref_idx);
-      Poly_add_point(poly, xs[crossref_idx], ys[crossref_idx], zs[crossref_idx]);
+
+      Point *point = Point_new(xs[crossref_idx], ys[crossref_idx], zs[crossref_idx]);
+      Poly_add_point(poly, point);
     }
 
     Model_add_poly(model, poly);

@@ -6,7 +6,7 @@
 #include "display.h"
 
 Model *models[ENOUGH];
-int model_count;
+int model_count = 0;
 
 void add_model(Model *model) {
   models[model_count] = model;
@@ -14,53 +14,53 @@ void add_model(Model *model) {
 }
 
 void on_key_do_transform(Model *model, const char key) {
-  double model_center_x, model_center_y, model_center_z;
-  Model_calc_center(model, &model_center_x, &model_center_y, &model_center_z);
+  Point model_center;
+  Model_center_M(&model_center, model);
 
   const double speed = 1.5;
   double mat_translate_backwards[4][4];
-  M3d_make_translation(mat_translate_backwards, 0, 0, -speed);
+  Mat_translation_M(mat_translate_backwards, 0, 0, -speed);
 
   double mat_translate_forwards[4][4];
-  M3d_make_translation(mat_translate_forwards, 0, 0, speed);
+  Mat_translation_M(mat_translate_forwards, 0, 0, speed);
 
   double mat_translate_left[4][4];
-  M3d_make_translation(mat_translate_left, -speed, 0, 0);
+  Mat_translation_M(mat_translate_left, -speed, 0, 0);
 
   double mat_translate_right[4][4];
-  M3d_make_translation(mat_translate_right, speed, 0, 0);
+  Mat_translation_M(mat_translate_right, speed, 0, 0);
 
   double mat_translate_up[4][4];
-  M3d_make_translation(mat_translate_up, 0, speed, 0);
+  Mat_translation_M(mat_translate_up, 0, speed, 0);
 
   double mat_translate_down[4][4];
-  M3d_make_translation(mat_translate_down, 0, -speed, 0);
+  Mat_translation_M(mat_translate_down, 0, -speed, 0);
 
   double mat_translate_to_origin[4][4];
-  M3d_make_translation(mat_translate_to_origin, -model_center_x, -model_center_y, -model_center_z);
+  Mat_translation_M(mat_translate_to_origin, -model_center.x, -model_center.y, -model_center.z);
 
   double mat_translate_from_origin[4][4];
-  M3d_make_translation(mat_translate_from_origin, model_center_x, model_center_y, model_center_z);
+  Mat_translation_M(mat_translate_from_origin, model_center.x, model_center.y, model_center.z);
 
 #define make_rel_to_origin(name) \
-  M3d_mat_mult(name, name, mat_translate_to_origin); \
-  M3d_mat_mult(name, mat_translate_from_origin, name);
+  Mat_mult_M(name, name, mat_translate_to_origin); \
+  Mat_mult_M(name, mat_translate_from_origin, name);
 
   const double scale_amt = 0.001;
 
   double mat_scale_up[4][4];
-  M3d_make_scaling(mat_scale_up, 1 + scale_amt, 1 + scale_amt, 1 + scale_amt);
+  Mat_scaling_M(mat_scale_up, 1 + scale_amt, 1 + scale_amt, 1 + scale_amt);
   make_rel_to_origin(mat_scale_up);
 
   double mat_scale_down[4][4];
-  M3d_make_scaling(mat_scale_up, 1 - scale_amt, 1 - scale_amt, 1 - scale_amt);
+  Mat_scaling_M(mat_scale_up, 1 - scale_amt, 1 - scale_amt, 1 - scale_amt);
   make_rel_to_origin(mat_scale_down);
 
   const double angle = M_PI / 16;
 
 #define make_rot_with_sign(name, axis, sign) \
   double name[4][4]; \
-  M3d_make_ ## axis ## _rotation_cs(name, cos(sign * angle), sin(sign * angle)); \
+  Mat_ ## axis ## _rotation_cs_M(name, cos(sign * angle), sin(sign * angle)); \
   make_rel_to_origin(name)
 
 #define make_rot_mats(axis) \
@@ -113,7 +113,8 @@ int main(const int argc, const char **argv) {
 
   for (int i = 1; i < argc; i++) {
     const char *filename = argv[i];
-    add_model(load_model(filename));
+    Model *model = load_model(filename);
+    add_model(model);
   }
 
   int model_idx;
