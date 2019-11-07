@@ -141,9 +141,18 @@ for (int i = 0; i < polygonCount; i++) {
 void drawPoly(int index){
     
     //calculating x bar and y bar for display
-    
+    double finalX[polygonCount[index][8]];
+    double finalY[polygonCount[index][8]];
 
     for(int i = 0; i < polygonCount[index]; i++) {
+	for(int j = 0; j < polygonPointsCount[i]; j++){
+	    finalX[i][j] = 
+	    finalY[i][j] = 
+}
+}
+
+    for(int i = 0; i < polygonCount[index]; i++) {
+
 	G_draw_polygon(polygonXs[index][i], polygonsYs[index][i], )
 	    
     }
