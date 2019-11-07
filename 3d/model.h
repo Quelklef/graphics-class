@@ -24,7 +24,7 @@ Model *Model_new() {
   return model;
 }
 
-char *Model_print(const Model *model) {
+void Model_print(const Model *model) {
   printf("MODEL [\n");
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
     Poly_print(model->polys[poly_idx]);

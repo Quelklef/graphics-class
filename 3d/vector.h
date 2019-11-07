@@ -23,7 +23,7 @@ double Vec_dot(const Vec *A, const Vec *B) {
   return A->x * B->x + A->y * B->y + A->z * B->z;
 }
 
-void *Vec_cross_M(Vec *result, const Vec *A, const Vec *B) {
+void Vec_cross_M(Vec *result, const Vec *A, const Vec *B) {
   Vec_init(result, A->y * B->z - B->y * A->z,
                    B->x * A->z - A->x * B->z,
                    A->x * B->y - B->x * A->y);
