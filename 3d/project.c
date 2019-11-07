@@ -1,6 +1,9 @@
 #include <FPT.h>
 
+#include "matrix.h"
 #include "poly.h"
+#include "model.h"
+#include "display.h"
 
 Model *models[ENOUGH];
 int model_count;
