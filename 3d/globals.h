@@ -3,12 +3,14 @@
 
 #include <math.h>
 
-#define screen_width 800
-#define screen_height 800
+const int screen_width = 800;
+const int screen_height = 800;
 
 #define ENOUGH 5000
 
-#define half_angle (M_PI / 4)
+double half_angle = M_PI / 8;
+
+int backface_elimination_sign = 1;
 
 #endif // globals_h_INCLUDED
 

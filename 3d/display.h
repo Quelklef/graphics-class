@@ -54,7 +54,7 @@ int shouldnt_display(const Poly *poly) {
   Vec N;
   Poly_normal_M(&N, poly);
 
-  return Vec_dot(&T, &N) < 0;
+  return backface_elimination_sign * Vec_dot(&T, &N) < 0;
 }
 
 void Model_display(const Model *model) {

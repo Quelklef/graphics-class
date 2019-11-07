@@ -13,7 +13,7 @@ void add_model(Model *model) {
   model_count++;
 }
 
-void on_key_do_transform(Model *model, const char key) {
+void on_key(Model *model, const char key) {
   Point model_center;
   Model_center_M(&model_center, model);
 
@@ -94,6 +94,11 @@ void on_key_do_transform(Model *model, const char key) {
     case ']': Model_transform(model, mat_scale_up           ); break;
 
     case '0': Model_transform(model, mat_translate_to_origin); break;
+
+    case '=': half_angle += 0.01; break;
+    case '-': half_angle -= 0.01; break;
+
+    case '/': backface_elimination_sign *= -1;
   }
 }
 
@@ -103,11 +108,17 @@ int main(const int argc, const char **argv) {
     exit(1);
   }
 
-  printf("Press e to exit.\n");
-  printf("Use WASD to strafe on an xz plane and RF to strafe up and down.\n");
-  printf("Rotate the object with the following keys:\n");
-  printf("\tx: op\n\ty: kl\n\tz: m,\n");
-  printf("Use [brackets] to scale.\n");
+  printf("Controls:\n");
+  printf("  e    - Exit program\n");
+  printf("  0    - Move object to user\n");
+  printf("  wasd - Strafe user along xz plane\n");
+  printf("  rf   - Strafe user up and down\n");
+  printf("  op   - Rotate object around x axis\n");
+  printf("  kl   - Rotate object around y axis\n");
+  printf("  m,   - Rotate object around z axis\n");
+  printf("  []   - Scale object down and up\n");
+  printf("  -+   - Adjust perspective\n");
+  printf("  /    - Change backface elimination sign\n");
 
   G_init_graphics(screen_width, screen_height);
 
@@ -134,7 +145,7 @@ int main(const int argc, const char **argv) {
     }
 
     Model *model = models[model_idx];
-    on_key_do_transform(model, key);
+    on_key(model, key);
     Model_display(model);
 
   } while ((key = G_wait_key()));
