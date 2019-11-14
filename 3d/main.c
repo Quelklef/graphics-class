@@ -66,7 +66,7 @@ void on_key(Model *model, const char key) {
   Mat_mult_M(name, name, translate_to_origin); \
   Mat_mult_M(name, translate_from_origin, name);
 
-  const double scale_amt = 0.001;
+  const double scale_amt = 0.01;
 
   _Mat scale_up;
   Mat_scaling_M(scale_up, 1 + scale_amt, 1 + scale_amt, 1 + scale_amt);
