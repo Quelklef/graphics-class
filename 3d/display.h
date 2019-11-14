@@ -71,8 +71,8 @@ void Poly_display(const Poly *poly) {
 }
 
 int comparator(const void *_poly0, const void *_poly1) {
-  const Poly *poly0 = (const Poly *) _poly0;
-  const Poly *poly1 = (const Poly *) _poly1;
+  const Poly *poly0 = *((const Poly **) _poly0);
+  const Poly *poly1 = *((const Poly **) _poly1);
 
   Point center0;
   Point center1;
@@ -83,7 +83,7 @@ int comparator(const void *_poly0, const void *_poly1) {
   const double dist0 = PointVec_mag(&center0);
   const double dist1 = PointVec_mag(&center1);
 
-  return dist1 - dist0;
+  return dist1 > dist0;
 }
 
 void Model_display(Model *model) {

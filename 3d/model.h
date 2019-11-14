@@ -1,7 +1,7 @@
 #ifndef model_h_INCLUDED
 #define model_h_INCLUDED
 
-// THe Model data type, which is a collection of polygons
+// The Model data type, which is a collection of polygons
 
 #include <float.h>
 
