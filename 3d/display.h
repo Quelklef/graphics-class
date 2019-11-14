@@ -51,30 +51,47 @@ int shouldnt_display(const Poly *poly) {
   return backface_elimination_sign * PointVec_dot(&T, &N) < 0;
 }
 
-int comparator(const void *_p0, const void *_p1) {
-  const Point *p0 = (const Point *) _p0;
-  const Point *p1 = (const Point *) _p1;
+void Poly_display(const Poly *poly) {
+  double xs[poly->point_count];
+  double ys[poly->point_count];
+  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+    const Point *p = poly->points[point_idx];
+    pixel_coords_M(&xs[point_idx], &ys[point_idx], p);
+  }
 
-  const double dist0 = PointVec_mag(p0);
-  const double dist1 = PointVec_mag(p1);
+  G_rgb(1, 0, 0);
+  G_fill_polygon(xs, ys, poly->point_count);
+
+  G_rgb(1, 1, 1);
+  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+    const Point *p0 = poly->points[point_idx];
+    const Point *pf = poly->points[(point_idx + 1) % poly->point_count];
+    display_line(p0, pf);
+  }
+}
+
+int comparator(const void *_poly0, const void *_poly1) {
+  const Poly *poly0 = (const Poly *) _poly0;
+  const Poly *poly1 = (const Poly *) _poly1;
+
+  Point center0;
+  Point center1;
+
+  Poly_calc_center_M(&center0, poly0);
+  Poly_calc_center_M(&center1, poly1);
+
+  const double dist0 = PointVec_mag(&center0);
+  const double dist1 = PointVec_mag(&center1);
 
   return dist1 - dist0;
 }
 
-void Model_display(const Model *model) {
-  G_rgb(1, 0, 0);
+void Model_display(Model *model) {
+  qsort((void *) model->polys, model->poly_count, sizeof(Poly *), comparator);
+
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
     Poly *poly = model->polys[poly_idx];
-
-    //qsort((void *) poly->points, poly->point_count, sizeof(Point *), comparator);
-
-    if (shouldnt_display(poly)) continue;
-
-    for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-      const Point *p0 = poly->points[point_idx];
-      const Point *pf = poly->points[(point_idx + 1) % poly->point_count];
-      display_line(p0, pf);
-    }
+    Poly_display(poly);
   }
 }
 
