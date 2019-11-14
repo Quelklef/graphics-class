@@ -6,7 +6,7 @@
 #include <float.h>
 
 #include "globals.h"
-#include "point.h"
+#include "pointvec.h"
 
 typedef struct {
   Point *points[ENOUGH];
@@ -22,7 +22,7 @@ Poly *Poly_new() {
 void Poly_print(const Poly* poly) {
   printf("POLY [\n");
   for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-    Point_print(poly->points[point_idx]);
+    PointVec_print(poly->points[point_idx]);
   }
   printf("] POLY\n");
 }
@@ -100,6 +100,25 @@ void Poly_transform(Poly *poly, const double transformation[4][4]) {
                        + transformation[2][2] * zs[i]
                        + transformation[2][3] * 1;
   }
+}
+
+void Poly_normal_M(Vec *result, const Poly *poly) {
+  // Takes a polygon which MUST have at least 3 points
+  // Returns the (length-1) normal veector to the polygon
+  if (poly->point_count < 3) {
+    printf("ERROR: In plane_normal(): requires point_count >= 3");
+    exit(1);
+  }
+
+  Vec A;
+  PointVec_between_M(&A, poly->points[0], poly->points[1]);
+  PointVec_normalize_M(&A, &A);
+
+  Vec B;
+  PointVec_between_M(&B, poly->points[0], poly->points[2]);
+  PointVec_normalize_M(&B, &B);
+
+  PointVec_cross_M(result, &A, &B);
 }
 
 #endif // poly_h_INCLUDED

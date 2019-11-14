@@ -7,7 +7,7 @@
 
 #include "poly.h"
 #include "model.h"
-#include "vector.h"
+#include "pointvec.h"
 
 void pixel_coords_M(double *result_x, double *result_y, const Point *point) {
   /* Find the pixel coordinates on the screen of a given
@@ -37,30 +37,36 @@ void display_line(const Point *p0, const Point *pf) {
   G_line(pixel_x0, pixel_y0, pixel_xf, pixel_yf);
 }
 
-void display_vec(const Point *p0, const Vec *v) {
-  Point end;
-  Point_init(&end, p0->x + v->x, p0->y + v->y, p0->z + v->z);
-  display_line(p0, &end);
-}
-
 int shouldnt_display(const Poly *poly) {
   // Implements backface elimination
-  Point Point_origin;
-  Point_init(&Point_origin, 0, 0, 0);
+  Point origin;
+  PointVec_init(&origin, 0, 0, 0);
 
   Vec T;
-  Vec_between_M(&T, &Point_origin, poly->points[0]);
+  PointVec_between_M(&T, &origin, poly->points[0]);
 
   Vec N;
   Poly_normal_M(&N, poly);
 
-  return backface_elimination_sign * Vec_dot(&T, &N) < 0;
+  return backface_elimination_sign * PointVec_dot(&T, &N) < 0;
+}
+
+int comparator(const void *_p0, const void *_p1) {
+  const Point *p0 = (const Point *) _p0;
+  const Point *p1 = (const Point *) _p1;
+
+  const double dist0 = PointVec_mag(p0);
+  const double dist1 = PointVec_mag(p1);
+
+  return dist1 - dist0;
 }
 
 void Model_display(const Model *model) {
   G_rgb(1, 0, 0);
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
     Poly *poly = model->polys[poly_idx];
+
+    //qsort((void *) poly->points, poly->point_count, sizeof(Point *), comparator);
 
     if (shouldnt_display(poly)) continue;
 
