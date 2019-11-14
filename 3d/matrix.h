@@ -5,6 +5,12 @@
 #include <math.h>
 #include <stdarg.h>
 
+// Define the matrix type.
+// The underscore before it is meant
+// to remind the user that it is 
+// an array type and NOT a struct.
+typedef double _Mat[4][4];
+
 
 /*
 
@@ -16,7 +22,7 @@ instead of (x',y',1) = (x,y,1) * M
 
 */
 
-void Mat_print(const double a[4][4]) {
+void Mat_print(const _Mat a) {
   int r, c;
   for (r = 0; r < 4; r++) {
     printf("|");
@@ -28,7 +34,7 @@ void Mat_print(const double a[4][4]) {
   }
 } 
 
-void Mat_copy_M(double result[4][4], const double src[4][4]) {
+void Mat_copy_M(_Mat result, const _Mat src) {
   for (int i = 0; i < 4; i++) { 
     for (int j = 0; j < 4; j++) {
       result[i][j] = src[i][j];
@@ -36,7 +42,7 @@ void Mat_copy_M(double result[4][4], const double src[4][4]) {
   }
 } 
 
-void Mat_identity_M(double result[4][4]) {
+void Mat_identity_M(_Mat result) {
   for (int r = 0; r < 4; r++) {
     for (int c = 0; c < 4; c++) {
       if (r == c) result[r][c] = 1.0;
@@ -45,35 +51,35 @@ void Mat_identity_M(double result[4][4]) {
   }
 } 
 
-void Mat_translation_M(double result[4][4], const double dx, const double dy, const double dz) {
+void Mat_translation_M(_Mat result, const double dx, const double dy, const double dz) {
   Mat_identity_M(result);
   result[0][3] = dx;
   result[1][3] = dy;
   result[2][3] = dz;
 }
 
-void Mat_scaling_M(double result[4][4], const double sx, const double sy, const double sz) {
+void Mat_scaling_M(_Mat result, const double sx, const double sy, const double sz) {
   Mat_identity_M(result);
   result[0][0] = sx;
   result[1][1] = sy;
   result[2][2] = sz;
 }
 
-void Mat_z_rotation_cs_M(double result[4][4], const double cs, const double sn) {
+void Mat_z_rotation_cs_M(_Mat result, const double cs, const double sn) {
   result[0][0] =  cs;   result[0][1] = -sn;   result[0][2] =   0;   result[0][3] =   0;
   result[1][0] =  sn;   result[1][1] =  cs;   result[1][2] =   0;   result[1][3] =   0;
   result[2][0] =   0;   result[2][1] =   0;   result[2][2] =   1;   result[2][3] =   0;
   result[3][0] =   0;   result[3][1] =   0;   result[3][2] =   0;   result[3][3] =   1;
 }
 
-void Mat_x_rotation_cs_M(double result[4][4], const double cs, const double sn) {
+void Mat_x_rotation_cs_M(_Mat result, const double cs, const double sn) {
   result[0][0] =   1;   result[0][1] =   0;   result[0][2] =   0;   result[0][3] =   0;
   result[1][0] =   0;   result[1][1] =  cs;   result[1][2] = -sn;   result[1][3] =   0;
   result[2][0] =   0;   result[2][1] =  sn;   result[2][2] =  cs;   result[2][3] =   0;
   result[3][0] =   0;   result[3][1] =   0;   result[3][2] =   0;   result[3][3] =   1;
 }
 
-void Mat_y_rotation_cs_M(double result[4][4], const double cs, const double sn) {
+void Mat_y_rotation_cs_M(_Mat result, const double cs, const double sn) {
   result[0][0] =  cs;   result[0][1] =   0;   result[0][2] =  sn;   result[0][3] =   0;
   result[1][0] =   0;   result[1][1] =   1;   result[1][2] =   0;   result[1][3] =   0;
   result[2][0] = -sn;   result[2][1] =   0;   result[2][2] =  cs;   result[2][3] =   0;
@@ -81,26 +87,26 @@ void Mat_y_rotation_cs_M(double result[4][4], const double cs, const double sn) 
 }
 
 
-void Mat_mult_M(double result[4][4], const double a[4][4], const double b[4][4]) {
+void Mat_mult_M(_Mat result, const _Mat a, const _Mat b) {
   // result = a * b
   // this is SAFE, i.e. the user can make a call such as 
   // M2d_mat_mult(p,  p,q) or M2d_mat_mult(p,  q,p) or  M2d_mat_mult(p, p,p)
-  double u[4][4];
+  _Mat u;
   Mat_copy_M(u, a);
-  double v[4][4];
+  _Mat v;
   Mat_copy_M(v, b);
 
   for(int i = 0; i < 4; i++) {
     for(int j = 0; j < 4; j++) {
       result[i][j] = u[i][0] * v[0][j]
-                + u[i][1] * v[1][j]
-                + u[i][2] * v[2][j]
-                + u[i][3] * v[3][j];
+                   + u[i][1] * v[1][j]
+                   + u[i][2] * v[2][j]
+                   + u[i][3] * v[3][j];
     }
   }
 }
 
-void Mat_mat_mult_pt_M(double result[3], const double m[4][4], const double Q[3]) {
+void Mat_mat_mult_pt_M(double result[3], const _Mat m, const double Q[3]) {
   // result = m*Q
   // SAFE, user may make a call like M2d_mat_mult_pt (W, m,W);
   double u[2];
@@ -114,7 +120,7 @@ void Mat_mat_mult_pt_M(double result[3], const double m[4][4], const double Q[3]
 }
 
 void Mat_mat_mult_points_M(double result_X[], double result_Y[], double result_Z[],
-                           const double m[4][4],
+                           const _Mat m,
                            const double x[], const double y[], const double z[],
                            const int numpoints) {
   // |X0 X1 X2 ...|       |x0 x1 x2 ...|

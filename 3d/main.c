@@ -19,20 +19,20 @@ void on_key(Model *model, const char key) {
   // Absolute transformations
 
   static int already_init = 0;
-  static double mat_translate_backwards[4][4];
-  static double mat_translate_forwards[4][4];
-  static double mat_translate_left[4][4];
-  static double mat_translate_right[4][4];
-  static double mat_translate_up[4][4];
-  static double mat_translate_down[4][4];
+  static _Mat translate_backwards;
+  static _Mat translate_forwards;
+  static _Mat translate_left;
+  static _Mat translate_right;
+  static _Mat translate_up;
+  static _Mat translate_down;
 
   if (!already_init) {
-    Mat_translation_M(mat_translate_backwards, 0, 0, -speed);
-    Mat_translation_M(mat_translate_forwards, 0, 0, speed);
-    Mat_translation_M(mat_translate_left, -speed, 0, 0);
-    Mat_translation_M(mat_translate_right, speed, 0, 0);
-    Mat_translation_M(mat_translate_up, 0, speed, 0);
-    Mat_translation_M(mat_translate_down, 0, -speed, 0);
+    Mat_translation_M(translate_backwards, 0     , 0     , -speed);
+    Mat_translation_M(translate_forwards , 0     , 0     , speed );
+    Mat_translation_M(translate_left     , -speed, 0     , 0     );
+    Mat_translation_M(translate_right    , +speed, 0     , 0     );
+    Mat_translation_M(translate_up       , 0     , +speed, 0     );
+    Mat_translation_M(translate_down     , 0     , -speed, 0     );
   }
   already_init = 1;
 
@@ -41,36 +41,36 @@ void on_key(Model *model, const char key) {
   Point model_center;
   Model_center_M(&model_center, model);
 
-  double mat_translate_to_origin[4][4];
-  double mat_translate_from_origin[4][4];
+  _Mat translate_to_origin;
+  _Mat translate_from_origin;
 
-  Mat_translation_M(mat_translate_to_origin, -model_center.x, -model_center.y, -model_center.z);
-  Mat_translation_M(mat_translate_from_origin, model_center.x, model_center.y, model_center.z);
+  Mat_translation_M(translate_to_origin, -model_center.x, -model_center.y, -model_center.z);
+  Mat_translation_M(translate_from_origin, model_center.x, model_center.y, model_center.z);
 
 #define make_rel_to_origin(name) \
-  Mat_mult_M(name, name, mat_translate_to_origin); \
-  Mat_mult_M(name, mat_translate_from_origin, name);
+  Mat_mult_M(name, name, translate_to_origin); \
+  Mat_mult_M(name, translate_from_origin, name);
 
   const double scale_amt = 0.001;
 
-  double mat_scale_up[4][4];
-  Mat_scaling_M(mat_scale_up, 1 + scale_amt, 1 + scale_amt, 1 + scale_amt);
-  make_rel_to_origin(mat_scale_up);
+  _Mat scale_up;
+  Mat_scaling_M(scale_up, 1 + scale_amt, 1 + scale_amt, 1 + scale_amt);
+  make_rel_to_origin(scale_up);
 
-  double mat_scale_down[4][4];
-  Mat_scaling_M(mat_scale_up, 1 - scale_amt, 1 - scale_amt, 1 - scale_amt);
-  make_rel_to_origin(mat_scale_down);
+  _Mat scale_down;
+  Mat_scaling_M(scale_up, 1 - scale_amt, 1 - scale_amt, 1 - scale_amt);
+  make_rel_to_origin(scale_down);
 
   const double angle = M_PI / 16;
 
 #define make_rot_with_sign(name, axis, sign) \
-  double name[4][4]; \
+  _Mat name; \
   Mat_ ## axis ## _rotation_cs_M(name, cos(sign * angle), sin(sign * angle)); \
   make_rel_to_origin(name)
 
 #define make_rot_mats(axis) \
-  make_rot_with_sign(mat_rotate_ ## axis ## _positive, axis, +1); \
-  make_rot_with_sign(mat_rotate_ ## axis ## _negative, axis, -1);
+  make_rot_with_sign(rotate_ ## axis ## _positive, axis, +1); \
+  make_rot_with_sign(rotate_ ## axis ## _negative, axis, -1);
 
   make_rot_mats(x)
   make_rot_mats(y)
@@ -79,26 +79,26 @@ void on_key(Model *model, const char key) {
   switch(key) {
     case 'e': exit(0); break;
 
-    case 'w': Model_transform(model, mat_translate_forwards ); break;
-    case 's': Model_transform(model, mat_translate_backwards); break;
-    case 'd': Model_transform(model, mat_translate_right    ); break;
-    case 'a': Model_transform(model, mat_translate_left     ); break;
-    case 'f': Model_transform(model, mat_translate_down     ); break;
-    case 'r': Model_transform(model, mat_translate_up       ); break;
+    case 'w': Model_transform(model, translate_forwards ); break;
+    case 's': Model_transform(model, translate_backwards); break;
+    case 'd': Model_transform(model, translate_right    ); break;
+    case 'a': Model_transform(model, translate_left     ); break;
+    case 'f': Model_transform(model, translate_down     ); break;
+    case 'r': Model_transform(model, translate_up       ); break;
 
-    case 'o': Model_transform(model, mat_rotate_x_positive  ); break;
-    case 'p': Model_transform(model, mat_rotate_x_negative  ); break;
+    case 'o': Model_transform(model, rotate_x_positive  ); break;
+    case 'p': Model_transform(model, rotate_x_negative  ); break;
 
-    case 'k': Model_transform(model, mat_rotate_y_positive  ); break;
-    case 'l': Model_transform(model, mat_rotate_y_negative  ); break;
+    case 'k': Model_transform(model, rotate_y_positive  ); break;
+    case 'l': Model_transform(model, rotate_y_negative  ); break;
 
-    case 'm': Model_transform(model, mat_rotate_z_positive  ); break;
-    case ',': Model_transform(model, mat_rotate_z_negative  ); break;
+    case 'm': Model_transform(model, rotate_z_positive  ); break;
+    case ',': Model_transform(model, rotate_z_negative  ); break;
 
-    case '[': Model_transform(model, mat_scale_down         ); break;
-    case ']': Model_transform(model, mat_scale_up           ); break;
+    case '[': Model_transform(model, scale_down         ); break;
+    case ']': Model_transform(model, scale_up           ); break;
 
-    case '0': Model_transform(model, mat_translate_to_origin); break;
+    case '0': Model_transform(model, translate_to_origin); break;
 
     case '=': half_angle += 0.01; break;
     case '-': half_angle -= 0.01; break;

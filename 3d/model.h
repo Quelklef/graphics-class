@@ -37,7 +37,7 @@ void Model_add_poly(Model *model, Poly *poly) {
   model->poly_count++;
 }
 
-void Model_transform(Model *model, const double transformation[4][4]) {
+void Model_transform(Model *model, const _Mat transformation) {
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
     Poly *poly = model->polys[poly_idx];
     Poly_transform(poly, transformation);
