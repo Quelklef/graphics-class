@@ -14,32 +14,37 @@ void add_model(Model *model) {
 }
 
 void on_key(Model *model, const char key) {
+  static const double speed = 0.5;
+
+  // Absolute transformations
+
+  static int already_init = 0;
+  static double mat_translate_backwards[4][4];
+  static double mat_translate_forwards[4][4];
+  static double mat_translate_left[4][4];
+  static double mat_translate_right[4][4];
+  static double mat_translate_up[4][4];
+  static double mat_translate_down[4][4];
+
+  if (!already_init) {
+    Mat_translation_M(mat_translate_backwards, 0, 0, -speed);
+    Mat_translation_M(mat_translate_forwards, 0, 0, speed);
+    Mat_translation_M(mat_translate_left, -speed, 0, 0);
+    Mat_translation_M(mat_translate_right, speed, 0, 0);
+    Mat_translation_M(mat_translate_up, 0, speed, 0);
+    Mat_translation_M(mat_translate_down, 0, -speed, 0);
+  }
+  already_init = 1;
+
+  // Relative transformations
+
   Point model_center;
   Model_center_M(&model_center, model);
 
-  const double speed = 0.5;
-  double mat_translate_backwards[4][4];
-  Mat_translation_M(mat_translate_backwards, 0, 0, -speed);
-
-  double mat_translate_forwards[4][4];
-  Mat_translation_M(mat_translate_forwards, 0, 0, speed);
-
-  double mat_translate_left[4][4];
-  Mat_translation_M(mat_translate_left, -speed, 0, 0);
-
-  double mat_translate_right[4][4];
-  Mat_translation_M(mat_translate_right, speed, 0, 0);
-
-  double mat_translate_up[4][4];
-  Mat_translation_M(mat_translate_up, 0, speed, 0);
-
-  double mat_translate_down[4][4];
-  Mat_translation_M(mat_translate_down, 0, -speed, 0);
-
   double mat_translate_to_origin[4][4];
-  Mat_translation_M(mat_translate_to_origin, -model_center.x, -model_center.y, -model_center.z);
-
   double mat_translate_from_origin[4][4];
+
+  Mat_translation_M(mat_translate_to_origin, -model_center.x, -model_center.y, -model_center.z);
   Mat_translation_M(mat_translate_from_origin, model_center.x, model_center.y, model_center.z);
 
 #define make_rel_to_origin(name) \
