@@ -17,7 +17,7 @@ void on_key(Model *model, const char key) {
   Point model_center;
   Model_center_M(&model_center, model);
 
-  const double speed = 1.5;
+  const double speed = 0.5;
   double mat_translate_backwards[4][4];
   Mat_translation_M(mat_translate_backwards, 0, 0, -speed);
 
@@ -74,12 +74,12 @@ void on_key(Model *model, const char key) {
   switch(key) {
     case 'e': exit(0); break;
 
-    case 's': Model_transform(model, mat_translate_forwards ); break;
-    case 'w': Model_transform(model, mat_translate_backwards); break;
-    case 'a': Model_transform(model, mat_translate_right    ); break;
-    case 'd': Model_transform(model, mat_translate_left     ); break;
-    case 'r': Model_transform(model, mat_translate_down     ); break;
-    case 'f': Model_transform(model, mat_translate_up       ); break;
+    case 'w': Model_transform(model, mat_translate_forwards ); break;
+    case 's': Model_transform(model, mat_translate_backwards); break;
+    case 'd': Model_transform(model, mat_translate_right    ); break;
+    case 'a': Model_transform(model, mat_translate_left     ); break;
+    case 'f': Model_transform(model, mat_translate_down     ); break;
+    case 'r': Model_transform(model, mat_translate_up       ); break;
 
     case 'o': Model_transform(model, mat_rotate_x_positive  ); break;
     case 'p': Model_transform(model, mat_rotate_x_negative  ); break;
@@ -111,12 +111,12 @@ int main(const int argc, const char **argv) {
   printf("Controls:\n");
   printf("  e    - Exit program\n");
   printf("  0    - Move object to user\n");
-  printf("  wasd - Strafe user along xz plane\n");
-  printf("  rf   - Strafe user up and down\n");
-  printf("  op   - Rotate object around x axis\n");
-  printf("  kl   - Rotate object around y axis\n");
-  printf("  m,   - Rotate object around z axis\n");
-  printf("  []   - Scale object down and up\n");
+  printf("  wasd - Strafe selected object along xz plane\n");
+  printf("  rf   - Strafe selected object up and down\n");
+  printf("  op   - Rotate selected object around x axis\n");
+  printf("  kl   - Rotate selected object around y axis\n");
+  printf("  m,   - Rotate selected object around z axis\n");
+  printf("  []   - Scale selected object down and up\n");
   printf("  -+   - Adjust perspective\n");
   printf("  /    - Change backface elimination sign\n");
 
@@ -128,7 +128,7 @@ int main(const int argc, const char **argv) {
     add_model(model);
   }
 
-  int model_idx;
+  Model *focused_model = NULL;
   char key = '1';
   do {
 
@@ -141,12 +141,14 @@ int main(const int argc, const char **argv) {
     G_fill_rectangle(0               , 0                , 1           , screen_height);
 
     if (0 <= key - '1' && key - '1' < model_count) {
-      model_idx = key - '1';
+      focused_model = models[key - '1'];
     }
 
-    Model *model = models[model_idx];
-    on_key(model, key);
-    Model_display(model);
+    if (focused_model != NULL) {
+      on_key(focused_model, key);
+    }
+
+    display_models(models, model_count, focused_model);
 
   } while ((key = G_wait_key()));
 }

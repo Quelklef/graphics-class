@@ -51,7 +51,7 @@ int shouldnt_display(const Poly *poly) {
   return backface_elimination_sign * PointVec_dot(&T, &N) < 0;
 }
 
-void Poly_display(const Poly *poly) {
+void Poly_display(const Poly *poly, int focused) {
   double xs[poly->point_count];
   double ys[poly->point_count];
   for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
@@ -59,7 +59,11 @@ void Poly_display(const Poly *poly) {
     pixel_coords_M(&xs[point_idx], &ys[point_idx], p);
   }
 
-  G_rgb(1, 0, 0);
+  if (focused) {
+    G_rgb(1, 0, 0);
+  } else {
+    G_rgb(0.5, 0.2, 0.2);
+  }
   G_fill_polygon(xs, ys, poly->point_count);
 
   G_rgb(1, 1, 1);
@@ -70,15 +74,23 @@ void Poly_display(const Poly *poly) {
   }
 }
 
-int comparator(const void *_poly0, const void *_poly1) {
-  const Poly *poly0 = *((const Poly **) _poly0);
-  const Poly *poly1 = *((const Poly **) _poly1);
+
+
+
+typedef struct {
+  Poly *poly;
+  int is_focused;
+}  MaybeFocusedPoly;
+
+int comparator(const void *_mfPoly0, const void *_mfPoly1) {
+  const MaybeFocusedPoly *mfPoly0 = (const MaybeFocusedPoly *) _mfPoly0;
+  const MaybeFocusedPoly *mfPoly1 = (const MaybeFocusedPoly *) _mfPoly1;
 
   Point center0;
   Point center1;
 
-  Poly_calc_center_M(&center0, poly0);
-  Poly_calc_center_M(&center1, poly1);
+  Poly_calc_center_M(&center0, mfPoly0->poly);
+  Poly_calc_center_M(&center1, mfPoly1->poly);
 
   const double dist0 = PointVec_mag(&center0);
   const double dist1 = PointVec_mag(&center1);
@@ -86,12 +98,38 @@ int comparator(const void *_poly0, const void *_poly1) {
   return dist1 > dist0;
 }
 
-void Model_display(Model *model) {
-  qsort((void *) model->polys, model->poly_count, sizeof(Poly *), comparator);
+void display_models(Model *models[], int model_count, Model *focused_model) {
+  // We need to draw aw polygons at once, not model-by-model, in order to
+  // correctly handle overlapping models.
+  int total_poly_count = 0;
+  for (int model_idx = 0; model_idx < model_count; model_idx++) {
+    const Model *model = models[model_idx];
+    total_poly_count += model->poly_count;
+  }
 
-  for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
-    Poly *poly = model->polys[poly_idx];
-    Poly_display(poly);
+  MaybeFocusedPoly aggregate_mfPolys[total_poly_count];
+  int aggregate_mfPolys_i = 0;
+
+  for (int model_idx = 0; model_idx < model_count; model_idx++) {
+    const Model *model = models[model_idx];
+    const int is_focused = model == focused_model;
+    for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
+      const Poly *poly = model->polys[poly_idx];
+
+      MaybeFocusedPoly mfPoly;
+      mfPoly.poly = (Poly *) poly;
+      mfPoly.is_focused = is_focused;
+
+      aggregate_mfPolys[aggregate_mfPolys_i] = mfPoly;
+      aggregate_mfPolys_i++;
+    }
+  }
+
+  qsort((void *) aggregate_mfPolys, total_poly_count, sizeof(MaybeFocusedPoly), comparator);
+
+  for (int mfPoly_idx = 0; mfPoly_idx < total_poly_count; mfPoly_idx++) {
+    MaybeFocusedPoly mfPoly = aggregate_mfPolys[mfPoly_idx];
+    Poly_display(mfPoly.poly, mfPoly.is_focused);
   }
 }
 
