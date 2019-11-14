@@ -75,6 +75,29 @@ void Model_center_M(Point *result, const Model *model) {
   result->z = min_z / 2 + max_z / 2;
 }
 
+void nicely_place_model(Model *model) {
+  // Move the model to somewhere nice
+  Point model_center;
+  Model_center_M(&model_center, model);
+
+  double min_z = DBL_MAX;
+  for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
+    const Poly *poly = model->polys[poly_idx];
+    for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+      const Point *point = poly->points[point_idx];
+      const double z = point->z;
+      if (z < min_z) min_z = z;
+    }
+  }
+
+  // We choose that "somewhere nice" means that x=y=0 and the closest z value is at some z
+  const desired_z = 15;
+  _Mat to_nice;
+  Mat_translation_M(to_nice, -model_center.x, -model_center.y, -min_z + desired_z);
+
+  Model_transform(model, to_nice);
+}
+
 Model *load_model(const char *filename) {
 
   FILE *file = fopen(filename, "r");
@@ -123,6 +146,8 @@ Model *load_model(const char *filename) {
 
     Model_add_poly(model, poly);
   }
+
+  nicely_place_model(model);
 
   return model;
 
