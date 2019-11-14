@@ -15,6 +15,7 @@ void add_model(Model *model) {
 
 void on_key(Model *model, const char key) {
   static const double speed = 0.5;
+  static const double fast_speed = 7.5;
 
   // Absolute transformations
 
@@ -26,6 +27,13 @@ void on_key(Model *model, const char key) {
   static _Mat translate_up;
   static _Mat translate_down;
 
+  static _Mat translate_backwards_fast;
+  static _Mat translate_forwards_fast;
+  static _Mat translate_left_fast;
+  static _Mat translate_right_fast;
+  static _Mat translate_up_fast;
+  static _Mat translate_down_fast;
+
   if (!already_init) {
     Mat_translation_M(translate_backwards, 0     , 0     , -speed);
     Mat_translation_M(translate_forwards , 0     , 0     , speed );
@@ -33,6 +41,13 @@ void on_key(Model *model, const char key) {
     Mat_translation_M(translate_right    , +speed, 0     , 0     );
     Mat_translation_M(translate_up       , 0     , +speed, 0     );
     Mat_translation_M(translate_down     , 0     , -speed, 0     );
+
+    Mat_translation_M(translate_backwards_fast, 0          , 0          , -fast_speed);
+    Mat_translation_M(translate_forwards_fast , 0          , 0          , fast_speed );
+    Mat_translation_M(translate_left_fast     , -fast_speed, 0          , 0          );
+    Mat_translation_M(translate_right_fast    , +fast_speed, 0          , 0          );
+    Mat_translation_M(translate_up_fast       , 0          , +fast_speed, 0          );
+    Mat_translation_M(translate_down_fast     , 0          , -fast_speed, 0          );
   }
   already_init = 1;
 
@@ -85,6 +100,13 @@ void on_key(Model *model, const char key) {
     case 'a': Model_transform(model, translate_left     ); break;
     case 'f': Model_transform(model, translate_down     ); break;
     case 'r': Model_transform(model, translate_up       ); break;
+
+    case 'W': Model_transform(model, translate_forwards_fast ); break;
+    case 'S': Model_transform(model, translate_backwards_fast); break;
+    case 'D': Model_transform(model, translate_right_fast    ); break;
+    case 'A': Model_transform(model, translate_left_fast     ); break;
+    case 'F': Model_transform(model, translate_down_fast     ); break;
+    case 'R': Model_transform(model, translate_up_fast       ); break;
 
     case 'o': Model_transform(model, rotate_x_positive  ); break;
     case 'p': Model_transform(model, rotate_x_negative  ); break;
