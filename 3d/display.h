@@ -19,9 +19,9 @@ void pixel_coords_M(double *result_x, double *result_y, const Point *point) {
   // Scale with respect to only width OR height, because
   // scaling with respect to both will deform the object
   // by stretching it.
-  const double minor = fmin(screen_width, screen_height);
+  const double minor = fmin(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-  const double H = tan(half_angle);
+  const double H = tan(HALF_ANGLE);
   const double x_bar_bar = x_bar / H * (minor / 2);
   const double y_bar_bar = y_bar / H * (minor / 2);
 
@@ -39,6 +39,9 @@ void display_line(const Point *p0, const Point *pf) {
 
 int shouldnt_display(const Poly *poly) {
   // Implements backface elimination
+
+  if (!DO_BACKFACE_ELIMINATION) return 0;
+
   Point origin;
   PointVec_init(&origin, 0, 0, 0);
 
@@ -48,17 +51,15 @@ int shouldnt_display(const Poly *poly) {
   Vec N;
   Poly_normal_M(&N, poly);
 
-  return backface_elimination_sign * PointVec_dot(&T, &N) < 0;
+  return BACKFACE_ELIMINATION_SIGN * PointVec_dot(&T, &N) < 0;
 }
-
-const double ambient = 0.5;
-const double diffuse_max = 0.3;
-const int specular_power = 20;
 
 double Poly_calc_intensity(const Poly *poly) {
   // TODO: REMOVE
   Point light_source;
   PointVec_init(&light_source, 0, 0, 0);
+
+  if (!DO_LIGHT_MODEL) return 1;
 
   Vec poly_normal;
   Poly_normal_M(&poly_normal, poly);
@@ -87,7 +88,7 @@ double Poly_calc_intensity(const Poly *poly) {
   // If bserver is on other side of polygon, no reflected light
   // is seen.
   if (PointVec_dot(&to_observer, &to_light) < 0) {
-    return ambient;
+    return AMBIENT;
   }
 
   Vec in_plane;
@@ -101,10 +102,10 @@ double Poly_calc_intensity(const Poly *poly) {
 
   const double cos_beta = PointVec_dot(&reflection, &to_observer);
 
-  return ambient
-         + diffuse_max * fmax(0, cos_alpha)
-         + (1 - ambient - diffuse_max)
-           * pow(fmax(0, cos_beta), specular_power);
+  return AMBIENT
+         + DIFFUSE_MAX * fmax(0, cos_alpha)
+         + (1 - AMBIENT - DIFFUSE_MAX)
+           * pow(fmax(0, cos_beta), SPECULAR_POWER);
 }
 
 void Poly_display(const Poly *poly, int focused) {
@@ -117,8 +118,10 @@ void Poly_display(const Poly *poly, int focused) {
 
   const double intensity = Poly_calc_intensity(poly);
 
-  G_rgb(0.8 * intensity, 0.5 * intensity, 0.8 * intensity);
-  G_fill_polygon(xs, ys, poly->point_count);
+  if (DO_POLY_FILL) {
+    G_rgb(0.8 * intensity, 0.5 * intensity, 0.8 * intensity);
+    G_fill_polygon(xs, ys, poly->point_count);
+  }
 
   focused ? G_rgb(0.7, 0.7, 0.7) : G_rgb(0, 0, 0);
   for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {

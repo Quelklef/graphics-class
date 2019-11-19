@@ -122,10 +122,13 @@ void on_key(Model *model, const char key) {
 
     case '0': Model_transform(model, translate_to_origin); break;
 
-    case '=': half_angle += 0.01; break;
-    case '-': half_angle -= 0.01; break;
+    case '=': HALF_ANGLE += 0.01; break;
+    case '-': HALF_ANGLE -= 0.01; break;
 
-    case '/': backface_elimination_sign *= -1;
+    case '!': DO_POLY_FILL            = 1 - DO_POLY_FILL;
+    case '@': DO_BACKFACE_ELIMINATION = 1 - DO_BACKFACE_ELIMINATION;
+    case '#': DO_LIGHT_MODEL          = 1 - DO_LIGHT_MODEL;
+    case '/': BACKFACE_ELIMINATION_SIGN *= -1;
   }
 }
 
@@ -135,19 +138,26 @@ int main(const int argc, const char **argv) {
     exit(1);
   }
 
-  printf("Controls:\n");
+  printf("Some controls:\n");
   printf("  e    - Exit program\n");
   printf("  0    - Move object to user\n");
+  printf("  []   - Scale selected object down and up\n");
+  printf("\n");
+  printf("Strafing (may be quickened with shift):\n");
   printf("  wasd - Strafe selected object along xz plane\n");
   printf("  rf   - Strafe selected object up and down\n");
   printf("  op   - Rotate selected object around x axis\n");
   printf("  kl   - Rotate selected object around y axis\n");
   printf("  m,   - Rotate selected object around z axis\n");
-  printf("  []   - Scale selected object down and up\n");
+  printf("\n");
+  printf("Parameters:\n");
   printf("  -+   - Adjust perspective\n");
+  printf("  !    - Enable/disable polygon filling\n");
+  printf("  @    - Enable/disable backface elimination\n");
   printf("  /    - Change backface elimination sign\n");
+  printf("  #    - Enable/disable light model\n");
 
-  G_init_graphics(screen_width, screen_height);
+  G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
 
   for (int i = 1; i < argc; i++) {
     const char *filename = argv[i];
@@ -162,10 +172,10 @@ int main(const int argc, const char **argv) {
     G_rgb(1, 1, 1);
     G_clear();
     G_rgb(1, 0, 0);
-    G_fill_rectangle(0               , 0                , screen_width, 1            );
-    G_fill_rectangle(screen_width - 1, 0                , 1           , screen_height);
-    G_fill_rectangle(0               , screen_height - 1, screen_width, 1            );
-    G_fill_rectangle(0               , 0                , 1           , screen_height);
+    G_fill_rectangle(0               , 0                , SCREEN_WIDTH, 1            );
+    G_fill_rectangle(SCREEN_WIDTH - 1, 0                , 1           , SCREEN_HEIGHT);
+    G_fill_rectangle(0               , SCREEN_HEIGHT - 1, SCREEN_WIDTH, 1            );
+    G_fill_rectangle(0               , 0                , 1           , SCREEN_HEIGHT);
 
     if (0 <= key - '1' && key - '1' < model_count) {
       focused_model = models[key - '1'];
