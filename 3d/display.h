@@ -54,11 +54,7 @@ int shouldnt_display(const Poly *poly) {
   return BACKFACE_ELIMINATION_SIGN * PointVec_dot(&T, &N) < 0;
 }
 
-double Poly_calc_intensity(const Poly *poly) {
-  // TODO: REMOVE
-  Point light_source;
-  PointVec_init(&light_source, 0, 0, 0);
-
+double Poly_calc_intensity(const Poly *poly, const Point *light_source_loc) {
   if (!DO_LIGHT_MODEL) return 1;
 
   Vec poly_normal;
@@ -68,7 +64,7 @@ double Poly_calc_intensity(const Poly *poly) {
   Poly_calc_center_M(&poly_center, poly);
 
   Vec to_light;
-  PointVec_between_M(&to_light, &poly_center, &light_source);
+  PointVec_between_M(&to_light, &poly_center, light_source_loc);
   PointVec_normalize(&to_light);
 
   // Make sure normal is going correct direction
@@ -108,7 +104,7 @@ double Poly_calc_intensity(const Poly *poly) {
            * pow(fmax(0, cos_beta), SPECULAR_POWER);
 }
 
-void Poly_display(const Poly *poly, int focused) {
+void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
   double xs[poly->point_count];
   double ys[poly->point_count];
   for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
@@ -116,14 +112,14 @@ void Poly_display(const Poly *poly, int focused) {
     pixel_coords_M(&xs[point_idx], &ys[point_idx], p);
   }
 
-  const double intensity = Poly_calc_intensity(poly);
+  const double intensity = Poly_calc_intensity(poly, light_source_loc);
 
   if (DO_POLY_FILL) {
     G_rgb(0.8 * intensity, 0.5 * intensity, 0.8 * intensity);
     G_fill_polygon(xs, ys, poly->point_count);
   }
 
-  focused ? G_rgb(0.7, 0.7, 0.7) : G_rgb(0, 0, 0);
+  focused ? G_rgb(1, 0, 0) : G_rgb(0, 0, 0);
   for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
     const Point *p0 = poly->points[point_idx];
     const Point *pf = poly->points[(point_idx + 1) % poly->point_count];
@@ -155,7 +151,10 @@ int comparator(const void *_mfPoly0, const void *_mfPoly1) {
   return dist1 > dist0;
 }
 
-void display_models(Model *models[], int model_count, Model *focused_model) {
+void display_models(Model *models[], int model_count, Model *focused_model, Model *light_source) {
+  Point light_source_loc;
+  Model_center_M(&light_source_loc, light_source);
+
   // We need to draw aw polygons at once, not model-by-model, in order to
   // correctly handle overlapping models.
   int total_poly_count = 0;
@@ -192,7 +191,7 @@ void display_models(Model *models[], int model_count, Model *focused_model) {
 
   for (int mfPoly_idx = 0; mfPoly_idx < total_poly_count; mfPoly_idx++) {
     MaybeFocusedPoly mfPoly = aggregate_mfPolys[mfPoly_idx];
-    Poly_display(mfPoly.poly, mfPoly.is_focused);
+    Poly_display(mfPoly.poly, mfPoly.is_focused, &light_source_loc);
   }
 }
 

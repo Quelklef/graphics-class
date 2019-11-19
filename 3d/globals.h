@@ -18,9 +18,9 @@ int DO_LIGHT_MODEL          = 1;
 int BACKFACE_ELIMINATION_SIGN = 1;
 
 // Light model params
-double AMBIENT       = 0.5;
-double DIFFUSE_MAX   = 0.3;
-int   SPECULAR_POWER = 20;
+double AMBIENT       = 0.2;
+double DIFFUSE_MAX   = 0.7;
+int   SPECULAR_POWER = 50;
 
 #endif // globals_h_INCLUDED
 
