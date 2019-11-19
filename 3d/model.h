@@ -91,7 +91,7 @@ void nicely_place_model(Model *model) {
   }
 
   // We choose that "somewhere nice" means that x=y=0 and the closest z value is at some z
-  const desired_z = 15;
+  const double desired_z = 15;
   _Mat to_nice;
   Mat_translation_M(to_nice, -model_center.x, -model_center.y, -min_z + desired_z);
 

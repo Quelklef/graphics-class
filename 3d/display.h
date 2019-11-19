@@ -51,6 +51,62 @@ int shouldnt_display(const Poly *poly) {
   return backface_elimination_sign * PointVec_dot(&T, &N) < 0;
 }
 
+const double ambient = 0.5;
+const double diffuse_max = 0.3;
+const int specular_power = 20;
+
+double Poly_calc_intensity(const Poly *poly) {
+  // TODO: REMOVE
+  Point light_source;
+  PointVec_init(&light_source, 0, 0, 0);
+
+  Vec poly_normal;
+  Poly_normal_M(&poly_normal, poly);
+
+  Point poly_center;
+  Poly_calc_center_M(&poly_center, poly);
+
+  Vec to_light;
+  PointVec_between_M(&to_light, &poly_center, &light_source);
+  PointVec_normalize(&to_light);
+
+  // Make sure normal is going correct direction
+  if (PointVec_dot(&poly_normal, &to_light) < 0) {
+    PointVec_negate(&poly_normal);
+  }
+
+  const double cos_alpha = PointVec_dot(&poly_normal, &to_light);
+
+  Point observer;
+  PointVec_init(&observer, 0, 0, 0);
+
+  Vec to_observer;
+  PointVec_between_M(&to_observer, &poly_center, &observer);
+  PointVec_normalize(&to_observer);
+
+  // If bserver is on other side of polygon, no reflected light
+  // is seen.
+  if (PointVec_dot(&to_observer, &to_light) < 0) {
+    return ambient;
+  }
+
+  Vec in_plane;
+  PointVec_cross_M(&in_plane, &poly_normal, &to_light);
+  Vec plane_normal;
+  PointVec_cross_M(&plane_normal, &poly_normal, &in_plane);
+
+  Vec reflection;
+  PointVec_clone_M(&reflection, &to_light);
+  PointVec_reflect_over_plane_M(&reflection, &reflection, &poly_center, &plane_normal);
+
+  const double cos_beta = PointVec_dot(&reflection, &to_observer);
+
+  return ambient
+         + diffuse_max * fmax(0, cos_alpha)
+         + (1 - ambient - diffuse_max)
+           * pow(fmax(0, cos_beta), specular_power);
+}
+
 void Poly_display(const Poly *poly, int focused) {
   double xs[poly->point_count];
   double ys[poly->point_count];
@@ -59,14 +115,12 @@ void Poly_display(const Poly *poly, int focused) {
     pixel_coords_M(&xs[point_idx], &ys[point_idx], p);
   }
 
-  if (focused) {
-    G_rgb(1, 0, 0);
-  } else {
-    G_rgb(0.5, 0.2, 0.2);
-  }
+  const double intensity = Poly_calc_intensity(poly);
+
+  G_rgb(0.8 * intensity, 0.5 * intensity, 0.8 * intensity);
   G_fill_polygon(xs, ys, poly->point_count);
 
-  G_rgb(1, 1, 1);
+  focused ? G_rgb(0.7, 0.7, 0.7) : G_rgb(0, 0, 0);
   for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
     const Point *p0 = poly->points[point_idx];
     const Point *pf = poly->points[(point_idx + 1) % poly->point_count];
@@ -92,8 +146,8 @@ int comparator(const void *_mfPoly0, const void *_mfPoly1) {
   Poly_calc_center_M(&center0, mfPoly0->poly);
   Poly_calc_center_M(&center1, mfPoly1->poly);
 
-  const double dist0 = PointVec_mag(&center0);
-  const double dist1 = PointVec_mag(&center1);
+  const double dist0 = PointVec_magnitude(&center0);
+  const double dist1 = PointVec_magnitude(&center1);
 
   return dist1 > dist0;
 }
@@ -104,7 +158,11 @@ void display_models(Model *models[], int model_count, Model *focused_model) {
   int total_poly_count = 0;
   for (int model_idx = 0; model_idx < model_count; model_idx++) {
     const Model *model = models[model_idx];
-    total_poly_count += model->poly_count;
+    for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
+      const Poly *poly = model->polys[poly_idx];
+      if (shouldnt_display(poly)) continue;
+      total_poly_count++;
+    }
   }
 
   MaybeFocusedPoly aggregate_mfPolys[total_poly_count];
@@ -115,6 +173,8 @@ void display_models(Model *models[], int model_count, Model *focused_model) {
     const int is_focused = model == focused_model;
     for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
       const Poly *poly = model->polys[poly_idx];
+
+      if (shouldnt_display(poly)) continue;
 
       MaybeFocusedPoly mfPoly;
       mfPoly.poly = (Poly *) poly;
