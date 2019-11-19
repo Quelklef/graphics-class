@@ -51,12 +51,12 @@ double Model_bounds_M(
       const Model *model
     ) {
 
-  *result_min_x = DBL_MAX;
-  *result_max_x = DBL_MIN;
-  *result_min_y = DBL_MAX;
-  *result_max_y = DBL_MIN;
-  *result_min_z = DBL_MAX;
-  *result_max_z = DBL_MIN;
+  *result_min_x = +DBL_MAX;
+  *result_max_x = -DBL_MAX;
+  *result_min_y = +DBL_MAX;
+  *result_max_y = -DBL_MAX;
+  *result_min_z = +DBL_MAX;
+  *result_max_z = -DBL_MAX;
 
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
     const Poly *poly = model->polys[poly_idx];
@@ -80,7 +80,6 @@ void Model_center_M(Point *result, const Model *model) {
   double min_x, max_x, min_y, max_y, min_z, max_z;
 
   Model_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, model);
-  printf("x : (%lf -- %lf) y : (%lf -- %lf) z : (%lf -- %lf)\n", min_x, max_x, min_y, max_y, min_z, max_z);
 
   result->x = min_x / 2 + max_x / 2;
   result->y = min_y / 2 + max_y / 2;
