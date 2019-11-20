@@ -127,13 +127,43 @@ void on_key(Model *model, const char key) {
 
     case 'O': Model_transform(model, translate_to_origin); break;
 
-    case '=': HALF_ANGLE += 0.01; break;
-    case '-': HALF_ANGLE -= 0.01; break;
+  }
 
-    case '!': DO_POLY_FILL            = 1 - DO_POLY_FILL;
-    case '@': DO_BACKFACE_ELIMINATION = 1 - DO_BACKFACE_ELIMINATION;
-    case '#': DO_LIGHT_MODEL          = 1 - DO_LIGHT_MODEL;
-    case '/': BACKFACE_ELIMINATION_SIGN *= -1;
+  // Parameter adjustment
+
+  static const int param_HALF_ANGLE     = 1;
+  static const int param_AMBIENT        = 2;
+  static const int param_DIFFUSE_MAX    = 3;
+  static const int param_SPECULAR_POWER = 4;
+  static int parameter = 0;
+
+// https://stackoverflow.com/a/1508589/4608364
+#define reset() printf("\r"); fflush(stdout);
+#define printr(...) printf(__VA_ARGS__); printf("        "); reset();
+
+  switch(key) {
+    case '&': parameter = param_HALF_ANGLE;     printr("Selected param: HALF_ANGLE");     break;
+    case '*': parameter = param_AMBIENT;        printr("Selected param: AMBIENT");        break;
+    case '(': parameter = param_DIFFUSE_MAX;    printr("Selected param: DIFFUSE_MAX");    break;
+    case ')': parameter = param_SPECULAR_POWER; printr("Selected param: SPECULAR_POWER"); break;
+  }
+
+  if (key == '=' || key == '-') {
+    const int sign = key == '=' ? 1 : -1;
+
+    if (parameter == param_HALF_ANGLE) {
+      HALF_ANGLE += sign * 0.05;
+      printr("HALF_ANGLE = %lf", HALF_ANGLE);
+    } else if (parameter == param_AMBIENT) {
+      AMBIENT += sign * 0.05;
+      printr("AMBIENT = %lf", AMBIENT);
+    } else if (parameter == param_DIFFUSE_MAX) {
+      DIFFUSE_MAX += sign * 0.05;
+      printr("DIFFUSE_MAX = %lf", DIFFUSE_MAX);
+    } else if (parameter == param_SPECULAR_POWER) {
+      SPECULAR_POWER += sign * 1;
+      printr("SPECULAR_POWER = %d", SPECULAR_POWER);
+    }
   }
 }
 
@@ -151,12 +181,17 @@ void show_help() {
   printf("  kl   - Rotate selected object around y axis\n");
   printf("  m,   - Rotate selected object around z axis\n");
   printf("\n");
-  printf("Parameters:\n");
-  printf("  -+   - Adjust perspective\n");
+  printf("Binary parameters:\n");
   printf("  !    - Enable/disable polygon filling\n");
   printf("  @    - Enable/disable backface elimination\n");
   printf("  #    - Enable/disable light model\n");
   printf("  /    - Change backface elimination sign\n");
+  printf("Scalar parameters:\n");
+  printf("  -+   - Adjust parameter\n");
+  printf("   &   - HALF_ANGLE\n");
+  printf("   *   - AMBIENT\n");
+  printf("   (   - DIFFUSE_MAX\n");
+  printf("   )   - SPECULAR_POWER\n");
 }
 
 Model *make_light_source() {
@@ -172,24 +207,24 @@ Model *make_light_source() {
   PointVec_scale(p3, scale);
 
   Poly *poly0 = Poly_new();
-  Poly_add_point(poly0, p0);
   Poly_add_point(poly0, p1);
   Poly_add_point(poly0, p2);
+  Poly_add_point(poly0, p3);
 
   Poly *poly1 = Poly_new();
-  Poly_add_point(poly1, p1);
+  Poly_add_point(poly1, p0);
   Poly_add_point(poly1, p2);
   Poly_add_point(poly1, p3);
 
   Poly *poly2 = Poly_new();
-  Poly_add_point(poly2, p2);
-  Poly_add_point(poly2, p3);
   Poly_add_point(poly2, p0);
+  Poly_add_point(poly2, p1);
+  Poly_add_point(poly2, p3);
 
   Poly *poly3 = Poly_new();
-  Poly_add_point(poly3, p3);
   Poly_add_point(poly3, p0);
   Poly_add_point(poly3, p1);
+  Poly_add_point(poly3, p2);
 
   Model *model = Model_new();
   Model_add_poly(model, poly0);
