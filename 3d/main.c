@@ -186,12 +186,14 @@ void show_help() {
   printf("  @    - Enable/disable backface elimination\n");
   printf("  #    - Enable/disable light model\n");
   printf("  /    - Change backface elimination sign\n");
+  printf("\n");
   printf("Scalar parameters:\n");
   printf("  -+   - Adjust parameter\n");
   printf("   &   - HALF_ANGLE\n");
   printf("   *   - AMBIENT\n");
   printf("   (   - DIFFUSE_MAX\n");
   printf("   )   - SPECULAR_POWER\n");
+  printf("\n");
 }
 
 Model *make_light_source() {
