@@ -193,9 +193,9 @@ void show_help() {
   printf("\n");
   printf("Scalar parameters:\n");
   printf("  -+   - Adjust parameter\n");
-  printf("  &    - HALF_ANGLE\n");
-  printf("  *    - AMBIENT\n");
-  printf("  (    - DIFFUSE_MAX\n");
+  printf("  &    - Select parameter HALF_ANGLE\n");
+  printf("  *    - Select parameter AMBIENT\n");
+  printf("  (    - Select parameter DIFFUSE_MAX\n");
   printf("  )    - SPECULAR_POWER\n");
   printf("\n");
 }

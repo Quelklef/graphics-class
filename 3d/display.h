@@ -81,8 +81,7 @@ double Poly_calc_intensity(const Poly *poly, const Point *light_source_loc) {
   PointVec_between_M(&to_observer, &poly_center, &observer);
   PointVec_normalize(&to_observer);
 
-  // If bserver is on other side of polygon, no reflected light
-  // is seen.
+  // If observer is on other side of polygon, no reflected light is seen.
   if (PointVec_dot(&to_observer, &to_light) < 0) {
     return AMBIENT;
   }
