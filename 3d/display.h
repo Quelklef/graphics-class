@@ -133,7 +133,7 @@ void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
 typedef struct {
   Poly *poly;
   int is_focused;
-}  MaybeFocusedPoly;
+} MaybeFocusedPoly;
 
 int comparator(const void *_mfPoly0, const void *_mfPoly1) {
   const MaybeFocusedPoly *mfPoly0 = (const MaybeFocusedPoly *) _mfPoly0;

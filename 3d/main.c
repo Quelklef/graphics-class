@@ -78,7 +78,7 @@ void on_key(Model *model, const char key) {
   make_rel_to_origin(scale_up);
 
   _Mat scale_down;
-  Mat_scaling_M(scale_up, 1 - scale_amt, 1 - scale_amt, 1 - scale_amt);
+  Mat_scaling_M(scale_down, 1 - scale_amt, 1 - scale_amt, 1 - scale_amt);
   make_rel_to_origin(scale_down);
 
   const double angle = M_PI / 16;
