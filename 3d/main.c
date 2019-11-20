@@ -127,6 +127,10 @@ void on_key(Model *model, const char key) {
 
     case 'O': Model_transform(model, translate_to_origin); break;
 
+    case '!': DO_POLY_FILL            = 1 - DO_POLY_FILL;            break;
+    case '@': DO_BACKFACE_ELIMINATION = 1 - DO_BACKFACE_ELIMINATION; break;
+    case '#': DO_LIGHT_MODEL          = 1 - DO_LIGHT_MODEL;          break;
+    case '/': BACKFACE_ELIMINATION_SIGN *= -1;
   }
 
   // Parameter adjustment
@@ -189,10 +193,10 @@ void show_help() {
   printf("\n");
   printf("Scalar parameters:\n");
   printf("  -+   - Adjust parameter\n");
-  printf("   &   - HALF_ANGLE\n");
-  printf("   *   - AMBIENT\n");
-  printf("   (   - DIFFUSE_MAX\n");
-  printf("   )   - SPECULAR_POWER\n");
+  printf("  &    - HALF_ANGLE\n");
+  printf("  *    - AMBIENT\n");
+  printf("  (    - DIFFUSE_MAX\n");
+  printf("  )    - SPECULAR_POWER\n");
   printf("\n");
 }
 
