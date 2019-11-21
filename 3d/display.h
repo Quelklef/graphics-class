@@ -155,7 +155,6 @@ void Poly_display_minimal(const Poly *poly) {
 
 void Poly_display_as_halo(const Poly *poly) {
   const double scale_amt = 3;
-  G_rgb(1, 0, 0);
 
   double pxs[poly->point_count];
   double pys[poly->point_count];
@@ -190,6 +189,7 @@ void Poly_display_as_halo(const Poly *poly) {
     pys[point_idx] = (pys[point_idx] - center_py) * scale_amt + center_py;
   }
 
+  G_rgb(1, 0, 0);
   G_fill_polygon(pxs, pys, poly->point_count);
 }
 
@@ -261,8 +261,8 @@ int comparator(const void *_dPoly0, const void *_dPoly1) {
   }
 
   // Place distant polygons before
-  if (dist1 > dist0) return +1;
   if (dist0 > dist1) return -1;
+  if (dist1 > dist0) return +1;
   return 0;
 }
 
