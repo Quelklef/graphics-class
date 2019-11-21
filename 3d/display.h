@@ -253,8 +253,7 @@ int comparator(const void *_dPoly0, const void *_dPoly1) {
   const double dist0 = PointVec_magnitude(&center0);
   const double dist1 = PointVec_magnitude(&center1);
 
-  // If they belong to the same model, place
-  // focused polygons at the back.
+  // If they belong to the same model, place  focused polygons at the back.
   if (dPoly0->belongs_to == dPoly1->belongs_to) {
     if (dPoly0->is_focused && !dPoly1->is_focused) return -1;
     if (dPoly1->is_focused && !dPoly0->is_focused) return +1;
@@ -263,6 +262,7 @@ int comparator(const void *_dPoly0, const void *_dPoly1) {
   // Place distant polygons before
   if (dist0 > dist1) return -1;
   if (dist1 > dist0) return +1;
+
   return 0;
 }
 
