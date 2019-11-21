@@ -9,6 +9,12 @@
 #include "model.h"
 #include "pointvec.h"
 
+double sgn(double x) {
+  if (x > 0) return +1;
+  if (x < 0) return -1;
+  return 0;
+}
+
 void pixel_coords_M(double *result_x, double *result_y, const Point *point) {
   /* Find the pixel coordinates on the screen of a given
    * (x, y, z) point. */
@@ -55,13 +61,11 @@ int shouldnt_display(const Poly *poly) {
 }
 
 double Poly_calc_intensity(const Poly *poly, const Point *light_source_loc) {
-  if (!DO_LIGHT_MODEL) return 1;
+  Point poly_center;
+  Poly_calc_center_M(&poly_center, poly);
 
   Vec poly_normal;
   Poly_normal_M(&poly_normal, poly);
-
-  Point poly_center;
-  Poly_calc_center_M(&poly_center, poly);
 
   Vec to_light;
   PointVec_between_M(&to_light, &poly_center, light_source_loc);
@@ -72,7 +76,8 @@ double Poly_calc_intensity(const Poly *poly, const Point *light_source_loc) {
     PointVec_negate(&poly_normal);
   }
 
-  const double cos_alpha = PointVec_dot(&poly_normal, &to_light);
+  double cos_alpha = PointVec_dot(&poly_normal, &to_light);
+  cos_alpha = fmax(0, cos_alpha);
 
   Point observer;
   PointVec_init(&observer, 0, 0, 0);
@@ -82,7 +87,9 @@ double Poly_calc_intensity(const Poly *poly, const Point *light_source_loc) {
   PointVec_normalize(&to_observer);
 
   // If observer is on other side of polygon, no reflected light is seen.
-  if (PointVec_dot(&to_observer, &to_light) < 0) {
+  const double A = PointVec_dot(&poly_normal, &to_light);
+  const double B = PointVec_dot(&poly_normal, &to_observer);
+  if (sgn(A) != sgn(B)) {
     return AMBIENT;
   }
 
@@ -90,17 +97,48 @@ double Poly_calc_intensity(const Poly *poly, const Point *light_source_loc) {
   PointVec_cross_M(&in_plane, &poly_normal, &to_light);
   Vec plane_normal;
   PointVec_cross_M(&plane_normal, &poly_normal, &in_plane);
-
   Vec reflection;
-  PointVec_clone_M(&reflection, &to_light);
-  PointVec_reflect_over_plane_M(&reflection, &reflection, &poly_center, &plane_normal);
+  PointVec_reflect_over_plane_M(&reflection, &to_light, &poly_center, &plane_normal);
 
-  const double cos_beta = PointVec_dot(&reflection, &to_observer);
+  double cos_beta = PointVec_dot(&reflection, &to_observer);
+  cos_beta = fmax(0, cos_beta);
 
   return AMBIENT
-         + DIFFUSE_MAX * fmax(0, cos_alpha)
-         + (1 - AMBIENT - DIFFUSE_MAX)
-           * pow(fmax(0, cos_beta), SPECULAR_POWER);
+         + DIFFUSE_MAX * cos_alpha
+         + (1 - AMBIENT - DIFFUSE_MAX) * pow(cos_beta, SPECULAR_POWER);
+}
+
+void Poly_calc_color_M(
+      double *result_r, double *result_g, double *result_b, 
+      const Poly *poly, const Point *light_source_loc,
+      const double inherent_r, const double inherent_g, const double inherent_b
+    ) {
+
+  const double intensity = Poly_calc_intensity(poly, light_source_loc);
+  const double full = AMBIENT + DIFFUSE_MAX;
+
+  if (intensity == full) {
+    *result_r = inherent_r;
+    *result_g = inherent_g;
+    *result_b = inherent_b;
+    return;
+  }
+
+  if (intensity > full) {
+    const double ratio = (intensity - full) / (1 - full);
+    *result_r = inherent_r + (1 - inherent_r) * ratio;
+    *result_g = inherent_g + (1 - inherent_g) * ratio;
+    *result_b = inherent_b + (1 - inherent_b) * ratio;
+    return;
+  }
+
+  if (full > intensity) {
+    const double ratio = intensity / full;
+    *result_r = inherent_r * ratio;
+    *result_g = inherent_g * ratio;
+    *result_b = inherent_b * ratio;
+    return;
+  }
 }
 
 void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
@@ -114,15 +152,28 @@ void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
   const double intensity = Poly_calc_intensity(poly, light_source_loc);
 
   if (DO_POLY_FILL) {
-    G_rgb(0.8 * intensity, 0.5 * intensity, 0.8 * intensity);
+    double r = 1; //0.8;
+    double g = 1; //0.5;
+    double b = 1; //0.8;
+
+    if (DO_LIGHT_MODEL) {
+      Poly_calc_color_M(
+        &r, &g, &b,
+        poly, light_source_loc,
+        r, g, b);
+    }
+
+    G_rgb(r, g, b);
     G_fill_polygon(xs, ys, poly->point_count);
   }
 
-  focused ? G_rgb(1, 0, 0) : G_rgb(0, 0, 0);
-  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-    const Point *p0 = poly->points[point_idx];
-    const Point *pf = poly->points[(point_idx + 1) % poly->point_count];
-    display_line(p0, pf);
+  if (DO_WIREFRAME) {
+    focused ? G_rgb(1, 0, 0) : G_rgb(0, 0, 0);
+    for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+      const Point *p0 = poly->points[point_idx];
+      const Point *pf = poly->points[(point_idx + 1) % poly->point_count];
+      display_line(p0, pf);
+    }
   }
 }
 
@@ -153,6 +204,7 @@ int comparator(const void *_mfPoly0, const void *_mfPoly1) {
 void display_models(Model *models[], int model_count, Model *focused_model, Model *light_source) {
   Point light_source_loc;
   Model_center_M(&light_source_loc, light_source);
+  PointVec_init(&light_source_loc, 100, 200, 0); // REMOVE
 
   // We need to draw aw polygons at once, not model-by-model, in order to
   // correctly handle overlapping models.

@@ -127,10 +127,11 @@ void on_key(Model *model, const char key) {
 
     case 'O': Model_transform(model, translate_to_origin); break;
 
-    case '!': DO_POLY_FILL            = 1 - DO_POLY_FILL;            break;
+    case '!': DO_WIREFRAME            = 1 - DO_WIREFRAME;            break;
     case '@': DO_BACKFACE_ELIMINATION = 1 - DO_BACKFACE_ELIMINATION; break;
-    case '#': DO_LIGHT_MODEL          = 1 - DO_LIGHT_MODEL;          break;
-    case '/': BACKFACE_ELIMINATION_SIGN *= -1;
+    case '#': DO_POLY_FILL            = 1 - DO_POLY_FILL;            break;
+    case '$': DO_LIGHT_MODEL          = 1 - DO_LIGHT_MODEL;          break;
+    case '/': BACKFACE_ELIMINATION_SIGN *= -1; break;
   }
 
   // Parameter adjustment
@@ -143,13 +144,25 @@ void on_key(Model *model, const char key) {
 
 // https://stackoverflow.com/a/1508589/4608364
 #define reset() printf("\r"); fflush(stdout);
-#define printr(...) printf(__VA_ARGS__); printf("        "); reset();
+#define printr(...) printf(__VA_ARGS__); printf("                "); reset();
 
   switch(key) {
-    case '&': parameter = param_HALF_ANGLE;     printr("Selected param: HALF_ANGLE");     break;
-    case '*': parameter = param_AMBIENT;        printr("Selected param: AMBIENT");        break;
-    case '(': parameter = param_DIFFUSE_MAX;    printr("Selected param: DIFFUSE_MAX");    break;
-    case ')': parameter = param_SPECULAR_POWER; printr("Selected param: SPECULAR_POWER"); break;
+    case '&':
+      parameter = param_HALF_ANGLE;
+      printr("Selected param: HALF_ANGLE (%lf)", HALF_ANGLE);
+      break;
+    case '*':
+      parameter = param_AMBIENT;
+      printr("Selected param: AMBIENT (%lf)", AMBIENT);
+      break;
+    case '(':
+      parameter = param_DIFFUSE_MAX;
+      printr("Selected param: DIFFUSE_MAX (%lf)", DIFFUSE_MAX);
+      break;
+    case ')':
+      parameter = param_SPECULAR_POWER;
+      printr("Selected param: SPECULAR_POWER (%d)", SPECULAR_POWER);
+      break;
   }
 
   if (key == '=' || key == '-') {
@@ -186,9 +199,10 @@ void show_help() {
   printf("  m,   - Rotate selected object around z axis\n");
   printf("\n");
   printf("Binary parameters:\n");
-  printf("  !    - Enable/disable polygon filling\n");
+  printf("  !    - Enable/disable wireframe\n");
   printf("  @    - Enable/disable backface elimination\n");
-  printf("  #    - Enable/disable light model\n");
+  printf("  #    - Enable/disable polygon filling\n");
+  printf("  $    - Enable/disable light model\n");
   printf("  /    - Change backface elimination sign\n");
   printf("\n");
   printf("Scalar parameters:\n");
@@ -196,7 +210,7 @@ void show_help() {
   printf("  &    - Select parameter HALF_ANGLE\n");
   printf("  *    - Select parameter AMBIENT\n");
   printf("  (    - Select parameter DIFFUSE_MAX\n");
-  printf("  )    - SPECULAR_POWER\n");
+  printf("  )    - Select parameter SPECULAR_POWER\n");
   printf("\n");
 }
 
@@ -266,7 +280,7 @@ int main(const int argc, const char **argv) {
   char key = '1';
   do {
 
-    G_rgb(1, 1, 1);
+    G_rgb(0, 0, 0);
     G_clear();
     G_rgb(1, 0, 0);
     G_fill_rectangle(0               , 0                , SCREEN_WIDTH, 1            );

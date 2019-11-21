@@ -8,19 +8,19 @@ const int SCREEN_HEIGHT = 800;
 
 #define ENOUGH 5000
 
-double HALF_ANGLE = M_PI / 8;
+double HALF_ANGLE                = M_PI / 8;
 
-int DO_POLY_FILL            = 1;
-int DO_BACKFACE_ELIMINATION = 0;
-int DO_LIGHT_MODEL          = 1;
+int    DO_WIREFRAME              = 1;
+int    DO_BACKFACE_ELIMINATION   = 0;
 
-// Backface elimination params
-int BACKFACE_ELIMINATION_SIGN = 1;
+int    BACKFACE_ELIMINATION_SIGN = 1;
 
-// Light model params
-double AMBIENT        = 0.2;
-double DIFFUSE_MAX    = 2.0;
-int    SPECULAR_POWER = 100;
+int    DO_POLY_FILL              = 1;
+int    DO_LIGHT_MODEL            = 1;
+
+double AMBIENT                   = 0.2; //0.2;
+double DIFFUSE_MAX               = 0.5; //2.0;
+int    SPECULAR_POWER            = 50; //100;
 
 #endif // globals_h_INCLUDED
 
