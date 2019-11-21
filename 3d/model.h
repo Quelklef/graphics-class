@@ -44,35 +44,54 @@ void Model_transform(Model *model, const _Mat transformation) {
   }
 }
 
-void Model_center_M(Point *result, const Model *model) {
-  /* Calculates the center of the bounding box */
-  double min_x = DBL_MAX;
-  double max_x = DBL_MIN;
-  double min_y = DBL_MAX;
-  double max_y = DBL_MIN;
-  double min_z = DBL_MAX;
-  double max_z = DBL_MIN;
+double Model_bounds_M(
+      double *result_min_x, double *result_max_x,
+      double *result_min_y, double *result_max_y,
+      double *result_min_z, double *result_max_z,
+      const Model *model
+    ) {
+
+  *result_min_x = +DBL_MAX;
+  *result_max_x = -DBL_MAX;
+  *result_min_y = +DBL_MAX;
+  *result_max_y = -DBL_MAX;
+  *result_min_z = +DBL_MAX;
+  *result_max_z = -DBL_MAX;
 
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
-    Poly *poly = model->polys[poly_idx];
+    const Poly *poly = model->polys[poly_idx];
     for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
       const Point *point = poly->points[point_idx];
       double x = point->x;
       double y = point->y;
       double z = point->z;
 
-      if (x < min_x) min_x = x;
-      if (x > max_x) max_x = x;
-      if (y < min_y) min_y = y;
-      if (y > max_y) max_y = y;
-      if (z < min_z) min_z = z;
-      if (z > max_z) max_z = z;
+      if (x < *result_min_x) *result_min_x = x;
+      if (x > *result_max_x) *result_max_x = x;
+      if (y < *result_min_y) *result_min_y = y;
+      if (y > *result_max_y) *result_max_y = y;
+      if (z < *result_min_z) *result_min_z = z;
+      if (z > *result_max_z) *result_max_z = z;
     }
   }
+}
+
+void Model_center_M(Point *result, const Model *model) {
+  double min_x, max_x, min_y, max_y, min_z, max_z;
+
+  Model_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, model);
 
   result->x = min_x / 2 + max_x / 2;
   result->y = min_y / 2 + max_y / 2;
   result->z = min_z / 2 + max_z / 2;
+}
+
+double Model_size_M(double *result_x_size, double *result_y_size, double *result_z_size, const Model *model) {
+  double min_x, max_x, min_y, max_y, min_z, max_z;
+  Model_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, model);
+  *result_x_size = max_x - min_x;
+  *result_y_size = max_y - min_y;
+  *result_z_size = max_z - min_z;
 }
 
 void nicely_place_model(Model *model) {
@@ -91,7 +110,7 @@ void nicely_place_model(Model *model) {
   }
 
   // We choose that "somewhere nice" means that x=y=0 and the closest z value is at some z
-  const desired_z = 15;
+  const double desired_z = 15;
   _Mat to_nice;
   Mat_translation_M(to_nice, -model_center.x, -model_center.y, -min_z + desired_z);
 

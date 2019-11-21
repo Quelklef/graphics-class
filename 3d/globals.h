@@ -3,14 +3,24 @@
 
 #include <math.h>
 
-const int screen_width = 800;
-const int screen_height = 800;
+const int SCREEN_WIDTH = 800;
+const int SCREEN_HEIGHT = 800;
 
 #define ENOUGH 5000
 
-double half_angle = M_PI / 8;
+double HALF_ANGLE = M_PI / 8;
 
-int backface_elimination_sign = 1;
+int DO_POLY_FILL            = 1;
+int DO_BACKFACE_ELIMINATION = 0;
+int DO_LIGHT_MODEL          = 1;
+
+// Backface elimination params
+int BACKFACE_ELIMINATION_SIGN = 1;
+
+// Light model params
+double AMBIENT        = 0.2;
+double DIFFUSE_MAX    = 2.0;
+int    SPECULAR_POWER = 100;
 
 #endif // globals_h_INCLUDED
 

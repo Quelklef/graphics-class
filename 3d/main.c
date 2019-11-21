@@ -14,44 +14,49 @@ void add_model(Model *model) {
 }
 
 void on_key(Model *model, const char key) {
-  static const double speed = 0.5;
-  static const double fast_speed = 7.5;
+  // Two ways to move: with an absolute distance
+  static const double abs_speed = 0.5;
+  // or moving as a percentage of the object's size
+  static const double rel_speed = 0.1;
 
   // Absolute transformations
 
   static int already_init = 0;
-  static _Mat translate_backwards;
-  static _Mat translate_forwards;
-  static _Mat translate_left;
-  static _Mat translate_right;
-  static _Mat translate_up;
-  static _Mat translate_down;
 
-  static _Mat translate_backwards_fast;
-  static _Mat translate_forwards_fast;
-  static _Mat translate_left_fast;
-  static _Mat translate_right_fast;
-  static _Mat translate_up_fast;
-  static _Mat translate_down_fast;
+  static _Mat translate_backwards_abs;
+  static _Mat translate_forwards_abs;
+  static _Mat translate_left_abs;
+  static _Mat translate_right_abs;
+  static _Mat translate_up_abs;
+  static _Mat translate_down_abs;
 
   if (!already_init) {
-    Mat_translation_M(translate_backwards, 0     , 0     , -speed);
-    Mat_translation_M(translate_forwards , 0     , 0     , speed );
-    Mat_translation_M(translate_left     , -speed, 0     , 0     );
-    Mat_translation_M(translate_right    , +speed, 0     , 0     );
-    Mat_translation_M(translate_up       , 0     , +speed, 0     );
-    Mat_translation_M(translate_down     , 0     , -speed, 0     );
-
-    Mat_translation_M(translate_backwards_fast, 0          , 0          , -fast_speed);
-    Mat_translation_M(translate_forwards_fast , 0          , 0          , fast_speed );
-    Mat_translation_M(translate_left_fast     , -fast_speed, 0          , 0          );
-    Mat_translation_M(translate_right_fast    , +fast_speed, 0          , 0          );
-    Mat_translation_M(translate_up_fast       , 0          , +fast_speed, 0          );
-    Mat_translation_M(translate_down_fast     , 0          , -fast_speed, 0          );
+    Mat_translation_M(translate_backwards_abs, 0, 0, -abs_speed);
+    Mat_translation_M(translate_forwards_abs , 0, 0, +abs_speed);
+    Mat_translation_M(translate_left_abs     , -abs_speed, 0, 0);
+    Mat_translation_M(translate_right_abs    , +abs_speed, 0, 0);
+    Mat_translation_M(translate_up_abs       , 0, +abs_speed, 0);
+    Mat_translation_M(translate_down_abs     , 0, -abs_speed, 0);
+    already_init = 1;
   }
-  already_init = 1;
 
   // Relative transformations
+
+  _Mat translate_backwards_rel;
+  _Mat translate_forwards_rel;
+  _Mat translate_left_rel;
+  _Mat translate_right_rel;
+  _Mat translate_up_rel;
+  _Mat translate_down_rel;
+
+  double model_x_size, model_y_size, model_z_size;
+  Model_size_M(&model_x_size, &model_y_size, &model_z_size, model);
+  Mat_translation_M(translate_backwards_rel, 0, 0, -rel_speed * model_z_size);
+  Mat_translation_M(translate_forwards_rel , 0, 0, +rel_speed * model_z_size);
+  Mat_translation_M(translate_left_rel     , -rel_speed * model_x_size, 0, 0);
+  Mat_translation_M(translate_right_rel    , +rel_speed * model_x_size, 0, 0);
+  Mat_translation_M(translate_up_rel       , 0, +rel_speed * model_y_size, 0);
+  Mat_translation_M(translate_down_rel     , 0, -rel_speed * model_y_size, 0);
 
   Point model_center;
   Model_center_M(&model_center, model);
@@ -73,7 +78,7 @@ void on_key(Model *model, const char key) {
   make_rel_to_origin(scale_up);
 
   _Mat scale_down;
-  Mat_scaling_M(scale_up, 1 - scale_amt, 1 - scale_amt, 1 - scale_amt);
+  Mat_scaling_M(scale_down, 1 - scale_amt, 1 - scale_amt, 1 - scale_amt);
   make_rel_to_origin(scale_down);
 
   const double angle = M_PI / 16;
@@ -94,19 +99,19 @@ void on_key(Model *model, const char key) {
   switch(key) {
     case 'e': exit(0); break;
 
-    case 'w': Model_transform(model, translate_forwards ); break;
-    case 's': Model_transform(model, translate_backwards); break;
-    case 'd': Model_transform(model, translate_right    ); break;
-    case 'a': Model_transform(model, translate_left     ); break;
-    case 'f': Model_transform(model, translate_down     ); break;
-    case 'r': Model_transform(model, translate_up       ); break;
+    case 'w': Model_transform(model, translate_forwards_rel ); break;
+    case 's': Model_transform(model, translate_backwards_rel); break;
+    case 'd': Model_transform(model, translate_right_rel    ); break;
+    case 'a': Model_transform(model, translate_left_rel     ); break;
+    case 'f': Model_transform(model, translate_down_rel     ); break;
+    case 'r': Model_transform(model, translate_up_rel       ); break;
 
-    case 'W': Model_transform(model, translate_forwards_fast ); break;
-    case 'S': Model_transform(model, translate_backwards_fast); break;
-    case 'D': Model_transform(model, translate_right_fast    ); break;
-    case 'A': Model_transform(model, translate_left_fast     ); break;
-    case 'F': Model_transform(model, translate_down_fast     ); break;
-    case 'R': Model_transform(model, translate_up_fast       ); break;
+    case 'W': Model_transform(model, translate_forwards_abs ); break;
+    case 'S': Model_transform(model, translate_backwards_abs); break;
+    case 'D': Model_transform(model, translate_right_abs    ); break;
+    case 'A': Model_transform(model, translate_left_abs     ); break;
+    case 'F': Model_transform(model, translate_down_abs     ); break;
+    case 'R': Model_transform(model, translate_up_abs       ); break;
 
     case 'o': Model_transform(model, rotate_x_positive  ); break;
     case 'p': Model_transform(model, rotate_x_negative  ); break;
@@ -120,13 +125,122 @@ void on_key(Model *model, const char key) {
     case '[': Model_transform(model, scale_down         ); break;
     case ']': Model_transform(model, scale_up           ); break;
 
-    case '0': Model_transform(model, translate_to_origin); break;
+    case 'O': Model_transform(model, translate_to_origin); break;
 
-    case '=': half_angle += 0.01; break;
-    case '-': half_angle -= 0.01; break;
-
-    case '/': backface_elimination_sign *= -1;
+    case '!': DO_POLY_FILL            = 1 - DO_POLY_FILL;            break;
+    case '@': DO_BACKFACE_ELIMINATION = 1 - DO_BACKFACE_ELIMINATION; break;
+    case '#': DO_LIGHT_MODEL          = 1 - DO_LIGHT_MODEL;          break;
+    case '/': BACKFACE_ELIMINATION_SIGN *= -1;
   }
+
+  // Parameter adjustment
+
+  static const int param_HALF_ANGLE     = 1;
+  static const int param_AMBIENT        = 2;
+  static const int param_DIFFUSE_MAX    = 3;
+  static const int param_SPECULAR_POWER = 4;
+  static int parameter = 0;
+
+// https://stackoverflow.com/a/1508589/4608364
+#define reset() printf("\r"); fflush(stdout);
+#define printr(...) printf(__VA_ARGS__); printf("        "); reset();
+
+  switch(key) {
+    case '&': parameter = param_HALF_ANGLE;     printr("Selected param: HALF_ANGLE");     break;
+    case '*': parameter = param_AMBIENT;        printr("Selected param: AMBIENT");        break;
+    case '(': parameter = param_DIFFUSE_MAX;    printr("Selected param: DIFFUSE_MAX");    break;
+    case ')': parameter = param_SPECULAR_POWER; printr("Selected param: SPECULAR_POWER"); break;
+  }
+
+  if (key == '=' || key == '-') {
+    const int sign = key == '=' ? 1 : -1;
+
+    if (parameter == param_HALF_ANGLE) {
+      HALF_ANGLE += sign * 0.05;
+      printr("HALF_ANGLE = %lf", HALF_ANGLE);
+    } else if (parameter == param_AMBIENT) {
+      AMBIENT += sign * 0.05;
+      printr("AMBIENT = %lf", AMBIENT);
+    } else if (parameter == param_DIFFUSE_MAX) {
+      DIFFUSE_MAX += sign * 0.05;
+      printr("DIFFUSE_MAX = %lf", DIFFUSE_MAX);
+    } else if (parameter == param_SPECULAR_POWER) {
+      SPECULAR_POWER += sign * 1;
+      printr("SPECULAR_POWER = %d", SPECULAR_POWER);
+    }
+  }
+}
+
+void show_help() {
+  printf("Some controls:\n");
+  printf("  e    - Exit program\n");
+  printf("  O    - Move object to user\n");
+  printf("  []   - Scale selected object down and up\n");
+  printf("  0-9  - Switch models\n");
+  printf("\n");
+  printf("Strafing (& shift-):\n");
+  printf("  wasd - Strafe selected object along xz plane\n");
+  printf("  rf   - Strafe selected object up and down\n");
+  printf("  op   - Rotate selected object around x axis\n");
+  printf("  kl   - Rotate selected object around y axis\n");
+  printf("  m,   - Rotate selected object around z axis\n");
+  printf("\n");
+  printf("Binary parameters:\n");
+  printf("  !    - Enable/disable polygon filling\n");
+  printf("  @    - Enable/disable backface elimination\n");
+  printf("  #    - Enable/disable light model\n");
+  printf("  /    - Change backface elimination sign\n");
+  printf("\n");
+  printf("Scalar parameters:\n");
+  printf("  -+   - Adjust parameter\n");
+  printf("  &    - Select parameter HALF_ANGLE\n");
+  printf("  *    - Select parameter AMBIENT\n");
+  printf("  (    - Select parameter DIFFUSE_MAX\n");
+  printf("  )    - SPECULAR_POWER\n");
+  printf("\n");
+}
+
+Model *make_light_source() {
+  Point *p0 = PointVec_new(0, 0, 0);
+  Point *p1 = PointVec_new(1, 0, 1);
+  Point *p2 = PointVec_new(1, 1, 0);
+  Point *p3 = PointVec_new(0, 1, 1);
+
+  const double scale = 0.25;
+  PointVec_scale(p0, scale);
+  PointVec_scale(p1, scale);
+  PointVec_scale(p2, scale);
+  PointVec_scale(p3, scale);
+
+  Poly *poly0 = Poly_new();
+  Poly_add_point(poly0, p1);
+  Poly_add_point(poly0, p2);
+  Poly_add_point(poly0, p3);
+
+  Poly *poly1 = Poly_new();
+  Poly_add_point(poly1, p0);
+  Poly_add_point(poly1, p2);
+  Poly_add_point(poly1, p3);
+
+  Poly *poly2 = Poly_new();
+  Poly_add_point(poly2, p0);
+  Poly_add_point(poly2, p1);
+  Poly_add_point(poly2, p3);
+
+  Poly *poly3 = Poly_new();
+  Poly_add_point(poly3, p0);
+  Poly_add_point(poly3, p1);
+  Poly_add_point(poly3, p2);
+
+  Model *model = Model_new();
+  Model_add_poly(model, poly0);
+  Model_add_poly(model, poly1);
+  Model_add_poly(model, poly2);
+  Model_add_poly(model, poly3);
+
+  nicely_place_model(model);
+
+  return model;
 }
 
 int main(const int argc, const char **argv) {
@@ -135,19 +249,12 @@ int main(const int argc, const char **argv) {
     exit(1);
   }
 
-  printf("Controls:\n");
-  printf("  e    - Exit program\n");
-  printf("  0    - Move object to user\n");
-  printf("  wasd - Strafe selected object along xz plane\n");
-  printf("  rf   - Strafe selected object up and down\n");
-  printf("  op   - Rotate selected object around x axis\n");
-  printf("  kl   - Rotate selected object around y axis\n");
-  printf("  m,   - Rotate selected object around z axis\n");
-  printf("  []   - Scale selected object down and up\n");
-  printf("  -+   - Adjust perspective\n");
-  printf("  /    - Change backface elimination sign\n");
+  show_help();
 
-  G_init_graphics(screen_width, screen_height);
+  G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
+
+  Model *light_source = make_light_source();
+  add_model(light_source);
 
   for (int i = 1; i < argc; i++) {
     const char *filename = argv[i];
@@ -162,20 +269,21 @@ int main(const int argc, const char **argv) {
     G_rgb(1, 1, 1);
     G_clear();
     G_rgb(1, 0, 0);
-    G_fill_rectangle(0               , 0                , screen_width, 1            );
-    G_fill_rectangle(screen_width - 1, 0                , 1           , screen_height);
-    G_fill_rectangle(0               , screen_height - 1, screen_width, 1            );
-    G_fill_rectangle(0               , 0                , 1           , screen_height);
+    G_fill_rectangle(0               , 0                , SCREEN_WIDTH, 1            );
+    G_fill_rectangle(SCREEN_WIDTH - 1, 0                , 1           , SCREEN_HEIGHT);
+    G_fill_rectangle(0               , SCREEN_HEIGHT - 1, SCREEN_WIDTH, 1            );
+    G_fill_rectangle(0               , 0                , 1           , SCREEN_HEIGHT);
 
-    if (0 <= key - '1' && key - '1' < model_count) {
-      focused_model = models[key - '1'];
+    const int model_idx = key - '0';
+    if (0 <= model_idx && model_idx < model_count) {
+      focused_model = models[model_idx];
     }
 
     if (focused_model != NULL) {
       on_key(focused_model, key);
     }
 
-    display_models(models, model_count, focused_model);
+    display_models(models, model_count, focused_model, light_source);
 
   } while ((key = G_wait_key()));
 }

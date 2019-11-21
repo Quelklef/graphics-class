@@ -19,9 +19,9 @@ void pixel_coords_M(double *result_x, double *result_y, const Point *point) {
   // Scale with respect to only width OR height, because
   // scaling with respect to both will deform the object
   // by stretching it.
-  const double minor = fmin(screen_width, screen_height);
+  const double minor = fmin(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-  const double H = tan(half_angle);
+  const double H = tan(HALF_ANGLE);
   const double x_bar_bar = x_bar / H * (minor / 2);
   const double y_bar_bar = y_bar / H * (minor / 2);
 
@@ -39,6 +39,9 @@ void display_line(const Point *p0, const Point *pf) {
 
 int shouldnt_display(const Poly *poly) {
   // Implements backface elimination
+
+  if (!DO_BACKFACE_ELIMINATION) return 0;
+
   Point origin;
   PointVec_init(&origin, 0, 0, 0);
 
@@ -48,10 +51,59 @@ int shouldnt_display(const Poly *poly) {
   Vec N;
   Poly_normal_M(&N, poly);
 
-  return backface_elimination_sign * PointVec_dot(&T, &N) < 0;
+  return BACKFACE_ELIMINATION_SIGN * PointVec_dot(&T, &N) < 0;
 }
 
-void Poly_display(const Poly *poly, int focused) {
+double Poly_calc_intensity(const Poly *poly, const Point *light_source_loc) {
+  if (!DO_LIGHT_MODEL) return 1;
+
+  Vec poly_normal;
+  Poly_normal_M(&poly_normal, poly);
+
+  Point poly_center;
+  Poly_calc_center_M(&poly_center, poly);
+
+  Vec to_light;
+  PointVec_between_M(&to_light, &poly_center, light_source_loc);
+  PointVec_normalize(&to_light);
+
+  // Make sure normal is going correct direction
+  if (PointVec_dot(&poly_normal, &to_light) < 0) {
+    PointVec_negate(&poly_normal);
+  }
+
+  const double cos_alpha = PointVec_dot(&poly_normal, &to_light);
+
+  Point observer;
+  PointVec_init(&observer, 0, 0, 0);
+
+  Vec to_observer;
+  PointVec_between_M(&to_observer, &poly_center, &observer);
+  PointVec_normalize(&to_observer);
+
+  // If observer is on other side of polygon, no reflected light is seen.
+  if (PointVec_dot(&to_observer, &to_light) < 0) {
+    return AMBIENT;
+  }
+
+  Vec in_plane;
+  PointVec_cross_M(&in_plane, &poly_normal, &to_light);
+  Vec plane_normal;
+  PointVec_cross_M(&plane_normal, &poly_normal, &in_plane);
+
+  Vec reflection;
+  PointVec_clone_M(&reflection, &to_light);
+  PointVec_reflect_over_plane_M(&reflection, &reflection, &poly_center, &plane_normal);
+
+  const double cos_beta = PointVec_dot(&reflection, &to_observer);
+
+  return AMBIENT
+         + DIFFUSE_MAX * fmax(0, cos_alpha)
+         + (1 - AMBIENT - DIFFUSE_MAX)
+           * pow(fmax(0, cos_beta), SPECULAR_POWER);
+}
+
+void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
   double xs[poly->point_count];
   double ys[poly->point_count];
   for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
@@ -59,14 +111,14 @@ void Poly_display(const Poly *poly, int focused) {
     pixel_coords_M(&xs[point_idx], &ys[point_idx], p);
   }
 
-  if (focused) {
-    G_rgb(1, 0, 0);
-  } else {
-    G_rgb(0.5, 0.2, 0.2);
-  }
-  G_fill_polygon(xs, ys, poly->point_count);
+  const double intensity = Poly_calc_intensity(poly, light_source_loc);
 
-  G_rgb(1, 1, 1);
+  if (DO_POLY_FILL) {
+    G_rgb(0.8 * intensity, 0.5 * intensity, 0.8 * intensity);
+    G_fill_polygon(xs, ys, poly->point_count);
+  }
+
+  focused ? G_rgb(1, 0, 0) : G_rgb(0, 0, 0);
   for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
     const Point *p0 = poly->points[point_idx];
     const Point *pf = poly->points[(point_idx + 1) % poly->point_count];
@@ -80,7 +132,7 @@ void Poly_display(const Poly *poly, int focused) {
 typedef struct {
   Poly *poly;
   int is_focused;
-}  MaybeFocusedPoly;
+} MaybeFocusedPoly;
 
 int comparator(const void *_mfPoly0, const void *_mfPoly1) {
   const MaybeFocusedPoly *mfPoly0 = (const MaybeFocusedPoly *) _mfPoly0;
@@ -92,19 +144,26 @@ int comparator(const void *_mfPoly0, const void *_mfPoly1) {
   Poly_calc_center_M(&center0, mfPoly0->poly);
   Poly_calc_center_M(&center1, mfPoly1->poly);
 
-  const double dist0 = PointVec_mag(&center0);
-  const double dist1 = PointVec_mag(&center1);
+  const double dist0 = PointVec_magnitude(&center0);
+  const double dist1 = PointVec_magnitude(&center1);
 
   return dist1 > dist0;
 }
 
-void display_models(Model *models[], int model_count, Model *focused_model) {
+void display_models(Model *models[], int model_count, Model *focused_model, Model *light_source) {
+  Point light_source_loc;
+  Model_center_M(&light_source_loc, light_source);
+
   // We need to draw aw polygons at once, not model-by-model, in order to
   // correctly handle overlapping models.
   int total_poly_count = 0;
   for (int model_idx = 0; model_idx < model_count; model_idx++) {
     const Model *model = models[model_idx];
-    total_poly_count += model->poly_count;
+    for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
+      const Poly *poly = model->polys[poly_idx];
+      if (shouldnt_display(poly)) continue;
+      total_poly_count++;
+    }
   }
 
   MaybeFocusedPoly aggregate_mfPolys[total_poly_count];
@@ -115,6 +174,8 @@ void display_models(Model *models[], int model_count, Model *focused_model) {
     const int is_focused = model == focused_model;
     for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
       const Poly *poly = model->polys[poly_idx];
+
+      if (shouldnt_display(poly)) continue;
 
       MaybeFocusedPoly mfPoly;
       mfPoly.poly = (Poly *) poly;
@@ -129,7 +190,7 @@ void display_models(Model *models[], int model_count, Model *focused_model) {
 
   for (int mfPoly_idx = 0; mfPoly_idx < total_poly_count; mfPoly_idx++) {
     MaybeFocusedPoly mfPoly = aggregate_mfPolys[mfPoly_idx];
-    Poly_display(mfPoly.poly, mfPoly.is_focused);
+    Poly_display(mfPoly.poly, mfPoly.is_focused, &light_source_loc);
   }
 }
 

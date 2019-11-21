@@ -112,11 +112,11 @@ void Poly_normal_M(Vec *result, const Poly *poly) {
 
   Vec A;
   PointVec_between_M(&A, poly->points[0], poly->points[1]);
-  PointVec_normalize_M(&A, &A);
+  PointVec_normalize(&A);
 
   Vec B;
   PointVec_between_M(&B, poly->points[0], poly->points[2]);
-  PointVec_normalize_M(&B, &B);
+  PointVec_normalize(&B);
 
   PointVec_cross_M(result, &A, &B);
 }
