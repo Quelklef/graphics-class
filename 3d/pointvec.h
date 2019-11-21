@@ -50,45 +50,50 @@ double PointVec_magnitude(const Vec *A) {
   return sqrt(pow(A->x, 2) + pow(A->y, 2) + pow(A->z, 2));
 }
 
+void PointVec_scale_M(PointVec *result, const PointVec *pv, const double s) {
+  result->x = pv->x * s;
+  result->y = pv->y * s;
+  result->z = pv->z * s;
+}
+
 void PointVec_scale(Vec *A, double c) {
-  A->x *= c;
-  A->y *= c;
-  A->z *= c;
+  PointVec_scale_M(A, A, c);
+}
+
+void PointVec_normalize_M(PointVec *result, const PointVec *pv) {
+  PointVec_scale_M(result, pv, 1 / PointVec_magnitude(pv));
 }
 
 void PointVec_normalize(Vec *v) {
-  PointVec_scale(v, 1 / PointVec_magnitude(v));
+  PointVec_normalize_M(v, v);
+}
+
+void PointVec_negate_M(PointVec *result, const PointVec *v) {
+  PointVec_scale_M(result, v, -1);
 }
 
 void PointVec_negate(Vec *v) {
-  PointVec_scale(v, -1);
+  PointVec_negate_M(v, v);
 }
 
 void PointVec_add_M(PointVec *result, const PointVec *A, const PointVec *B) {
   PointVec_init(result, A->x + B->x, A->y + B->y, A->z + B->z);
 }
 
+void PointVec_add(PointVec *pv, const PointVec *a) {
+  PointVec_add_M(pv, pv, a);
+}
+
 void PointVec_subtract_M(PointVec *result, const PointVec *A, const PointVec *B) {
   PointVec_init(result, A->x - B->x, A->y - B->y, A->z - B->z);
 }
 
-void PointVec_print(const PointVec *pv) {
-  printf("POINTVEC [ %lf, %lf, %lf ] POINTVEC\n", pv->x, pv->y, pv->z);
+void PointVec_subtract(PointVec *pv, const PointVec *v) {
+  PointVec_subtract_M(pv, pv, v);
 }
 
-void PointVec_reflect_over_plane_M(Point *result, const Point *p, const Point *plane_p0, const Vec *plane_normal) {
-  Vec delta;
-  PointVec_subtract_M(&delta, p, plane_p0);
-
-  Vec projected;
-  PointVec_clone_M(&projected, plane_normal);
-  PointVec_scale(&projected, PointVec_dot(&delta, plane_normal));
-
-  Vec movement;
-  PointVec_clone_M(&movement, &projected);
-  PointVec_negate(&movement);
-
-  PointVec_add_M(result, plane_p0, &movement);
+void PointVec_print(const PointVec *pv) {
+  printf("POINTVEC [ %lf, %lf, %lf ] POINTVEC\n", pv->x, pv->y, pv->z);
 }
 
 #endif // pointvec_h_INCLUDED

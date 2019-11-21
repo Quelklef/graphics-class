@@ -66,6 +66,7 @@ double Poly_calc_intensity(const Poly *poly, const Point *light_source_loc) {
 
   Vec poly_normal;
   Poly_normal_M(&poly_normal, poly);
+  PointVec_normalize(&poly_normal);
 
   Vec to_light;
   PointVec_between_M(&to_light, &poly_center, light_source_loc);
@@ -76,8 +77,8 @@ double Poly_calc_intensity(const Poly *poly, const Point *light_source_loc) {
     PointVec_negate(&poly_normal);
   }
 
-  double cos_alpha = PointVec_dot(&poly_normal, &to_light);
-  cos_alpha = fmax(0, cos_alpha);
+  const double cos_alpha = PointVec_dot(&poly_normal, &to_light);
+  const double cos_alpha_0 = fmax(0, cos_alpha);
 
   Point observer;
   PointVec_init(&observer, 0, 0, 0);
@@ -93,19 +94,19 @@ double Poly_calc_intensity(const Poly *poly, const Point *light_source_loc) {
     return AMBIENT;
   }
 
-  Vec in_plane;
-  PointVec_cross_M(&in_plane, &poly_normal, &to_light);
-  Vec plane_normal;
-  PointVec_cross_M(&plane_normal, &poly_normal, &in_plane);
-  Vec reflection;
-  PointVec_reflect_over_plane_M(&reflection, &to_light, &poly_center, &plane_normal);
+  Vec scaled_normal;
+  PointVec_scale_M(&scaled_normal, &poly_normal, 2 * cos_alpha);
 
-  double cos_beta = PointVec_dot(&reflection, &to_observer);
-  cos_beta = fmax(0, cos_beta);
+  Vec reflection;
+  PointVec_negate_M(&reflection, &to_light);
+  PointVec_add(&reflection, &scaled_normal);
+
+  const double cos_beta = PointVec_dot(&reflection, &to_observer);
+  const double cos_beta_0 = fmax(0, cos_beta);
 
   return AMBIENT
-         + DIFFUSE_MAX * cos_alpha
-         + (1 - AMBIENT - DIFFUSE_MAX) * pow(cos_beta, SPECULAR_POWER);
+         + DIFFUSE_MAX * cos_alpha_0
+         + (1 - AMBIENT - DIFFUSE_MAX) * pow(cos_beta_0, SPECULAR_POWER);
 }
 
 void Poly_calc_color_M(
@@ -132,7 +133,7 @@ void Poly_calc_color_M(
     return;
   }
 
-  if (full > intensity) {
+  if (intensity < full) {
     const double ratio = intensity / full;
     *result_r = inherent_r * ratio;
     *result_g = inherent_g * ratio;
