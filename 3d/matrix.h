@@ -34,7 +34,7 @@ void Mat_print(const _Mat a) {
   }
 } 
 
-void Mat_copy_M(_Mat result, const _Mat src) {
+void Mat_clone_M(_Mat result, const _Mat src) {
   for (int i = 0; i < 4; i++) { 
     for (int j = 0; j < 4; j++) {
       result[i][j] = src[i][j];
@@ -92,9 +92,9 @@ void Mat_mult_M(_Mat result, const _Mat a, const _Mat b) {
   // this is SAFE, i.e. the user can make a call such as 
   // M2d_mat_mult(p,  p,q) or M2d_mat_mult(p,  q,p) or  M2d_mat_mult(p, p,p)
   _Mat u;
-  Mat_copy_M(u, a);
+  Mat_clone_M(u, a);
   _Mat v;
-  Mat_copy_M(v, b);
+  Mat_clone_M(v, b);
 
   for(int i = 0; i < 4; i++) {
     for(int j = 0; j < 4; j++) {
@@ -104,6 +104,14 @@ void Mat_mult_M(_Mat result, const _Mat a, const _Mat b) {
                    + u[i][3] * v[3][j];
     }
   }
+}
+
+void Mat_mult_right(_Mat mat, const _Mat x) {
+  Mat_mult_M(mat, mat, x);
+}
+
+void Mat_mult_left(_Mat mat, const _Mat x) {
+  Mat_mult_M(mat, x, mat);
 }
 
 void Mat_mat_mult_pt_M(double result[3], const _Mat m, const double Q[3]) {

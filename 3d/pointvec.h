@@ -20,16 +20,24 @@ void PointVec_init(PointVec *pv, const double x, const double y, const double z)
   pv->z = z;
 }
 
-void PointVec_clone_M(PointVec *result, const PointVec *pv) {
-  result->x = pv->x;
-  result->y = pv->y;
-  result->z = pv->z;
+void PointVec_clone_M(PointVec *result, const PointVec *source) {
+  result->x = source->x;
+  result->y = source->y;
+  result->z = source->z;
 }
 
 PointVec *PointVec_new(const double x, const double y, const double z) {
   PointVec *point = malloc(sizeof(PointVec));
   PointVec_init(point, x, y, z);
   return point;
+}
+
+PointVec *PointVec_clone(PointVec *source) {
+  return PointVec_new(source->x, source->y, source->z);
+}
+
+void *PointVec_destroy(PointVec *pv) {
+  free(pv);
 }
 
 void PointVec_between_M(Vec *result, const Point *p0, const Point *pf) {

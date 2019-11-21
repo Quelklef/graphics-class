@@ -68,8 +68,8 @@ void on_key(Model *model, const char key) {
   Mat_translation_M(translate_from_origin, model_center.x, model_center.y, model_center.z);
 
 #define make_rel_to_origin(name) \
-  Mat_mult_M(name, name, translate_to_origin); \
-  Mat_mult_M(name, translate_from_origin, name);
+  Mat_mult_right(name, translate_to_origin); \
+  Mat_mult_left(name, translate_from_origin);
 
   const double scale_amt = 0.01;
 

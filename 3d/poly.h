@@ -33,6 +33,23 @@ void Poly_add_point(Poly *poly, Point *point) {
   poly->point_count++;
 }
 
+Poly *Poly_clone(const Poly *source) {
+  Poly *poly = Poly_new();
+
+  for (int point_idx = 0; point_idx < source->point_count; point_idx++) {
+    Poly_add_point(poly, PointVec_clone(source->points[point_idx]));
+  }
+
+  return poly;
+}
+
+void Poly_destroy(Poly *poly) {
+  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+    PointVec_destroy(poly->points[point_idx]);
+  }
+  free(poly);
+}
+
 void Poly_calc_center_M(Point *result, const Poly *poly) {
   double min_x = DBL_MAX;
   double max_x = DBL_MIN;
@@ -100,6 +117,24 @@ void Poly_transform(Poly *poly, const double transformation[4][4]) {
                        + transformation[2][2] * zs[i]
                        + transformation[2][3] * 1;
   }
+}
+
+void Poly_scale_relative(Poly *poly, const double ratio) {
+  Point poly_center;
+  Poly_calc_center_M(&poly_center, poly);
+
+  _Mat scale;
+  Mat_scaling_M(scale, ratio, ratio, ratio);
+
+  _Mat to_origin;
+  Mat_translation_M(to_origin, -poly_center.x, -poly_center.y, -poly_center.z);
+  Mat_mult_right(scale, to_origin);
+
+  _Mat from_origin;
+  Mat_translation_M(from_origin, +poly_center.x, +poly_center.y, +poly_center.z);
+  Mat_mult_left(scale, from_origin);
+
+  Poly_transform(poly, scale);
 }
 
 void Poly_normal_M(Vec *result, const Poly *poly) {

@@ -142,17 +142,65 @@ void Poly_calc_color_M(
   }
 }
 
-void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
-  double xs[poly->point_count];
-  double ys[poly->point_count];
+void Poly_display_minimal(const Poly *poly) {
+  double pxs[poly->point_count];
+  double pys[poly->point_count];
   for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
     const Point *p = poly->points[point_idx];
-    pixel_coords_M(&xs[point_idx], &ys[point_idx], p);
+    pixel_coords_M(&pxs[point_idx], &pys[point_idx], p);
   }
 
-  const double intensity = Poly_calc_intensity(poly, light_source_loc);
+  G_fill_polygon(pxs, pys, poly->point_count);
+}
 
+void Poly_display_as_halo(const Poly *poly) {
+  const double scale_amt = 3;
+  G_rgb(1, 0, 0);
+
+  double pxs[poly->point_count];
+  double pys[poly->point_count];
+  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+    const Point *p = poly->points[point_idx];
+    pixel_coords_M(&pxs[point_idx], &pys[point_idx], p);
+  }
+
+  double center_px, center_py;
+  {
+    double min_px = +DBL_MAX;
+    double max_px = -DBL_MAX;
+    double min_py = +DBL_MAX;
+    double max_py = -DBL_MAX;
+
+    for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+      double px = pxs[point_idx];
+      double py = pys[point_idx];
+
+      if (px < min_px) min_px = px;
+      if (px > max_px) max_px = px;
+      if (py < min_py) min_py = py;
+      if (py > max_py) max_py = py;
+    }
+
+    center_px = min_px / 2 + max_px / 2;
+    center_py = min_py / 2 + max_py / 2;
+  }
+
+  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+    pxs[point_idx] = (pxs[point_idx] - center_px) * scale_amt + center_px;
+    pys[point_idx] = (pys[point_idx] - center_py) * scale_amt + center_py;
+  }
+
+  G_fill_polygon(pxs, pys, poly->point_count);
+}
+
+void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
   if (DO_POLY_FILL) {
+
+    if (focused) {
+      Poly_display_as_halo(poly);
+      return;
+    }
+
     double r = 0.8;
     double g = 0.5;
     double b = 0.8;
@@ -165,11 +213,16 @@ void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
     }
 
     G_rgb(r, g, b);
-    G_fill_polygon(xs, ys, poly->point_count);
+    Poly_display_minimal(poly);
   }
 
   if (DO_WIREFRAME) {
-    focused ? G_rgb(1, 0, 0) : G_rgb(.3, .3, .3);
+    if (!DO_POLY_FILL && focused) {
+      G_rgb(1, 0, 0);
+    } else {
+      G_rgb(.3, .3, .3);
+    }
+
     for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
       const Point *p0 = poly->points[point_idx];
       const Point *pf = poly->points[(point_idx + 1) % poly->point_count];
@@ -183,23 +236,34 @@ void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
 
 typedef struct {
   Poly *poly;
+  Model *belongs_to;
   int is_focused;
-} MaybeFocusedPoly;
+} DisplayPoly;
 
-int comparator(const void *_mfPoly0, const void *_mfPoly1) {
-  const MaybeFocusedPoly *mfPoly0 = (const MaybeFocusedPoly *) _mfPoly0;
-  const MaybeFocusedPoly *mfPoly1 = (const MaybeFocusedPoly *) _mfPoly1;
+int comparator(const void *_dPoly0, const void *_dPoly1) {
+  const DisplayPoly *dPoly0 = (const DisplayPoly *) _dPoly0;
+  const DisplayPoly *dPoly1 = (const DisplayPoly *) _dPoly1;
 
   Point center0;
   Point center1;
 
-  Poly_calc_center_M(&center0, mfPoly0->poly);
-  Poly_calc_center_M(&center1, mfPoly1->poly);
+  Poly_calc_center_M(&center0, dPoly0->poly);
+  Poly_calc_center_M(&center1, dPoly1->poly);
 
   const double dist0 = PointVec_magnitude(&center0);
   const double dist1 = PointVec_magnitude(&center1);
 
-  return dist1 > dist0;
+  // If they belong to the same model, place
+  // focused polygons at the back.
+  if (dPoly0->belongs_to == dPoly1->belongs_to) {
+    if (dPoly0->is_focused && !dPoly1->is_focused) return -1;
+    if (dPoly1->is_focused && !dPoly0->is_focused) return +1;
+  }
+
+  // Place distant polygons before
+  if (dist1 > dist0) return +1;
+  if (dist0 > dist1) return -1;
+  return 0;
 }
 
 void display_models(Model *models[], int model_count, Model *focused_model, Model *light_source) {
@@ -215,11 +279,14 @@ void display_models(Model *models[], int model_count, Model *focused_model, Mode
       const Poly *poly = model->polys[poly_idx];
       if (shouldnt_display(poly)) continue;
       total_poly_count++;
+
+      // Will have a focused duplicate
+      if (DO_POLY_FILL && model == focused_model) total_poly_count++;
     }
   }
 
-  MaybeFocusedPoly aggregate_mfPolys[total_poly_count];
-  int aggregate_mfPolys_i = 0;
+  DisplayPoly aggregate_dPolys[total_poly_count];
+  int aggregate_dPolys_i = 0;
 
   for (int model_idx = 0; model_idx < model_count; model_idx++) {
     const Model *model = models[model_idx];
@@ -229,20 +296,32 @@ void display_models(Model *models[], int model_count, Model *focused_model, Mode
 
       if (shouldnt_display(poly)) continue;
 
-      MaybeFocusedPoly mfPoly;
-      mfPoly.poly = (Poly *) poly;
-      mfPoly.is_focused = is_focused;
+      const DisplayPoly dPoly = {
+        .poly = (Poly *) poly,
+        .belongs_to = (Model *) model,
+        .is_focused = is_focused };
 
-      aggregate_mfPolys[aggregate_mfPolys_i] = mfPoly;
-      aggregate_mfPolys_i++;
+      aggregate_dPolys[aggregate_dPolys_i] = dPoly;
+      aggregate_dPolys_i++;
+
+      // Create non-focused clone
+      if (is_focused && DO_POLY_FILL) {
+        const DisplayPoly focusedDPoly = {
+          .poly = (Poly *) poly,
+          .belongs_to = (Model *) model,
+          .is_focused = 0 };
+
+        aggregate_dPolys[aggregate_dPolys_i] = focusedDPoly;
+        aggregate_dPolys_i++;
+      }
     }
   }
 
-  qsort((void *) aggregate_mfPolys, total_poly_count, sizeof(MaybeFocusedPoly), comparator);
+  qsort((void *) aggregate_dPolys, total_poly_count, sizeof(DisplayPoly), comparator);
 
-  for (int mfPoly_idx = 0; mfPoly_idx < total_poly_count; mfPoly_idx++) {
-    MaybeFocusedPoly mfPoly = aggregate_mfPolys[mfPoly_idx];
-    Poly_display(mfPoly.poly, mfPoly.is_focused, &light_source_loc);
+  for (int dPoly_idx = 0; dPoly_idx < total_poly_count; dPoly_idx++) {
+    DisplayPoly dPoly = aggregate_dPolys[dPoly_idx];
+    Poly_display(dPoly.poly, dPoly.is_focused, &light_source_loc);
   }
 }
 
