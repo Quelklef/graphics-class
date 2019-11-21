@@ -28,7 +28,7 @@ double polygonZs[10][10000][8];
 int pointCount[10];
 
 // Array of the number of points in each polygon
-int polygonPointCounts[10][10000];
+int polygonPointCount[10][10000];
 
 //colors
 //double colors[10000][3];
@@ -92,50 +92,29 @@ void collectPoints(char *filename, int index) {
      }
      }
 
-  
-  double toCenter[3][3];
-  M2d_make_translation(toCenter, sWidth/2, sHeight/2);
-  double toOrigin[3][3];
-  M2d_make_translation(toOrigin, -midX, -midY);
 
-  //--------------------------------------------------------------------------
-  //Matrix Operations here!
+  fscanf(file, "%d", &polygonCount);
+  int a, b, c;
 
-  M2d_print_mat(toCenter);
-  //M2d_print_mat(rotMat);
-  M2d_mat_mult(storageMat, toCenter, scaleMatrix);
-  //M2d_print_mat(storageMat);
-  M2d_mat_mult(storageMat, storageMat, toOrigin);
   for(int i = 0; i < polygonCount; i++){
-    M2d_mat_mult_points(polygonXs[i], polygonYs[i], storageMat, polygonXs[i], polygonYs[i], polygonPointCounts[i]);
+    fscanf(file, "%d", polygonPointCount[i]);
 
+    for(int j = 0; j < polygonPointCount[i]; j++) {
+      fscanf(file, "%d", &a);
+
+      polygonXs[index][i][j] = xs[a];
+      polygonYs[index][i][j] = ys[a];
+      polygonZs[index][i][j] = zs[a];
+
+    
+    }
   }
 
 
-  double centerToOrigin[3][3];
-  M2d_make_translation(centerToOrigin, -400, -400);
-  //Creating General Rotation Matrix
-  M2d_mat_mult(Rot, toCenter, rotMat);
-  M2d_mat_mult(Rot, Rot, centerToOrigin);
+  polygonXs[index][polygonCount][0] = 0;
+  polygonYs[index][polygonCount][0] = 0;
+  polygonZs[index][polygonCount][0] = 0;
 
-  //M2d_print_mat(toCenter);
- // M2d_print_mat(toOrigin);
-  M2d_print_mat(rotMat);
-  
-  //M2d_print_mat(scaleMatrix);
-  //M2d_print_mat(toOrigin);
-
-double r, g, b;
-/*  
-for (int i = 0; i < polygonCount; i++) {
-    fscanf(file, "%lf %lf %lf", &r, &g, &b);
-    colors[i][0] = r;
-    colors[i][1] = g;
-    colors[i][2] = b;
-  }
-
-  colorPoly();
-  */
 }
   //--------------------------------------------------------------------------
 void drawPoly(int index){
@@ -145,7 +124,7 @@ void drawPoly(int index){
     double finalY[polygonCount[index][8]];
 
     for(int i = 0; i < polygonCount[index]; i++) {
-	for(int j = 0; j < polygonPointsCount[i]; j++){
+	for(int j = 0; j < polygonPointCount[i]; j++){
 	    finalX[i][j] = 
 	    finalY[i][j] = 
 }
