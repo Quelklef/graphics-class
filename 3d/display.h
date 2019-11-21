@@ -153,9 +153,9 @@ void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
   const double intensity = Poly_calc_intensity(poly, light_source_loc);
 
   if (DO_POLY_FILL) {
-    double r = 1; //0.8;
-    double g = 1; //0.5;
-    double b = 1; //0.8;
+    double r = 0.8;
+    double g = 0.5;
+    double b = 0.8;
 
     if (DO_LIGHT_MODEL) {
       Poly_calc_color_M(
@@ -169,7 +169,7 @@ void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
   }
 
   if (DO_WIREFRAME) {
-    focused ? G_rgb(1, 0, 0) : G_rgb(0, 0, 0);
+    focused ? G_rgb(1, 0, 0) : G_rgb(.3, .3, .3);
     for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
       const Point *p0 = poly->points[point_idx];
       const Point *pf = poly->points[(point_idx + 1) % poly->point_count];
@@ -205,7 +205,6 @@ int comparator(const void *_mfPoly0, const void *_mfPoly1) {
 void display_models(Model *models[], int model_count, Model *focused_model, Model *light_source) {
   Point light_source_loc;
   Model_center_M(&light_source_loc, light_source);
-  PointVec_init(&light_source_loc, 100, 200, 0); // REMOVE
 
   // We need to draw aw polygons at once, not model-by-model, in order to
   // correctly handle overlapping models.

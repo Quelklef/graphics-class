@@ -18,9 +18,9 @@ int    BACKFACE_ELIMINATION_SIGN = 1;
 int    DO_POLY_FILL              = 1;
 int    DO_LIGHT_MODEL            = 1;
 
-double AMBIENT                   = 0.2; //0.2;
-double DIFFUSE_MAX               = 0.5; //2.0;
-int    SPECULAR_POWER            = 50; //100;
+double AMBIENT                   = 0.4;
+double DIFFUSE_MAX               = 0.3;
+int    SPECULAR_POWER            = 50;
 
 #endif // globals_h_INCLUDED
 
