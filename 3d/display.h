@@ -196,7 +196,7 @@ void Poly_display_as_halo(const Poly *poly) {
 void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
   if (DO_POLY_FILL) {
 
-    if (focused) {
+    if (DO_HALO && focused) {
       Poly_display_as_halo(poly);
       return;
     }
@@ -217,7 +217,7 @@ void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
   }
 
   if (DO_WIREFRAME) {
-    if (!DO_POLY_FILL && focused) {
+    if ((!DO_POLY_FILL || !DO_HALO) && focused) {
       G_rgb(1, 0, 0);
     } else {
       G_rgb(.3, .3, .3);
@@ -281,7 +281,7 @@ void display_models(Model *models[], int model_count, Model *focused_model, Mode
       total_poly_count++;
 
       // Will have a focused duplicate
-      if (DO_POLY_FILL && model == focused_model) total_poly_count++;
+      if (DO_POLY_FILL && DO_HALO && model == focused_model) total_poly_count++;
     }
   }
 
@@ -305,7 +305,7 @@ void display_models(Model *models[], int model_count, Model *focused_model, Mode
       aggregate_dPolys_i++;
 
       // Create non-focused clone
-      if (is_focused && DO_POLY_FILL) {
+      if (DO_POLY_FILL && DO_HALO && is_focused) {
         const DisplayPoly focusedDPoly = {
           .poly = (Poly *) poly,
           .belongs_to = (Model *) model,

@@ -12,6 +12,7 @@ double HALF_ANGLE                = M_PI / 8;
 
 int    DO_WIREFRAME              = 1;
 int    DO_BACKFACE_ELIMINATION   = 0;
+int    DO_HALO                   = 1;
 
 int    BACKFACE_ELIMINATION_SIGN = 1;
 
