@@ -24,6 +24,13 @@ Model *Model_new() {
   return model;
 }
 
+void Model_destroy(Model *model) {
+  for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
+    Poly_destroy(model->polys[poly_idx]);
+  }
+  free(model);
+}
+
 void Model_print(const Model *model) {
   printf("MODEL [\n");
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
@@ -44,7 +51,7 @@ void Model_transform(Model *model, const _Mat transformation) {
   }
 }
 
-double Model_bounds_M(
+void Model_bounds_M(
       double *result_min_x, double *result_max_x,
       double *result_min_y, double *result_max_y,
       double *result_min_z, double *result_max_z,
@@ -86,7 +93,7 @@ void Model_center_M(Point *result, const Model *model) {
   result->z = min_z / 2 + max_z / 2;
 }
 
-double Model_size_M(double *result_x_size, double *result_y_size, double *result_z_size, const Model *model) {
+void Model_size_M(double *result_x_size, double *result_y_size, double *result_z_size, const Model *model) {
   double min_x, max_x, min_y, max_y, min_z, max_z;
   Model_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, model);
   *result_x_size = max_x - min_x;

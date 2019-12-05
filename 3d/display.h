@@ -194,19 +194,17 @@ void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
   //   (0, 0, (YON + HITHER)/2) will be kept
   // Frees removed points
 
-  Poly *original_poly = Poly_clone(poly);
-
-  // Reset `poly`
-  poly->point_count = 0;
+  Poly result_poly;
+  Poly_init(&result_poly);
 
   // Create a point that's definitely inside the clipping region
   Point inside_point;
   PointVec_init(&inside_point, 0, 0, YON * 0.5 + HITHER * 0.5);
   int inside_side = Plane_side_of(plane, &inside_point);
 
-  for (int point_idx = 0; point_idx < original_poly->point_count; point_idx++) {
-    Point *this_point = original_poly->points[point_idx];
-    Point *next_point = original_poly->points[(point_idx + 1) % original_poly->point_count];
+  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+    Point *this_point = poly->points[point_idx];
+    Point *next_point = poly->points[(point_idx + 1) % poly->point_count];
 
     const int this_is_inside = inside_side == Plane_side_of(plane, this_point);
     const int next_is_inside = inside_side == Plane_side_of(plane, next_point);
@@ -214,12 +212,12 @@ void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
     Line this_to_next;
     Line_between(&this_to_next, this_point, next_point);
 
-    if (this_is_inside && next_is_inside) {
+    if (this_is_inside) {
+      Poly_add_point(&result_poly, this_point);
+    }
 
-      Poly_add_point(poly, this_point);
-
-    } else if (this_is_inside && !next_is_inside) {
-
+    // If crosses over, add itersection
+    if (this_is_inside != next_is_inside) {
       Point *intersection = malloc(sizeof(Point));
       const int found_intersection = Plane_intersect_line_M(intersection, plane, &this_to_next);
       // We know there should be an intersection since the points are on opposite sides of the plane
@@ -228,24 +226,7 @@ void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
         exit(1);
       }
 
-      Poly_add_point(poly, this_point);
-      Poly_add_point(poly, intersection);
-
-    } else if (!this_is_inside && next_is_inside) {
-
-      Point *intersection = malloc(sizeof(Point));
-      const int found_intersection = Plane_intersect_line_M(intersection, plane, &this_to_next);
-      if (!found_intersection) {
-        printf("Error in Poly_clip_with_plane: intersection not found.\n");
-        exit(1);
-      }
-
-      Poly_add_point(poly, intersection);
-
-    } else if (!this_is_inside && !next_is_inside) {
-
-      // Do nothing
-
+      Poly_add_point(&result_poly, intersection);
     }
 
   }
@@ -253,18 +234,15 @@ void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
   // Clean up:
 
   // Destroy unused points
-  for (int point_idx = 0; point_idx < original_poly->point_count; point_idx++) {
-    Point *point = original_poly->points[point_idx];
+  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+    Point *point = poly->points[point_idx];
     const int is_inside = inside_side == Plane_side_of(plane, point);
     if (!is_inside) {
       PointVec_destroy(point);
     }
   }
 
-  // Shallowly destroy original_poly
-  // Note each point in it was either unused, and thus destroyed,
-  // or placed into `poly` and should not be destroyed
-  free(original_poly);
+  *poly = result_poly;
 }
 
 void Poly_clip(Poly *poly) {
@@ -343,50 +321,45 @@ void Poly_display(const Poly *poly, const int is_focused, const int is_halo, con
   Poly *clipped = Poly_clone(poly);
   Poly_clip(clipped);
 
-  // If the clippedgon was entirely clipped, don't display it
-  if (clipped->point_count == 0) return;
+  if (clipped->point_count != 0) {
+    // Only display if there are points
+    // (Some display subroutines require a minimum point count)
 
-  if (DO_POLY_FILL) {
+    if (DO_POLY_FILL) {
+      if (is_halo) {
+        Poly_display_as_halo(clipped);
+      } else {
+        double r = 0.8;
+        double g = 0.5;
+        double b = 0.8;
 
-    if (is_halo) {
+        if (DO_LIGHT_MODEL) {
+          Poly_calc_color_M(
+            &r, &g, &b,
+            clipped, light_source_loc,
+            r, g, b);
+        }
 
-      Poly_display_as_halo(clipped);
+        G_rgb(r, g, b);
+        Poly_display_minimal(clipped);
+      }
+    }
 
-    } else {
-
-      double r = 0.8;
-      double g = 0.5;
-      double b = 0.8;
-
-      if (DO_LIGHT_MODEL) {
-        Poly_calc_color_M(
-          &r, &g, &b,
-          clipped, light_source_loc,
-          r, g, b);
+    if (DO_WIREFRAME && !is_halo) {
+      if ((!DO_POLY_FILL || !DO_HALO) && is_focused) {
+        G_rgb(1, 0, 0);
+      } else {
+        G_rgb(.3, .3, .3);
       }
 
-      G_rgb(r, g, b);
-      Poly_display_minimal(clipped);
+      for (int point_idx = 0; point_idx < clipped->point_count; point_idx++) {
+        const Point *p0 = clipped->points[point_idx];
+        const Point *pf = clipped->points[(point_idx + 1) % clipped->point_count];
 
-    }
-
-  }
-
-  if (DO_WIREFRAME && !is_halo) {
-
-    if ((!DO_POLY_FILL || !DO_HALO) && is_focused) {
-      G_rgb(1, 0, 0);
-    } else {
-      G_rgb(.3, .3, .3);
-    }
-
-    for (int point_idx = 0; point_idx < clipped->point_count; point_idx++) {
-      const Point *p0 = clipped->points[point_idx];
-      const Point *pf = clipped->points[(point_idx + 1) % clipped->point_count];
-
-      Line line;
-      Line_between(&line, p0, pf);
-      Line_display(&line);
+        Line line;
+        Line_between(&line, p0, pf);
+        Line_display(&line);
+      }
     }
 
   }

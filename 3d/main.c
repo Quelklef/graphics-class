@@ -97,8 +97,6 @@ void on_key(Model *model, const char key) {
   make_rot_mats(z)
 
   switch(key) {
-    case 'e': exit(0); break;
-
     case 'w': Model_transform(model, translate_forwards_rel ); break;
     case 's': Model_transform(model, translate_backwards_rel); break;
     case 'd': Model_transform(model, translate_right_rel    ); break;
@@ -249,24 +247,29 @@ Model *make_light_source() {
   PointVec_scale(p3, scale);
 
   Poly *poly0 = Poly_new();
-  Poly_add_point(poly0, p1);
-  Poly_add_point(poly0, p2);
-  Poly_add_point(poly0, p3);
+  Poly_add_point(poly0, PointVec_clone(p1));
+  Poly_add_point(poly0, PointVec_clone(p2));
+  Poly_add_point(poly0, PointVec_clone(p3));
 
   Poly *poly1 = Poly_new();
-  Poly_add_point(poly1, p0);
-  Poly_add_point(poly1, p2);
-  Poly_add_point(poly1, p3);
+  Poly_add_point(poly1, PointVec_clone(p0));
+  Poly_add_point(poly1, PointVec_clone(p2));
+  Poly_add_point(poly1, PointVec_clone(p3));
 
   Poly *poly2 = Poly_new();
-  Poly_add_point(poly2, p0);
-  Poly_add_point(poly2, p1);
-  Poly_add_point(poly2, p3);
+  Poly_add_point(poly2, PointVec_clone(p0));
+  Poly_add_point(poly2, PointVec_clone(p1));
+  Poly_add_point(poly2, PointVec_clone(p3));
 
   Poly *poly3 = Poly_new();
-  Poly_add_point(poly3, p0);
-  Poly_add_point(poly3, p1);
-  Poly_add_point(poly3, p2);
+  Poly_add_point(poly3, PointVec_clone(p0));
+  Poly_add_point(poly3, PointVec_clone(p1));
+  Poly_add_point(poly3, PointVec_clone(p2));
+
+  PointVec_destroy(p0);
+  PointVec_destroy(p1);
+  PointVec_destroy(p2);
+  PointVec_destroy(p3);
 
   Model *model = Model_new();
   Model_add_poly(model, poly0);
@@ -321,5 +324,11 @@ int main(const int argc, const char **argv) {
 
     display_models(models, model_count, focused_model, light_source);
 
-  } while ((key = G_wait_key()));
+  } while ((key = G_wait_key()) != 'e');
+
+  for (int model_idx = 0; model_idx < model_count; model_idx++) {
+    Model_destroy(models[model_idx]);
+  }
+
+  G_close();
 }

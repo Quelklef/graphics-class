@@ -36,7 +36,7 @@ PointVec *PointVec_clone(PointVec *source) {
   return PointVec_new(source->x, source->y, source->z);
 }
 
-void *PointVec_destroy(PointVec *pv) {
+void PointVec_destroy(PointVec *pv) {
   free(pv);
 }
 

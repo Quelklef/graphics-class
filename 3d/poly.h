@@ -13,9 +13,13 @@ typedef struct Poly {
   int point_count;
 } Poly;
 
+void Poly_init(Poly *poly) {
+  poly->point_count = 0;
+}
+
 Poly *Poly_new() {
   Poly *poly = malloc(sizeof(Poly));
-  poly->point_count = 0;
+  Poly_init(poly);
   return poly;
 }
 
@@ -31,16 +35,6 @@ void Poly_add_point(Poly *poly, Point *point) {
   /* Assumes that the added point is coplanar; does not verify */
   poly->points[poly->point_count] = point;
   poly->point_count++;
-}
-
-Poly *Poly_clone_shallow(const Poly *source) {
-  Poly *poly = Poly_new();
-
-  for (int point_idx = 0; point_idx < source->point_count; point_idx++) {
-    Poly_add_point(poly, source->points[point_idx]);
-  }
-
-  return poly;
 }
 
 Poly *Poly_clone(const Poly *source) {
