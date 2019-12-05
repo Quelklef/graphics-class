@@ -130,6 +130,7 @@ void on_key(Model *model, const char key) {
     case '#': DO_POLY_FILL            = 1 - DO_POLY_FILL;            break;
     case '$': DO_LIGHT_MODEL          = 1 - DO_LIGHT_MODEL;          break;
     case '%': DO_HALO                 = 1 - DO_HALO;                 break;
+    case '^': DO_CLIPPING             = 1 - DO_CLIPPING;             break;
 
     case '/': BACKFACE_ELIMINATION_SIGN *= -1; break;
   }
@@ -222,6 +223,7 @@ void show_help() {
   printf("  $    - Enable/disable light model\n");
   printf("  %%    - Enable/disable halos\n");
   printf("  /    - Change backface elimination sign\n");
+  printf("  ^    - Enable/disable clipping\n");
   printf("\n");
   printf("Scalar parameters:\n");
   printf("  -+   - Adjust parameter (use shift for fast)\n");

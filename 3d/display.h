@@ -319,7 +319,9 @@ void Poly_display(const Poly *poly, const int is_focused, const int is_halo, con
   // halo: is the polygon part of a halo?
 
   Poly *clipped = Poly_clone(poly);
-  Poly_clip(clipped);
+  if (DO_CLIPPING) {
+    Poly_clip(clipped);
+  }
 
   if (clipped->point_count != 0) {
     // Only display if there are points
