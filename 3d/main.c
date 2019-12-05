@@ -177,26 +177,27 @@ void on_key(Model *model, const char key) {
       break;
   }
 
-  if (key == '=' || key == '-') {
-    const int sign = key == '=' ? 1 : -1;
+  if (key == '=' || key == '-' || key == '+' || key == '_') {
+    const int sign = (key == '=' || key == '+') ? 1 : -1;
+    const int is_fast = key == '+' || key == '_';
 
     if (parameter == param_HALF_ANGLE) {
-      HALF_ANGLE += sign * 0.05;
+      HALF_ANGLE += sign * (is_fast ? 0.75 : 0.05);
       printr("HALF_ANGLE = %lf", HALF_ANGLE);
     } else if (parameter == param_AMBIENT) {
-      AMBIENT += sign * 0.05;
+      AMBIENT += sign * (is_fast ? 0.5 : 0.05);
       printr("AMBIENT = %lf", AMBIENT);
     } else if (parameter == param_DIFFUSE_MAX) {
-      DIFFUSE_MAX += sign * 0.05;
+      DIFFUSE_MAX += sign * (is_fast ? 0.5 : 0.05);
       printr("DIFFUSE_MAX = %lf", DIFFUSE_MAX);
     } else if (parameter == param_SPECULAR_POWER) {
-      SPECULAR_POWER += sign * 1;
+      SPECULAR_POWER += sign * (is_fast ? 25 : 1);
       printr("SPECULAR_POWER = %d", SPECULAR_POWER);
     } else if (parameter == param_HITHER) {
-      HITHER += sign * 0.1;
+      HITHER += sign * (is_fast ? 1.5 : 0.1);
       printr("HITHER = %lf", HITHER);
     } else if (parameter == param_YON) {
-      YON += sign * 0.1;
+      YON += sign * (is_fast ? 1.5 : 0.1);
       printr("YON = %lf", YON);
     }
   }
@@ -225,7 +226,7 @@ void show_help() {
   printf("  /    - Change backface elimination sign\n");
   printf("\n");
   printf("Scalar parameters:\n");
-  printf("  -+   - Adjust parameter\n");
+  printf("  -+   - Adjust parameter (use shift for fast)\n");
   printf("  H    - Select parameter HALF_ANGLE\n");
   printf("  B    - Select parameter AMBIENT\n");
   printf("  M    - Select parameter DIFFUSE_MAX\n");
