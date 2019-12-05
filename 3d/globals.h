@@ -23,5 +23,10 @@ double AMBIENT                   = 0.4;
 double DIFFUSE_MAX               = 0.3;
 int    SPECULAR_POWER            = 50;
 
+// Threshold for which objects too close to the observer aren't shown
+double HITHER                    = 1;
+//Threshold for which objects too far from the observer aren't shown
+double YON                       = 30;
+
 #endif // globals_h_INCLUDED
 

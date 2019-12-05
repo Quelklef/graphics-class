@@ -9,7 +9,7 @@
 #include "poly.h"
 #include "matrix.h"
 
-typedef struct {
+typedef struct Model {
   Poly *polys[ENOUGH];
   int poly_count;
 } Model;
@@ -167,6 +167,8 @@ Model *load_model(const char *filename) {
   }
 
   nicely_place_model(model);
+
+  fclose(file);
 
   return model;
 

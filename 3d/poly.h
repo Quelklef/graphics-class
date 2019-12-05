@@ -8,7 +8,7 @@
 #include "globals.h"
 #include "pointvec.h"
 
-typedef struct {
+typedef struct Poly {
   Point *points[ENOUGH];
   int point_count;
 } Poly;
@@ -31,6 +31,16 @@ void Poly_add_point(Poly *poly, Point *point) {
   /* Assumes that the added point is coplanar; does not verify */
   poly->points[poly->point_count] = point;
   poly->point_count++;
+}
+
+Poly *Poly_clone_shallow(const Poly *source) {
+  Poly *poly = Poly_new();
+
+  for (int point_idx = 0; point_idx < source->point_count; point_idx++) {
+    Poly_add_point(poly, source->points[point_idx]);
+  }
+
+  return poly;
 }
 
 Poly *Poly_clone(const Poly *source) {
@@ -135,25 +145,6 @@ void Poly_scale_relative(Poly *poly, const double ratio) {
   Mat_mult_left(scale, from_origin);
 
   Poly_transform(poly, scale);
-}
-
-void Poly_normal_M(Vec *result, const Poly *poly) {
-  // Takes a polygon which MUST have at least 3 points
-  // Returns the (length-1) normal veector to the polygon
-  if (poly->point_count < 3) {
-    printf("ERROR: In plane_normal(): requires point_count >= 3");
-    exit(1);
-  }
-
-  Vec A;
-  PointVec_between_M(&A, poly->points[0], poly->points[1]);
-  PointVec_normalize(&A);
-
-  Vec B;
-  PointVec_between_M(&B, poly->points[0], poly->points[2]);
-  PointVec_normalize(&B);
-
-  PointVec_cross_M(result, &A, &B);
 }
 
 #endif // poly_h_INCLUDED

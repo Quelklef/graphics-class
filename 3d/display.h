@@ -5,15 +5,11 @@
 
 #include <math.h>
 
+#include "misc.h"
 #include "poly.h"
 #include "model.h"
 #include "pointvec.h"
-
-double sgn(double x) {
-  if (x > 0) return +1;
-  if (x < 0) return -1;
-  return 0;
-}
+#include "plane.h"
 
 void pixel_coords_M(double *result_x, double *result_y, const Point *point) {
   /* Find the pixel coordinates on the screen of a given
@@ -35,10 +31,10 @@ void pixel_coords_M(double *result_x, double *result_y, const Point *point) {
   *result_y = y_bar_bar + minor / 2;
 }
 
-void display_line(const Point *p0, const Point *pf) {
+void Line_display(const Line *line) {
   double pixel_x0, pixel_y0, pixel_xf, pixel_yf;
-  pixel_coords_M(&pixel_x0, &pixel_y0, p0);
-  pixel_coords_M(&pixel_xf, &pixel_yf, pf);
+  pixel_coords_M(&pixel_x0, &pixel_y0, &line->p0);
+  pixel_coords_M(&pixel_xf, &pixel_yf, &line->pf);
 
   G_line(pixel_x0, pixel_y0, pixel_xf, pixel_yf);
 }
@@ -66,7 +62,6 @@ double Poly_calc_intensity(const Poly *poly, const Point *light_source_loc) {
 
   Vec poly_normal;
   Poly_normal_M(&poly_normal, poly);
-  PointVec_normalize(&poly_normal);
 
   Vec to_light;
   PointVec_between_M(&to_light, &poly_center, light_source_loc);
@@ -193,42 +188,210 @@ void Poly_display_as_halo(const Poly *poly) {
   G_fill_polygon(pxs, pys, poly->point_count);
 }
 
-void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
-  if (DO_POLY_FILL) {
+void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
+  // Clip a polygon with a plane
+  // The potion of the shape on the on the same side as the point
+  //   (0, 0, (YON + HITHER)/2) will be kept
+  // Frees removed points
 
-    if (DO_HALO && focused) {
-      Poly_display_as_halo(poly);
-      return;
+  Poly *original_poly = Poly_clone(poly);
+
+  // Reset `poly`
+  poly->point_count = 0;
+
+  // Create a point that's definitely inside the clipping region
+  Point inside_point;
+  PointVec_init(&inside_point, 0, 0, YON * 0.5 + HITHER * 0.5);
+  int inside_side = Plane_side_of(plane, &inside_point);
+
+  for (int point_idx = 0; point_idx < original_poly->point_count; point_idx++) {
+    Point *this_point = original_poly->points[point_idx];
+    Point *next_point = original_poly->points[(point_idx + 1) % original_poly->point_count];
+
+    const int this_is_inside = inside_side == Plane_side_of(plane, this_point);
+    const int next_is_inside = inside_side == Plane_side_of(plane, next_point);
+
+    Line this_to_next;
+    Line_between(&this_to_next, this_point, next_point);
+
+    if (this_is_inside && next_is_inside) {
+
+      Poly_add_point(poly, this_point);
+
+    } else if (this_is_inside && !next_is_inside) {
+
+      Point *intersection = malloc(sizeof(Point));
+      const int found_intersection = Plane_intersect_line_M(intersection, plane, &this_to_next);
+      // We know there should be an intersection since the points are on opposite sides of the plane
+      if (!found_intersection) {
+        printf("Error in Poly_clip_with_plane: intersection not found.\n");
+        exit(1);
+      }
+
+      Poly_add_point(poly, this_point);
+      Poly_add_point(poly, intersection);
+
+    } else if (!this_is_inside && next_is_inside) {
+
+      Point *intersection = malloc(sizeof(Point));
+      const int found_intersection = Plane_intersect_line_M(intersection, plane, &this_to_next);
+      if (!found_intersection) {
+        printf("Error in Poly_clip_with_plane: intersection not found.\n");
+        exit(1);
+      }
+
+      Poly_add_point(poly, intersection);
+
+    } else if (!this_is_inside && !next_is_inside) {
+
+      // Do nothing
+
     }
 
-    double r = 0.8;
-    double g = 0.5;
-    double b = 0.8;
-
-    if (DO_LIGHT_MODEL) {
-      Poly_calc_color_M(
-        &r, &g, &b,
-        poly, light_source_loc,
-        r, g, b);
-    }
-
-    G_rgb(r, g, b);
-    Poly_display_minimal(poly);
   }
 
-  if (DO_WIREFRAME) {
-    if ((!DO_POLY_FILL || !DO_HALO) && focused) {
+  // Clean up:
+
+  // Destroy unused points
+  for (int point_idx = 0; point_idx < original_poly->point_count; point_idx++) {
+    Point *point = original_poly->points[point_idx];
+    const int is_inside = inside_side == Plane_side_of(plane, point);
+    if (!is_inside) {
+      PointVec_destroy(point);
+    }
+  }
+
+  // Shallowly destroy original_poly
+  // Note each point in it was either unused, and thus destroyed,
+  // or placed into `poly` and should not be destroyed
+  free(original_poly);
+}
+
+void Poly_clip(Poly *poly) {
+  // Clip a polygon according to HALF_ANGLE, YON, and HITHER
+  // Frees removed points
+
+  Point observer;
+  PointVec_init(&observer, 0, 0, 0);
+
+  const double tha = tan(HALF_ANGLE);
+
+  // --
+
+  Point screen_top_left;
+  PointVec_init(&screen_top_left, -tha, tha, 1);
+
+  Point screen_top_right;
+  PointVec_init(&screen_top_right, tha, tha, 1);
+
+  Point screen_bottom_left;
+  PointVec_init(&screen_bottom_left, -tha, -tha, 1);
+
+  Point screen_bottom_right;
+  PointVec_init(&screen_bottom_right, tha, -tha, 1);
+
+  // --
+
+  Plane above_plane;
+  Plane_from_points(&above_plane, &observer, &screen_top_left, &screen_top_right);
+
+  Plane left_plane;
+  Plane_from_points(&left_plane, &observer, &screen_top_left, &screen_bottom_left);
+
+  Plane bottom_plane;
+  Plane_from_points(&bottom_plane, &observer, &screen_bottom_left, &screen_bottom_right);
+
+  Plane right_plane;
+  Plane_from_points(&right_plane, &observer, &screen_bottom_right, &screen_top_right);
+
+  Plane hither_plane;
+  {
+    Point p0;
+    PointVec_init(&p0, 0, 0, HITHER);
+
+    Vec normal;
+    PointVec_init(&normal, 0, 0, 1);
+
+    Plane_from_point_normal(&hither_plane, &p0, &normal);
+  }
+
+  Plane yon_plane;
+  {
+    Point p0;
+    PointVec_init(&p0, 0, 0, YON);
+
+    Vec normal;
+    PointVec_init(&normal, 0, 0, -1);
+
+    Plane_from_point_normal(&yon_plane, &p0, &normal);
+  }
+
+  // --
+
+  Poly_clip_with_plane(poly, &above_plane);
+  Poly_clip_with_plane(poly, &left_plane);
+  Poly_clip_with_plane(poly, &bottom_plane);
+  Poly_clip_with_plane(poly, &right_plane);
+  Poly_clip_with_plane(poly, &hither_plane);
+  Poly_clip_with_plane(poly, &yon_plane);
+}
+
+void Poly_display(const Poly *poly, const int is_focused, const int is_halo, const Point *light_source_loc) {
+  // focused: is the polygon part of the focused model? (NOT part of the halo)
+  // halo: is the polygon part of a halo?
+
+  Poly *clipped = Poly_clone(poly);
+  Poly_clip(clipped);
+
+  // If the clippedgon was entirely clipped, don't display it
+  if (clipped->point_count == 0) return;
+
+  if (DO_POLY_FILL) {
+
+    if (is_halo) {
+
+      Poly_display_as_halo(clipped);
+
+    } else {
+
+      double r = 0.8;
+      double g = 0.5;
+      double b = 0.8;
+
+      if (DO_LIGHT_MODEL) {
+        Poly_calc_color_M(
+          &r, &g, &b,
+          clipped, light_source_loc,
+          r, g, b);
+      }
+
+      G_rgb(r, g, b);
+      Poly_display_minimal(clipped);
+
+    }
+
+  }
+
+  if (DO_WIREFRAME && !is_halo) {
+
+    if ((!DO_POLY_FILL || !DO_HALO) && is_focused) {
       G_rgb(1, 0, 0);
     } else {
       G_rgb(.3, .3, .3);
     }
 
-    for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-      const Point *p0 = poly->points[point_idx];
-      const Point *pf = poly->points[(point_idx + 1) % poly->point_count];
-      display_line(p0, pf);
+    for (int point_idx = 0; point_idx < clipped->point_count; point_idx++) {
+      const Point *p0 = clipped->points[point_idx];
+      const Point *pf = clipped->points[(point_idx + 1) % clipped->point_count];
+
+      Line line;
+      Line_between(&line, p0, pf);
+      Line_display(&line);
     }
+
   }
+
+  Poly_destroy(clipped);
 }
 
 
@@ -237,7 +400,7 @@ void Poly_display(const Poly *poly, int focused, Point *light_source_loc) {
 typedef struct {
   Poly *poly;
   Model *belongs_to;
-  int is_focused;
+  int is_halo;
 } DisplayPoly;
 
 int comparator(const void *_dPoly0, const void *_dPoly1) {
@@ -255,8 +418,8 @@ int comparator(const void *_dPoly0, const void *_dPoly1) {
 
   // If they belong to the same model, place  focused polygons at the back.
   if (dPoly0->belongs_to == dPoly1->belongs_to) {
-    if (dPoly0->is_focused && !dPoly1->is_focused) return -1;
-    if (dPoly1->is_focused && !dPoly0->is_focused) return +1;
+    if (dPoly0->is_halo && !dPoly1->is_halo) return -1;
+    if (dPoly1->is_halo && !dPoly0->is_halo) return +1;
   }
 
   // Place distant polygons before
@@ -299,17 +462,17 @@ void display_models(Model *models[], int model_count, Model *focused_model, Mode
       const DisplayPoly dPoly = {
         .poly = (Poly *) poly,
         .belongs_to = (Model *) model,
-        .is_focused = is_focused };
+        .is_halo = 0 };
 
       aggregate_dPolys[aggregate_dPolys_i] = dPoly;
       aggregate_dPolys_i++;
 
-      // Create non-focused clone
+      // Create halo clone
       if (DO_POLY_FILL && DO_HALO && is_focused) {
         const DisplayPoly focusedDPoly = {
           .poly = (Poly *) poly,
           .belongs_to = (Model *) model,
-          .is_focused = 0 };
+          .is_halo = 1 };
 
         aggregate_dPolys[aggregate_dPolys_i] = focusedDPoly;
         aggregate_dPolys_i++;
@@ -321,7 +484,7 @@ void display_models(Model *models[], int model_count, Model *focused_model, Mode
 
   for (int dPoly_idx = 0; dPoly_idx < total_poly_count; dPoly_idx++) {
     DisplayPoly dPoly = aggregate_dPolys[dPoly_idx];
-    Poly_display(dPoly.poly, dPoly.is_focused, &light_source_loc);
+    Poly_display(dPoly.poly, dPoly.belongs_to == focused_model, dPoly.is_halo, &light_source_loc);
   }
 }
 

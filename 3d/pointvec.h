@@ -3,7 +3,7 @@
 
 // Points and vectors are combined into one type
 
-typedef struct {
+typedef struct PointVec {
   double x;
   double y;
   double z;

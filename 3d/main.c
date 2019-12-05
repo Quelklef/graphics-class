@@ -142,6 +142,8 @@ void on_key(Model *model, const char key) {
   static const int param_AMBIENT        = 2;
   static const int param_DIFFUSE_MAX    = 3;
   static const int param_SPECULAR_POWER = 4;
+  static const int param_HITHER         = 5;
+  static const int param_YON            = 6;
   static int parameter = 0;
 
 // https://stackoverflow.com/a/1508589/4608364
@@ -149,21 +151,29 @@ void on_key(Model *model, const char key) {
 #define printr(...) printf(__VA_ARGS__); printf("                "); reset();
 
   switch(key) {
-    case '&':
+    case 'H':
       parameter = param_HALF_ANGLE;
       printr("Selected param: HALF_ANGLE (%lf)", HALF_ANGLE);
       break;
-    case '*':
+    case 'B':
       parameter = param_AMBIENT;
       printr("Selected param: AMBIENT (%lf)", AMBIENT);
       break;
-    case '(':
+    case 'M':
       parameter = param_DIFFUSE_MAX;
       printr("Selected param: DIFFUSE_MAX (%lf)", DIFFUSE_MAX);
       break;
-    case ')':
+    case 'P':
       parameter = param_SPECULAR_POWER;
       printr("Selected param: SPECULAR_POWER (%d)", SPECULAR_POWER);
+      break;
+    case 'T':
+      parameter = param_HITHER;
+      printr("Selected param: HITHER (%lf)", HITHER);
+      break;
+    case 'Y':
+      parameter = param_YON;
+      printr("Selected param: YON (%lf)", YON);
       break;
   }
 
@@ -182,6 +192,12 @@ void on_key(Model *model, const char key) {
     } else if (parameter == param_SPECULAR_POWER) {
       SPECULAR_POWER += sign * 1;
       printr("SPECULAR_POWER = %d", SPECULAR_POWER);
+    } else if (parameter == param_HITHER) {
+      HITHER += sign * 0.1;
+      printr("HITHER = %lf", HITHER);
+    } else if (parameter == param_YON) {
+      YON += sign * 0.1;
+      printr("YON = %lf", YON);
     }
   }
 }
@@ -210,10 +226,12 @@ void show_help() {
   printf("\n");
   printf("Scalar parameters:\n");
   printf("  -+   - Adjust parameter\n");
-  printf("  &    - Select parameter HALF_ANGLE\n");
-  printf("  *    - Select parameter AMBIENT\n");
-  printf("  (    - Select parameter DIFFUSE_MAX\n");
-  printf("  )    - Select parameter SPECULAR_POWER\n");
+  printf("  H    - Select parameter HALF_ANGLE\n");
+  printf("  B    - Select parameter AMBIENT\n");
+  printf("  M    - Select parameter DIFFUSE_MAX\n");
+  printf("  P    - Select parameter SPECULAR_POWER\n");
+  printf("  T    - Select parameter HITHER\n");
+  printf("  Y    - Select parameter YON\n");
   printf("\n");
 }
 
