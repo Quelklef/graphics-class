@@ -256,7 +256,7 @@ void display_state() {
   draw_param(20, 120, "H", param_HALF_ANGLE    , "HAngle : %lf      ", HALF_ANGLE);
   draw_param(20, 100, "B", param_AMBIENT       , "Ambient: %lf      ", AMBIENT);
   draw_param(20,  80, "M", param_DIFFUSE_MAX   , "DifMax : %lf      ", DIFFUSE_MAX);
-  draw_param(20,  60, "P", param_SPECULAR_POWER, "SpecPow: %lf      ", SPECULAR_POWER);
+  draw_param(20,  60, "P", param_SPECULAR_POWER, "SpecPow: %d      ", SPECULAR_POWER);
   draw_param(20,  40, "T", param_HITHER        , "Hither : %lf      ", HITHER);
   draw_param(20,  20, "Y", param_YON           , "Yon    : %lf      ", YON);
 }
