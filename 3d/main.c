@@ -13,6 +13,17 @@ void add_model(Model *model) {
   model_count++;
 }
 
+// Currently selected parameter
+static const int param_HALF_ANGLE     = 1;
+static const int param_AMBIENT        = 2;
+static const int param_DIFFUSE_MAX    = 3;
+static const int param_SPECULAR_POWER = 4;
+static const int param_HITHER         = 5;
+static const int param_YON            = 6;
+static int current_parameter = 0;
+
+int display_overlay = 0;
+
 void on_key(Model *model, const char key) {
   // Two ways to move: with an absolute distance
   static const double abs_speed = 0.5;
@@ -133,17 +144,11 @@ void on_key(Model *model, const char key) {
     case '^': DO_CLIPPING             = 1 - DO_CLIPPING;             break;
 
     case '/': BACKFACE_ELIMINATION_SIGN *= -1; break;
+
+    case '`': display_overlay = 1 - display_overlay; break;
   }
 
   // Parameter adjustment
-
-  static const int param_HALF_ANGLE     = 1;
-  static const int param_AMBIENT        = 2;
-  static const int param_DIFFUSE_MAX    = 3;
-  static const int param_SPECULAR_POWER = 4;
-  static const int param_HITHER         = 5;
-  static const int param_YON            = 6;
-  static int parameter = 0;
 
 // https://stackoverflow.com/a/1508589/4608364
 #define reset() printf("\r"); fflush(stdout);
@@ -151,27 +156,27 @@ void on_key(Model *model, const char key) {
 
   switch(key) {
     case 'H':
-      parameter = param_HALF_ANGLE;
+      current_parameter = param_HALF_ANGLE;
       printr("Selected param: HALF_ANGLE (%lf)", HALF_ANGLE);
       break;
     case 'B':
-      parameter = param_AMBIENT;
+      current_parameter = param_AMBIENT;
       printr("Selected param: AMBIENT (%lf)", AMBIENT);
       break;
     case 'M':
-      parameter = param_DIFFUSE_MAX;
+      current_parameter = param_DIFFUSE_MAX;
       printr("Selected param: DIFFUSE_MAX (%lf)", DIFFUSE_MAX);
       break;
     case 'P':
-      parameter = param_SPECULAR_POWER;
+      current_parameter = param_SPECULAR_POWER;
       printr("Selected param: SPECULAR_POWER (%d)", SPECULAR_POWER);
       break;
     case 'T':
-      parameter = param_HITHER;
+      current_parameter = param_HITHER;
       printr("Selected param: HITHER (%lf)", HITHER);
       break;
     case 'Y':
-      parameter = param_YON;
+      current_parameter = param_YON;
       printr("Selected param: YON (%lf)", YON);
       break;
   }
@@ -180,26 +185,80 @@ void on_key(Model *model, const char key) {
     const int sign = (key == '=' || key == '+') ? 1 : -1;
     const int is_fast = key == '+' || key == '_';
 
-    if (parameter == param_HALF_ANGLE) {
-      HALF_ANGLE += sign * (is_fast ? 0.75 : 0.05);
+    if (current_parameter == param_HALF_ANGLE) {
+      HALF_ANGLE += sign * (is_fast ? 0.50 : 0.01);
       printr("HALF_ANGLE = %lf", HALF_ANGLE);
-    } else if (parameter == param_AMBIENT) {
+    } else if (current_parameter == param_AMBIENT) {
       AMBIENT += sign * (is_fast ? 0.5 : 0.05);
       printr("AMBIENT = %lf", AMBIENT);
-    } else if (parameter == param_DIFFUSE_MAX) {
+    } else if (current_parameter == param_DIFFUSE_MAX) {
       DIFFUSE_MAX += sign * (is_fast ? 0.5 : 0.05);
       printr("DIFFUSE_MAX = %lf", DIFFUSE_MAX);
-    } else if (parameter == param_SPECULAR_POWER) {
+    } else if (current_parameter == param_SPECULAR_POWER) {
       SPECULAR_POWER += sign * (is_fast ? 25 : 1);
       printr("SPECULAR_POWER = %d", SPECULAR_POWER);
-    } else if (parameter == param_HITHER) {
+    } else if (current_parameter == param_HITHER) {
       HITHER += sign * (is_fast ? 1.5 : 0.1);
       printr("HITHER = %lf", HITHER);
-    } else if (parameter == param_YON) {
+    } else if (current_parameter == param_YON) {
       YON += sign * (is_fast ? 1.5 : 0.1);
       printr("YON = %lf", YON);
     }
   }
+}
+
+// Would prefer to do this with functions than macros,
+// but can't pass varargs from one variadic function to another
+#define draw_stringf(llx, lly, fstring, ...) \
+  { \
+    const int len = strlen(fstring); \
+    char buffer[len]; \
+    buffer[0] = '\0'; \
+    snprintf(buffer, len, fstring, ##__VA_ARGS__); \
+    G_draw_string(buffer,  llx, lly); \
+  }
+
+#define draw_param(llx, lly, key, code, fstring, ...) \
+  { \
+    char *left; \
+    char *right; \
+    if (current_parameter == code) { \
+      left = "["; \
+      right = "] "; \
+    } else { \
+      left = "("; \
+      right = ") "; \
+    } \
+    char catted[strlen(left) + strlen(key) + strlen(right) + strlen(fstring)]; \
+    catted[0] = '\0'; \
+    strcat(catted, left); \
+    strcat(catted, key); \
+    strcat(catted, right); \
+    strcat(catted, fstring); \
+    draw_stringf(llx, lly, catted, ##__VA_ARGS__); \
+  }
+
+
+void display_state() {
+  G_rgb(1, 1, 1);
+  draw_stringf(20, SCREEN_HEIGHT -  40, "(`) Overlay: %d", display_overlay);
+  if (!display_overlay) return;
+
+  draw_stringf(20, SCREEN_HEIGHT -  80, "(!) Wframe: %d", DO_WIREFRAME);
+  draw_stringf(20, SCREEN_HEIGHT - 100, "(@) BFElim: %d", DO_BACKFACE_ELIMINATION);
+  draw_stringf(20, SCREEN_HEIGHT - 120, "(/)   Sign: %d ", BACKFACE_ELIMINATION_SIGN);
+  draw_stringf(20, SCREEN_HEIGHT - 140, "(#) Fill  : %d", DO_POLY_FILL);
+  draw_stringf(20, SCREEN_HEIGHT - 160, "($) Light : %d", DO_LIGHT_MODEL);
+  draw_stringf(20, SCREEN_HEIGHT - 180, "(%%) Halos : %d", DO_HALO);
+  draw_stringf(20, SCREEN_HEIGHT - 200, "(^) Clip  : %d", DO_CLIPPING);
+
+  draw_stringf(20, 140, "Use +/- to adjust ");
+  draw_param(20, 120, "H", param_HALF_ANGLE    , "HAngle : %lf      ", HALF_ANGLE);
+  draw_param(20, 100, "B", param_AMBIENT       , "Ambient: %lf      ", AMBIENT);
+  draw_param(20,  80, "M", param_DIFFUSE_MAX   , "DifMax : %lf      ", DIFFUSE_MAX);
+  draw_param(20,  60, "P", param_SPECULAR_POWER, "SpecPow: %lf      ", SPECULAR_POWER);
+  draw_param(20,  40, "T", param_HITHER        , "Hither : %lf      ", HITHER);
+  draw_param(20,  20, "Y", param_YON           , "Yon    : %lf      ", YON);
 }
 
 void show_help() {
@@ -310,6 +369,7 @@ int main(const int argc, const char **argv) {
     G_rgb(0, 0, 0);
     G_clear();
     G_rgb(1, 0, 0);
+
     G_fill_rectangle(0               , 0                , SCREEN_WIDTH, 1            );
     G_fill_rectangle(SCREEN_WIDTH - 1, 0                , 1           , SCREEN_HEIGHT);
     G_fill_rectangle(0               , SCREEN_HEIGHT - 1, SCREEN_WIDTH, 1            );
@@ -325,6 +385,8 @@ int main(const int argc, const char **argv) {
     }
 
     display_models(models, model_count, focused_model, light_source);
+
+    display_state();
 
   } while ((key = G_wait_key()) != 'e');
 
