@@ -199,9 +199,11 @@ void on_key(Model *model, const char key) {
       printr("SPECULAR_POWER = %d", SPECULAR_POWER);
     } else if (current_parameter == param_HITHER) {
       HITHER += sign * (is_fast ? 1.5 : 0.1);
+      if (HITHER > YON) HITHER = YON;  // Don't let HITHER and YON 'cross'
       printr("HITHER = %lf", HITHER);
     } else if (current_parameter == param_YON) {
       YON += sign * (is_fast ? 1.5 : 0.1);
+      if (YON < HITHER) YON = HITHER;  // Don't let HITHER and YON 'cross'
       printr("YON = %lf", YON);
     }
   }
@@ -210,6 +212,8 @@ void on_key(Model *model, const char key) {
 // Would prefer to do this with functions than macros,
 // but can't pass varargs from one variadic function to another
 #define draw_stringf(llx, lly, fstring, ...) \
+  /* Draw a format string. The length of the string after formatting */ \
+  /* is bounded by the length of the format string */ \
   { \
     const int len = strlen(fstring); \
     char buffer[len]; \
@@ -259,6 +263,26 @@ void display_state() {
   draw_param(20,  60, "P", param_SPECULAR_POWER, "SpecPow: %d      ", SPECULAR_POWER);
   draw_param(20,  40, "T", param_HITHER        , "Hither : %lf      ", HITHER);
   draw_param(20,  20, "Y", param_YON           , "Yon    : %lf      ", YON);
+
+  // Draw indices for each model
+  for (int model_i = 0; model_i < model_count; model_i++) {
+    const Model *model = models[model_i];
+
+    double min_x, max_x, min_y, max_y, min_z, max_z;
+    Model_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, model);
+    // Skip models that are entirely clipped
+    if ( max_z <= HITHER || min_z >= YON
+         || HITHER >= YON ) {  // If HITHER >= YON then all models are entirely clipped
+      continue;
+    }
+
+    Point center;
+    Model_center_M(&center, model);
+    double px, py;
+    pixel_coords_M(&px, &py, &center);
+
+    draw_stringf(px, py, "%d        ", model_i);
+  }
 }
 
 void show_help() {

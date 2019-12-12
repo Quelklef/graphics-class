@@ -190,9 +190,18 @@ void Poly_display_as_halo(const Poly *poly) {
 
 void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
   // Clip a polygon with a plane
-  // The potion of the shape on the on the same side as the point
+  // The portion of the shape on the on the same side as the point
   //   (0, 0, (YON + HITHER)/2) will be kept
+  //   (given that YON > HITHER)
   // Frees removed points
+
+  // If HITHER >= YON, then all models are entirely clipped
+  if (HITHER >= YON) {
+    Poly_destroy(poly);
+    const Poly *new = Poly_new();
+    *poly = *new;
+    return;
+  }
 
   Poly result_poly;
   Poly_init(&result_poly);
