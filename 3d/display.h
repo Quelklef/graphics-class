@@ -197,9 +197,7 @@ void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
 
   // If HITHER >= YON, then all models are entirely clipped
   if (HITHER >= YON) {
-    Poly_destroy(poly);
-    const Poly *new = Poly_new();
-    *poly = *new;
+    Poly_clear(poly);
     return;
   }
 

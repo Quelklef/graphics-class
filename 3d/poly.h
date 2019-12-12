@@ -47,10 +47,15 @@ Poly *Poly_clone(const Poly *source) {
   return poly;
 }
 
-void Poly_destroy(Poly *poly) {
+void Poly_clear(Poly *poly) {
   for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
     PointVec_destroy(poly->points[point_idx]);
   }
+  poly->point_count = 0;
+}
+
+void Poly_destroy(Poly *poly) {
+  Poly_clear(poly);
   free(poly);
 }
 
