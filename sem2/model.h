@@ -182,13 +182,18 @@ Model *load_model(const char *filename) {
         exit(1);
       }
 
-      Point *point = PointVec_new(xs[crossref_idx], ys[crossref_idx], zs[crossref_idx]);
+      Point *point = PointVec_new(
+        xs[crossref_idx],
+        ys[crossref_idx],
+        zs[crossref_idx]
+      );
       Poly_add_point(poly, point);
     }
 
     Model_add_poly(model, poly);
   }
 
+  // TODO: this should not be in this location
   nicely_place_model(model);
 
   fclose(file);

@@ -7,9 +7,9 @@
 #include "matrix.h"
 
 // Points that define the observer
-Point *eye;
-Point *up_point;
-Point *center_of_interest;
+Point *eye = NULL;
+Point *up_point = NULL;
+Point *center_of_interest = NULL;
 
 void init_observer() {
   eye = PointVec_new(0, 0, 0);
@@ -41,27 +41,30 @@ void calc_eyespace_matrix_M(_Mat result) {
   PointVec_transform(&up_clone, observer_to_origin);
   PointVec_transform(&coi_clone, observer_to_origin);
 
-  // Rotate observer so that the center of interest is on the z-axis
+  // Rotate observer so that the center of interest is on the y-z plane
   _Mat align_coi_1;
   const double theta1 = -atan2(coi_clone.x, coi_clone.z);
   Mat_y_rotation_M(align_coi_1, theta1);
 
+  // Emulate doing this to the existing stuff
+  PointVec_transform(&eye_clone, align_coi_1);
+  PointVec_transform(&up_clone, align_coi_1);
+  PointVec_transform(&coi_clone, align_coi_1);
+
+  // Rotate observer so that the center of interest is on the z-axis
   _Mat align_coi_2;
-  const double theta2 = -atan2(coi_clone.y, coi_clone.z);
+  const double theta2 = +atan2(coi_clone.y, coi_clone.z);
   Mat_x_rotation_M(align_coi_2, theta2);
 
   // Emulate doing this to the existing stuff
-  PointVec_transform(&eye_clone, align_coi_1);
   PointVec_transform(&eye_clone, align_coi_2);
-  PointVec_transform(&up_clone, align_coi_1);
   PointVec_transform(&up_clone, align_coi_2);
-  PointVec_transform(&coi_clone, align_coi_1);
   PointVec_transform(&coi_clone, align_coi_2);
 
   // Rotate observer so that the up point is on the y-z plane
   _Mat align_up;
-  const double theta3 = -atan2(up_clone.x, up_clone.z);
-  Mat_y_rotation_M(align_up, theta3);
+  const double theta3 = +atan2(up_clone.x, up_clone.y);
+  Mat_z_rotation_M(align_up, theta3);
 
   // Compose all the matrices
   Mat_identity_M(result);

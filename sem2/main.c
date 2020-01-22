@@ -1,4 +1,5 @@
 #include <FPT.h>
+#include <math.h>
 
 #include "matrix.h"
 #include "poly.h"
@@ -14,7 +15,7 @@ void add_model(Model *model) {
   model_count++;
 }
 
-Model *light_source;
+Model *light_source = NULL;
 
 
 // Currently selected parameter
@@ -331,7 +332,7 @@ void draw_box() {
   G_fill_rectangle(0               , 0                , 1           , SCREEN_HEIGHT);
 }
 
-int load_files(const char **filenames, const int file_count) {
+void load_files(const char **filenames, const int file_count) {
   for (int i = 0; i < file_count; i++) {
     const char *filename = filenames[i];
     Model *model = load_model(filename);
@@ -365,6 +366,119 @@ void event_loop() {
   } while ((key = G_wait_key()) != 'e');
 }
 
+
+
+void place_at_origin(Model *model) {
+  Point center;
+  Model_center_M(&center, model);
+
+  _Mat translate;
+  Mat_translation_M(translate, -center.x, -center.y, -center.z);
+  Model_transform(model, translate);
+}
+
+void setup_scene() {
+
+  // Place sphere
+
+  Model *sphere = load_model("xyz/sphere.xyz");
+  place_at_origin(sphere);
+
+  _Mat sph_dilate;
+  Mat_scaling_M(sph_dilate, 0.25, 0.25, 0.25);
+  Model_transform(sphere, sph_dilate);
+
+  add_model(sphere);
+
+  // Place cylinders
+
+  Model *cyl = load_model("xyz/cylinder.xyz");
+  place_at_origin(cyl);
+
+  _Mat cyl_translate;
+  Mat_translation_M(cyl_translate, 1, 0, 0);
+  Model_transform(cyl, cyl_translate);
+
+  _Mat cyl_dilate;
+  Mat_scaling_M(cyl_dilate, 2, 1, 1);
+  Model_transform(cyl, cyl_dilate);
+
+  // x cylinder
+
+  Model *x_cyl = Model_clone(cyl);
+  add_model(x_cyl);
+
+  // y cylinder
+
+  Model *y_cyl = Model_clone(cyl);
+
+  // Rotate to be on y-axis
+  _Mat y_cyl_rot;
+  Mat_z_rotation_M(y_cyl_rot, M_PI / 2);
+  Model_transform(y_cyl, y_cyl_rot);
+
+  add_model(y_cyl);
+
+
+  // z cylinder
+
+  Model *z_cyl = Model_clone(cyl);
+
+  // Rotate to be on z-axis
+  _Mat z_cyl_rot;
+  Mat_y_rotation_M(z_cyl_rot, -M_PI / 2);
+  Model_transform(z_cyl, z_cyl_rot);
+
+  add_model(z_cyl);
+
+  // cleanup
+
+  Model_destroy(cyl);
+
+}
+
+void do_animation() {
+  setup_scene();
+
+  const int frame_count = 100;
+
+  while (1) {
+
+    for (int frame_idx = 0; frame_idx <= frame_count; frame_idx++) {
+
+      // Clear screen
+      G_rgb(0, 0, 0);
+      G_clear();
+      G_rgb(1, 0, 0);
+      draw_box();
+
+      const double t = (double) frame_idx / frame_count;
+      printf("t = %f\n", t);
+
+      eye->x = 15 * cos(2 * M_PI * t),
+      eye->y = 6 * t,
+      eye->z = 7 * sin(2 * M_PI * t),
+
+      center_of_interest->x = 0;
+      center_of_interest->y = 0;
+      center_of_interest->z = 0;
+
+      up_point->x = eye->x;
+      up_point->y = eye->y + 1;
+      up_point->z = eye->z;
+
+      display_models(models, model_count, NULL, light_source);
+
+
+      const char key = G_wait_key();
+      if (key == 'e') return;
+
+    }
+
+  }
+
+}
+
 int main(const int argc, const char **argv) {
 
   // Setup
@@ -380,8 +494,9 @@ int main(const int argc, const char **argv) {
 
   // Main
 
-  load_files(&argv[1], argc - 1);
-  event_loop();
+  //load_files(&argv[1], argc - 1);
+  //event_loop();
+  do_animation(); 
 
   // Teardown
 

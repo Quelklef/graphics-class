@@ -478,8 +478,8 @@ void display_models(Model *models[], const int model_count, const Model *focused
   // Will clone all models and store their transformed
   // versions in this array
   Model *in_eyespace[model_count];
-  Model *focused_clone;
-  Model *light_source_clone;
+  Model *focused_clone = NULL;
+  Model *light_source_clone = NULL;
 
   _Mat to_eyespace;
   calc_eyespace_matrix_M(to_eyespace);
@@ -497,9 +497,9 @@ void display_models(Model *models[], const int model_count, const Model *focused
   display_models_aux(in_eyespace, model_count, focused_clone, light_source_clone);
 
   // Clean up
-  for (int model_i = 0; model_i < model_count; model_i++) {
-    Model *model = in_eyespace[model_i];
-    Model_destroy(model);
+  for (int clone_i = 0; clone_i < model_count; clone_i++) {
+    Model *clone = in_eyespace[clone_i];
+    Model_destroy(clone);
   }
 
 }
