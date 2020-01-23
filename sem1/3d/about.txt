@@ -1,7 +1,0 @@
-
-If a function returns a result, it may do so in one of two ways:
-  - Using the return statement
-  - Modifying one or more passed-in 'result' variable
-If the second method is used, the function MUST be suffixed with '_M'.
-Additionally, the passed-in result variables(s) MUST be the leftmost
-parameters and SHOULD either be named 'result' or begin with 'result_'.
