@@ -67,11 +67,13 @@ void calc_eyespace_matrix_M(_Mat result) {
   Mat_z_rotation_M(align_up, theta3);
 
   // Compose all the matrices
-  Mat_identity_M(result);
-  Mat_mult_left(result, observer_to_origin);
-  Mat_mult_left(result, align_coi_1);
-  Mat_mult_left(result, align_coi_2);
-  Mat_mult_left(result, align_up);
+  Mat_chain_M(
+    result, 4,
+    observer_to_origin,
+    align_coi_1,
+    align_coi_2,
+    align_up
+  );
 }
 
 #endif // eye_h_INCLUDED

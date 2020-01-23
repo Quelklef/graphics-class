@@ -29,9 +29,9 @@ void Mat_print(const _Mat a) {
     for (c = 0; c < 4; c++) {
       printf(" %12.4lf ", a[r][c]);
     }
-    printf("|");
-    printf("\n");
+    printf("|\n");
   }
+  printf("\n");
 } 
 
 void Mat_clone_M(_Mat result, const _Mat src) {
@@ -126,6 +126,37 @@ void Mat_mult_left(_Mat mat, const _Mat x) {
   Mat_mult_M(mat, x, mat);
 }
 
+void Mat_compose_M(_Mat result, const int count, ...) {
+  // Mat_compose(r, a, b, c) makes r = I*a*b*c
+
+  va_list args;
+  va_start(args, count);
+
+  Mat_identity_M(result);
+  for (int i = 0; i < count; i++) {
+    // Expecting pointer to array due to decay
+    double (*mat)[] = va_arg(args, double(*)[]);
+    Mat_mult_M(result, result, mat);
+  }
+
+  va_end(args);
+}
+
+void Mat_chain_M(_Mat result, const int count, ...) {
+  // Mat_chain(r, a, b, c) makes r = c*b*a*I
+
+  va_list args;
+  va_start(args, count);
+
+  Mat_identity_M(result);
+  for (int i = 0; i < count; i++) {
+    double (*mat)[] = va_arg(args, double(*)[]);
+    Mat_mult_M(result, mat, result);
+  }
+
+  va_end(args);
+}
+
 void Mat_mat_mult_pt_M(double result[3], const _Mat m, const double Q[3]) {
   // result = m*Q
   // SAFE, user may make a call like M2d_mat_mult_pt (W, m,W);
@@ -134,8 +165,8 @@ void Mat_mat_mult_pt_M(double result[3], const _Mat m, const double Q[3]) {
   u[1] = Q[1];
   for (int i = 0; i < 2; i++) {
     result[i] = m[i][0] * u[0]
-         + m[i][1] * u[1]
-         + m[i][2] * 1   ;
+              + m[i][1] * u[1]
+              + m[i][2] * 1   ;
   }
 }
 

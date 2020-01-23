@@ -481,11 +481,18 @@ void do_animation() {
 
 int main(const int argc, const char **argv) {
 
+  _Mat mat;
+  Mat_translation_M(mat, 1, 2, 3);
+
+  _Mat ch;
+  Mat_chain_M(ch, 1, &mat);
+  printf("done");
+
   // Setup
 
   G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-  show_help();
+  //show_help();
 
   light_source = make_small_model();
   add_model(light_source);
