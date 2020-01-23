@@ -481,12 +481,7 @@ void do_animation() {
 
 int main(const int argc, const char **argv) {
 
-  _Mat mat;
-  Mat_translation_M(mat, 1, 2, 3);
-
-  _Mat ch;
-  Mat_chain_M(ch, 1, &mat);
-  printf("done");
+  double test[4][4] = mtr(1, 2, 3);
 
   // Setup
 

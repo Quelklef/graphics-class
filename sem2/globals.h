@@ -8,7 +8,9 @@ const int SCREEN_HEIGHT = 800;
 
 #define ENOUGH 5000
 
-double HALF_ANGLE                = M_PI / 8;
+#define degrees(deg) ((double) (deg) / 180 * M_PI)
+
+double HALF_ANGLE                = degrees(30);
 
 int    DO_WIREFRAME              = 1;
 int    DO_BACKFACE_ELIMINATION   = 0;
