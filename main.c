@@ -31,9 +31,9 @@ int display_overlay = 0;
 
 void on_key(Model *model, const char key) {
   // Two ways to move: with an absolute distance
-  static const double abs_speed = 0.5;
+  static const float abs_speed = 0.5;
   // or moving as a percentage of the object's size
-  static const double rel_speed = 0.1;
+  static const float rel_speed = 0.1;
 
   // Absolute transformations
 
@@ -65,7 +65,7 @@ void on_key(Model *model, const char key) {
   _Mat translate_up_rel;
   _Mat translate_down_rel;
 
-  double model_x_size, model_y_size, model_z_size;
+  float model_x_size, model_y_size, model_z_size;
   Model_size_M(&model_x_size, &model_y_size, &model_z_size, model);
   Mat_translation_M(translate_backwards_rel, 0, 0, -rel_speed * model_z_size);
   Mat_translation_M(translate_forwards_rel , 0, 0, +rel_speed * model_z_size);
@@ -74,20 +74,19 @@ void on_key(Model *model, const char key) {
   Mat_translation_M(translate_up_rel       , 0, +rel_speed * model_y_size, 0);
   Mat_translation_M(translate_down_rel     , 0, -rel_speed * model_y_size, 0);
 
-  Point model_center;
-  Model_center_M(&model_center, model);
+  const v3 model_center = Model_center(model);
 
   _Mat translate_to_origin;
   _Mat translate_from_origin;
 
-  Mat_translation_M(translate_to_origin, -model_center.x, -model_center.y, -model_center.z);
-  Mat_translation_M(translate_from_origin, model_center.x, model_center.y, model_center.z);
+  Mat_translation_M(translate_to_origin, -model_center[0], -model_center[1], -model_center[2]);
+  Mat_translation_M(translate_from_origin, model_center[0], model_center[1], model_center[2]);
 
 #define make_rel_to_origin(name) \
   Mat_mult_right(name, translate_to_origin); \
   Mat_mult_left(name, translate_from_origin);
 
-  const double scale_amt = 0.01;
+  const float scale_amt = 0.01;
 
   _Mat scale_up;
   Mat_scaling_M(scale_up, 1 + scale_amt, 1 + scale_amt, 1 + scale_amt);
@@ -97,7 +96,7 @@ void on_key(Model *model, const char key) {
   Mat_scaling_M(scale_down, 1 - scale_amt, 1 - scale_amt, 1 - scale_amt);
   make_rel_to_origin(scale_down);
 
-  const double angle = M_PI / 16;
+  const float angle = M_PI / 16;
 
 #define make_rot_with_sign(name, axis, sign) \
   _Mat name; \
@@ -274,7 +273,7 @@ void display_state() {
   for (int model_i = 0; model_i < model_count; model_i++) {
     const Model *model = models[model_i];
 
-    double min_x, max_x, min_y, max_y, min_z, max_z;
+    float min_x, max_x, min_y, max_y, min_z, max_z;
     Model_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, model);
     // Skip models that are entirely clipped
     if ( max_z <= HITHER || min_z >= YON
@@ -282,10 +281,9 @@ void display_state() {
       continue;
     }
 
-    Point center;
-    Model_center_M(&center, model);
-    double px, py;
-    pixel_coords_M(&px, &py, &center);
+    const v3 center = Model_center(model);
+    float px, py;
+    pixel_coords_M(&px, &py, center);
 
     draw_stringf(px, py, "%d        ", model_i);
   }
@@ -369,11 +367,10 @@ void event_loop() {
 
 
 void place_at_origin(Model *model) {
-  Point center;
-  Model_center_M(&center, model);
+  const v3 center = Model_center(model);
 
   _Mat translate;
-  Mat_translation_M(translate, -center.x, -center.y, -center.z);
+  Mat_translation_M(translate, -center[0], -center[1], -center[2]);
   Model_transform(model, translate);
 }
 
@@ -452,20 +449,20 @@ void do_animation() {
       G_rgb(1, 0, 0);
       draw_box();
 
-      const double t = (double) frame_idx / frame_count;
+      const float t = (float) frame_idx / frame_count;
       printf("t = %f\n", t);
 
-      eye->x = 15 * cos(2 * M_PI * t),
-      eye->y = 6 * t,
-      eye->z = 7 * sin(2 * M_PI * t),
+      eye[0] = 15 * cos(2 * M_PI * t),
+      eye[1] = 6 * t,
+      eye[2] = 7 * sin(2 * M_PI * t),
 
-      center_of_interest->x = 0;
-      center_of_interest->y = 0;
-      center_of_interest->z = 0;
+      center_of_interest[0] = 0;
+      center_of_interest[1] = 0;
+      center_of_interest[2] = 0;
 
-      up_point->x = eye->x;
-      up_point->y = eye->y + 1;
-      up_point->z = eye->z;
+      up_point[0] = eye[0];
+      up_point[1] = eye[1] + 1;
+      up_point[2] = eye[2];
 
       display_models(models, model_count, NULL, light_source);
 
@@ -481,8 +478,6 @@ void do_animation() {
 
 int main(const int argc, const char **argv) {
 
-  double test[4][4] = mtr(1, 2, 3);
-
   // Setup
 
   G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
@@ -491,8 +486,6 @@ int main(const int argc, const char **argv) {
 
   light_source = make_small_model();
   add_model(light_source);
-
-  init_observer();
 
   // Main
 

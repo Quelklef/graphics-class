@@ -8,28 +8,28 @@ const int SCREEN_HEIGHT = 800;
 
 #define ENOUGH 5000
 
-#define degrees(deg) ((double) (deg) / 180 * M_PI)
+#define degrees(deg) ((float) (deg) / 180 * M_PI)
 
-double HALF_ANGLE                = degrees(30);
+float HALF_ANGLE                = degrees(30);
 
-int    DO_WIREFRAME              = 1;
-int    DO_BACKFACE_ELIMINATION   = 0;
-int    DO_HALO                   = 0;
-int    DO_CLIPPING               = 1;
+int   DO_WIREFRAME              = 1;
+int   DO_BACKFACE_ELIMINATION   = 0;
+int   DO_HALO                   = 0;
+int   DO_CLIPPING               = 1;
 
-int    BACKFACE_ELIMINATION_SIGN = 1;
+int   BACKFACE_ELIMINATION_SIGN = 1;
 
-int    DO_POLY_FILL              = 1;
-int    DO_LIGHT_MODEL            = 1;
+int   DO_POLY_FILL              = 1;
+int   DO_LIGHT_MODEL            = 1;
 
-double AMBIENT                   = 0.4;
-double DIFFUSE_MAX               = 0.3;
-int    SPECULAR_POWER            = 50;
+float AMBIENT                   = 0.4;
+float DIFFUSE_MAX               = 0.3;
+int   SPECULAR_POWER            = 50;
 
 // Threshold for which objects too close to the observer aren't shown
-double HITHER                    = 1;
+float HITHER                    = 1;
 //Threshold for which objects too far from the observer aren't shown
-double YON                       = 30;
+float YON                       = 30;
 
 #endif // globals_h_INCLUDED
 

@@ -1,21 +1,21 @@
 #ifndef line_h_INCLUDED
 #define line_h_INCLUDED
 
-#include "pointvec.h"
+#include "v3.h"
 
 // We define a line by two points
 typedef struct Line {
-  Point p0;
-  Point pf;
+  v3 p0;
+  v3 pf;
 } Line;
 
-void Line_between(Line *result, const Point *p0, const Point *pf) {
-  result->p0 = *p0;
-  result->pf = *pf;
+void Line_between(Line *result, const v3 p0, const v3 pf) {
+  result->p0 = p0;
+  result->pf = pf;
 }
 
-void Line_vector_M(Vec *result, const Line *line) {
-  PointVec_between_M(result, &line->p0, &line->pf);
+v3 Line_vector(const Line *line) {
+  return line->pf - line->p0;
 }
 
 #endif // line_h_INCLUDED

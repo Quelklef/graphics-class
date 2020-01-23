@@ -9,7 +9,7 @@
 // The underscore before it is meant
 // to remind the user that it is 
 // an array type and NOT a struct.
-typedef double _Mat[4][4];
+typedef float _Mat[4][4];
 
 
 /*
@@ -51,50 +51,50 @@ void Mat_identity_M(_Mat result) {
   }
 } 
 
-void Mat_translation_M(_Mat result, const double dx, const double dy, const double dz) {
+void Mat_translation_M(_Mat result, const float dx, const float dy, const float dz) {
   Mat_identity_M(result);
   result[0][3] = dx;
   result[1][3] = dy;
   result[2][3] = dz;
 }
 
-void Mat_scaling_M(_Mat result, const double sx, const double sy, const double sz) {
+void Mat_scaling_M(_Mat result, const float sx, const float sy, const float sz) {
   Mat_identity_M(result);
   result[0][0] = sx;
   result[1][1] = sy;
   result[2][2] = sz;
 }
 
-void Mat_z_rotation_cs_M(_Mat result, const double cs, const double sn) {
+void Mat_z_rotation_cs_M(_Mat result, const float cs, const float sn) {
   result[0][0] =  cs;   result[0][1] = -sn;   result[0][2] =   0;   result[0][3] =   0;
   result[1][0] =  sn;   result[1][1] =  cs;   result[1][2] =   0;   result[1][3] =   0;
   result[2][0] =   0;   result[2][1] =   0;   result[2][2] =   1;   result[2][3] =   0;
   result[3][0] =   0;   result[3][1] =   0;   result[3][2] =   0;   result[3][3] =   1;
 }
 
-void Mat_z_rotation_M(_Mat result, const double theta) {
+void Mat_z_rotation_M(_Mat result, const float theta) {
   Mat_z_rotation_cs_M(result, cos(theta), sin(theta));
 }
 
-void Mat_x_rotation_cs_M(_Mat result, const double cs, const double sn) {
+void Mat_x_rotation_cs_M(_Mat result, const float cs, const float sn) {
   result[0][0] =   1;   result[0][1] =   0;   result[0][2] =   0;   result[0][3] =   0;
   result[1][0] =   0;   result[1][1] =  cs;   result[1][2] = -sn;   result[1][3] =   0;
   result[2][0] =   0;   result[2][1] =  sn;   result[2][2] =  cs;   result[2][3] =   0;
   result[3][0] =   0;   result[3][1] =   0;   result[3][2] =   0;   result[3][3] =   1;
 }
 
-void Mat_x_rotation_M(_Mat result, const double theta) {
+void Mat_x_rotation_M(_Mat result, const float theta) {
   Mat_x_rotation_cs_M(result, cos(theta), sin(theta));
 }
 
-void Mat_y_rotation_cs_M(_Mat result, const double cs, const double sn) {
+void Mat_y_rotation_cs_M(_Mat result, const float cs, const float sn) {
   result[0][0] =  cs;   result[0][1] =   0;   result[0][2] =  sn;   result[0][3] =   0;
   result[1][0] =   0;   result[1][1] =   1;   result[1][2] =   0;   result[1][3] =   0;
   result[2][0] = -sn;   result[2][1] =   0;   result[2][2] =  cs;   result[2][3] =   0;
   result[3][0] =   0;   result[3][1] =   0;   result[3][2] =   0;   result[3][3] =   1;
 }
 
-void Mat_y_rotation_M(_Mat result, const double theta) {
+void Mat_y_rotation_M(_Mat result, const float theta) {
   Mat_y_rotation_cs_M(result, cos(theta), sin(theta));
 }
 
@@ -135,7 +135,7 @@ void Mat_compose_M(_Mat result, const int count, ...) {
   Mat_identity_M(result);
   for (int i = 0; i < count; i++) {
     // Expecting pointer to array due to decay
-    double (*mat)[] = va_arg(args, double(*)[]);
+    float (*mat)[] = va_arg(args, float(*)[]);
     Mat_mult_M(result, result, mat);
   }
 
@@ -150,17 +150,17 @@ void Mat_chain_M(_Mat result, const int count, ...) {
 
   Mat_identity_M(result);
   for (int i = 0; i < count; i++) {
-    double (*mat)[] = va_arg(args, double(*)[]);
+    float (*mat)[] = va_arg(args, float(*)[]);
     Mat_mult_M(result, mat, result);
   }
 
   va_end(args);
 }
 
-void Mat_mat_mult_pt_M(double result[3], const _Mat m, const double Q[3]) {
+void Mat_mat_mult_pt_M(float result[3], const _Mat m, const float Q[3]) {
   // result = m*Q
   // SAFE, user may make a call like M2d_mat_mult_pt (W, m,W);
-  double u[2];
+  float u[2];
   u[0] = Q[0];
   u[1] = Q[1];
   for (int i = 0; i < 2; i++) {
@@ -170,9 +170,9 @@ void Mat_mat_mult_pt_M(double result[3], const _Mat m, const double Q[3]) {
   }
 }
 
-void Mat_mat_mult_points_M(double result_X[], double result_Y[], double result_Z[],
+void Mat_mat_mult_points_M(float result_X[], float result_Y[], float result_Z[],
                            const _Mat m,
-                           const double x[], const double y[], const double z[],
+                           const float x[], const float y[], const float z[],
                            const int numpoints) {
   // |X0 X1 X2 ...|       |x0 x1 x2 ...|
   // |Y0 Y1 Y2 ...| = m * |y0 y1 y2 ...|
@@ -180,9 +180,9 @@ void Mat_mat_mult_points_M(double result_X[], double result_Y[], double result_Z
   // | 1  1  1 ...|       | 1  1  1 ...|
 
   // SAFE, user may make a call like M2d_mat_mult_points (x,y, m, x,y, n);
-  double copyX[numpoints];
-  double copyY[numpoints];
-  double copyZ[numpoints];
+  float copyX[numpoints];
+  float copyY[numpoints];
+  float copyZ[numpoints];
 
   for (int i = 0; i < numpoints; i++) {
     copyX[i] = x[i];

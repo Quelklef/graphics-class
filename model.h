@@ -5,7 +5,7 @@
 
 #include <float.h>
 
-#include "pointvec.h"
+#include "v3.h"
 #include "poly.h"
 #include "matrix.h"
 
@@ -62,9 +62,9 @@ void Model_transform(Model *model, const _Mat transformation) {
 }
 
 void Model_bounds_M(
-      double *result_min_x, double *result_max_x,
-      double *result_min_y, double *result_max_y,
-      double *result_min_z, double *result_max_z,
+      float *result_min_x, float *result_max_x,
+      float *result_min_y, float *result_max_y,
+      float *result_min_z, float *result_max_z,
       const Model *model
     ) {
 
@@ -78,10 +78,10 @@ void Model_bounds_M(
   for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
     const Poly *poly = model->polys[poly_idx];
     for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-      const Point *point = poly->points[point_idx];
-      double x = point->x;
-      double y = point->y;
-      double z = point->z;
+      const v3 point = poly->points[point_idx];
+      float x = point[0];
+      float y = point[1];
+      float z = point[2];
 
       if (x < *result_min_x) *result_min_x = x;
       if (x > *result_max_x) *result_max_x = x;
@@ -93,34 +93,35 @@ void Model_bounds_M(
   }
 }
 
-void Model_center_M(Point *result, const Model *model) {
-  double min_x, max_x, min_y, max_y, min_z, max_z;
+v3 Model_center(const Model *model) {
+  float min_x, max_x, min_y, max_y, min_z, max_z;
 
   Model_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, model);
 
-  result->x = min_x / 2 + max_x / 2;
-  result->y = min_y / 2 + max_y / 2;
-  result->z = min_z / 2 + max_z / 2;
+  return (v3) {
+    min_x / 2 + max_x / 2,
+    min_y / 2 + max_y / 2,
+    min_z / 2 + max_z / 2
+  };
 }
 
-void Model_size_M(double *result_x_size, double *result_y_size, double *result_z_size, const Model *model) {
-  double min_x, max_x, min_y, max_y, min_z, max_z;
+void Model_size_M(float *result_x_size, float *result_y_size, float *result_z_size, const Model *model) {
+  float min_x, max_x, min_y, max_y, min_z, max_z;
   Model_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, model);
   *result_x_size = max_x - min_x;
   *result_y_size = max_y - min_y;
   *result_z_size = max_z - min_z;
 }
 
-void Model_move_to(Model *model, const Point *target) {
-  Point model_center;
-  Model_center_M(&model_center, model);
+void Model_move_to(Model *model, const v3 target) {
+  v3 model_center = Model_center(model);
 
   _Mat translation;
   Mat_translation_M(
     translation,
-    -model_center.x + target->x,
-    -model_center.y + target->y,
-    -model_center.z + target->z
+    -model_center[0] + target[0],
+    -model_center[1] + target[1],
+    -model_center[2] + target[2]
   );
 
   Model_transform(model, translation);
@@ -129,15 +130,14 @@ void Model_move_to(Model *model, const Point *target) {
 void nicely_place_model(Model *model) {
   // Move the model to somewhere nice
 
-  double min_x, max_x, min_y, max_y, min_z, max_z;
+  float min_x, max_x, min_y, max_y, min_z, max_z;
   Model_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, model);
-  const double width = max_z - min_z;
+  const float width = max_z - min_z;
 
   // We choose that "somewhere nice" means that x=y=0 and the closest z value is at some z
-  const double desired_z = 15;
-  Point desired_location;
-  PointVec_init(&desired_location, 0, 0, width + desired_z);
-  Model_move_to(model, &desired_location);
+  const float desired_z = 15;
+  v3 desired_location = (v3) { 0, 0, width + desired_z };
+  Model_move_to(model, desired_location);
 }
 
 Model *load_model(const char *filename) {
@@ -182,11 +182,11 @@ Model *load_model(const char *filename) {
         exit(1);
       }
 
-      Point *point = PointVec_new(
-        xs[crossref_idx],
-        ys[crossref_idx],
-        zs[crossref_idx]
-      );
+      v3 point = {
+        (float) xs[crossref_idx],
+        (float) ys[crossref_idx],
+        (float) zs[crossref_idx]
+      };
       Poly_add_point(poly, point);
     }
 
@@ -205,41 +205,36 @@ Model *load_model(const char *filename) {
 Model *make_small_model() {
   /* Make a small model. No specified shape. Just small. */
 
-  Point *p0 = PointVec_new(0, 0, 0);
-  Point *p1 = PointVec_new(1, 0, 1);
-  Point *p2 = PointVec_new(1, 1, 0);
-  Point *p3 = PointVec_new(0, 1, 1);
+  v3 p0 = (v3) { 0, 0, 0 };
+  v3 p1 = (v3) { 1, 0, 1 };
+  v3 p2 = (v3) { 1, 1, 0 };
+  v3 p3 = (v3) { 0, 1, 1 };
 
-  const double scale = 0.1;
-  PointVec_scale(p0, scale);
-  PointVec_scale(p1, scale);
-  PointVec_scale(p2, scale);
-  PointVec_scale(p3, scale);
+  const float scale = 0.1;
+  p0 *= scale;
+  p1 *= scale;
+  p2 *= scale;
+  p3 *= scale;
 
   Poly *poly0 = Poly_new();
-  Poly_add_point(poly0, PointVec_clone(p1));
-  Poly_add_point(poly0, PointVec_clone(p2));
-  Poly_add_point(poly0, PointVec_clone(p3));
+  Poly_add_point(poly0, p1);
+  Poly_add_point(poly0, p2);
+  Poly_add_point(poly0, p3);
 
   Poly *poly1 = Poly_new();
-  Poly_add_point(poly1, PointVec_clone(p0));
-  Poly_add_point(poly1, PointVec_clone(p2));
-  Poly_add_point(poly1, PointVec_clone(p3));
+  Poly_add_point(poly1, p0);
+  Poly_add_point(poly1, p2);
+  Poly_add_point(poly1, p3);
 
   Poly *poly2 = Poly_new();
-  Poly_add_point(poly2, PointVec_clone(p0));
-  Poly_add_point(poly2, PointVec_clone(p1));
-  Poly_add_point(poly2, PointVec_clone(p3));
+  Poly_add_point(poly2, p0);
+  Poly_add_point(poly2, p1);
+  Poly_add_point(poly2, p3);
 
   Poly *poly3 = Poly_new();
-  Poly_add_point(poly3, PointVec_clone(p0));
-  Poly_add_point(poly3, PointVec_clone(p1));
-  Poly_add_point(poly3, PointVec_clone(p2));
-
-  PointVec_destroy(p0);
-  PointVec_destroy(p1);
-  PointVec_destroy(p2);
-  PointVec_destroy(p3);
+  Poly_add_point(poly3, p0);
+  Poly_add_point(poly3, p1);
+  Poly_add_point(poly3, p2);
 
   Model *model = Model_new();
   Model_add_poly(model, poly0);

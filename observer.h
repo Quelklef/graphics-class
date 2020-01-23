@@ -3,67 +3,57 @@
 
 #include <math.h>
 
-#include "pointvec.h"
+#include "v3.h"
 #include "matrix.h"
 
-// Points that define the observer
-Point *eye = NULL;
-Point *up_point = NULL;
-Point *center_of_interest = NULL;
-
-void init_observer() {
-  eye = PointVec_new(0, 0, 0);
-  up_point = PointVec_new(0, 1, 0);
-  center_of_interest = PointVec_new(0, 0, 1);
-}
+// v3s that define the observer
+v3 eye                = { 0, 0, 0 };
+v3 up_point           = { 0, 1, 0 };
+v3 center_of_interest = { 0, 0, 1 };
 
 void calc_eyespace_matrix_M(_Mat result) {
   /* Calculate the matrix that takes shapes
    * from world space to eye space
    */
 
-  Point eye_clone;
-  PointVec_overwrite(&eye_clone, eye);
-
-  Point up_clone;
-  PointVec_overwrite(&up_clone, up_point);
-
-  Point coi_clone;
-  PointVec_overwrite(&coi_clone, center_of_interest);
+  // Local variables
+  v3 l_eye = eye;
+  v3 l_upp = up_point;
+  v3 l_coi = center_of_interest;
 
 
   // Move the observer to the origin
   _Mat observer_to_origin;
-  Mat_translation_M(observer_to_origin, -eye->x, -eye->y, -eye->z);
+  Mat_translation_M(observer_to_origin, -eye[0], -eye[1], -eye[2]);
 
   // Emulate doing this to the existing stuff
-  PointVec_transform(&eye_clone, observer_to_origin);
-  PointVec_transform(&up_clone, observer_to_origin);
-  PointVec_transform(&coi_clone, observer_to_origin);
+  l_eye = v3_transform(l_eye, observer_to_origin);
+  l_upp = v3_transform(l_upp, observer_to_origin);
+  l_coi = v3_transform(l_coi, observer_to_origin);
 
   // Rotate observer so that the center of interest is on the y-z plane
   _Mat align_coi_1;
-  const double theta1 = -atan2(coi_clone.x, coi_clone.z);
+  const float theta1 = -atan2(l_coi[0], l_coi[2]);
   Mat_y_rotation_M(align_coi_1, theta1);
 
   // Emulate doing this to the existing stuff
-  PointVec_transform(&eye_clone, align_coi_1);
-  PointVec_transform(&up_clone, align_coi_1);
-  PointVec_transform(&coi_clone, align_coi_1);
+  l_eye = v3_transform(l_eye, align_coi_1);
+  l_upp = v3_transform(l_upp, align_coi_1);
+  l_coi = v3_transform(l_coi, align_coi_1);
 
   // Rotate observer so that the center of interest is on the z-axis
   _Mat align_coi_2;
-  const double theta2 = +atan2(coi_clone.y, coi_clone.z);
+  const float theta2 = +atan2(l_coi[1], l_coi[2]);
   Mat_x_rotation_M(align_coi_2, theta2);
 
   // Emulate doing this to the existing stuff
-  PointVec_transform(&eye_clone, align_coi_2);
-  PointVec_transform(&up_clone, align_coi_2);
-  PointVec_transform(&coi_clone, align_coi_2);
+  l_eye = v3_transform(l_eye, align_coi_2);
+  l_upp = v3_transform(l_upp, align_coi_2);
+  l_coi = v3_transform(l_coi, align_coi_2);
 
   // Rotate observer so that the up point is on the y-z plane
   _Mat align_up;
-  const double theta3 = +atan2(up_clone.x, up_clone.y);
+  const float theta3 = +atan2(l_upp[0], l_upp[1]);
   Mat_z_rotation_M(align_up, theta3);
 
   // Compose all the matrices
