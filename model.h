@@ -116,14 +116,7 @@ void Model_size_M(float *result_x_size, float *result_y_size, float *result_z_si
 void Model_move_to(Model *model, const v3 target) {
   v3 model_center = Model_center(model);
 
-  _Mat translation;
-  Mat_translation_M(
-    translation,
-    -model_center[0] + target[0],
-    -model_center[1] + target[1],
-    -model_center[2] + target[2]
-  );
-
+  const _Mat translation = Mat_translate_v(-model_center + target);
   Model_transform(model, translation);
 }
 

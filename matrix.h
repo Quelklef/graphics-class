@@ -40,63 +40,49 @@ void Mat_clone_M(_Mat result, const _Mat src) {
       result[i][j] = src[i][j];
     }
   }
-} 
-
-void Mat_identity_M(_Mat result) {
-  for (int r = 0; r < 4; r++) {
-    for (int c = 0; c < 4; c++) {
-      if (r == c) result[r][c] = 1.0;
-      else        result[r][c] = 0.0;
-    }
-  }
-} 
-
-void Mat_translation_M(_Mat result, const float dx, const float dy, const float dz) {
-  Mat_identity_M(result);
-  result[0][3] = dx;
-  result[1][3] = dy;
-  result[2][3] = dz;
 }
 
-void Mat_scaling_M(_Mat result, const float sx, const float sy, const float sz) {
-  Mat_identity_M(result);
-  result[0][0] = sx;
-  result[1][1] = sy;
-  result[2][2] = sz;
-}
+#define Mat_identity() \
+  { { 1, 0, 0, 0 }, \
+    { 0, 1, 0, 0 }, \
+    { 0, 0, 1, 0 }, \
+    { 0, 0, 0, 1 } }
 
-void Mat_z_rotation_cs_M(_Mat result, const float cs, const float sn) {
-  result[0][0] =  cs;   result[0][1] = -sn;   result[0][2] =   0;   result[0][3] =   0;
-  result[1][0] =  sn;   result[1][1] =  cs;   result[1][2] =   0;   result[1][3] =   0;
-  result[2][0] =   0;   result[2][1] =   0;   result[2][2] =   1;   result[2][3] =   0;
-  result[3][0] =   0;   result[3][1] =   0;   result[3][2] =   0;   result[3][3] =   1;
-}
+#define Mat_translate(dx, dy, dz) \
+  { { 1, 0, 0, (dx) }, \
+    { 0, 1, 0, (dy) }, \
+    { 0, 0, 1, (dz) }, \
+    { 0, 0, 0, 1    } }
 
-void Mat_z_rotation_M(_Mat result, const float theta) {
-  Mat_z_rotation_cs_M(result, cos(theta), sin(theta));
-}
+#define Mat_translate_v(v) \
+  Mat_translate((v)[0], (v)[1], (v)[2])
 
-void Mat_x_rotation_cs_M(_Mat result, const float cs, const float sn) {
-  result[0][0] =   1;   result[0][1] =   0;   result[0][2] =   0;   result[0][3] =   0;
-  result[1][0] =   0;   result[1][1] =  cs;   result[1][2] = -sn;   result[1][3] =   0;
-  result[2][0] =   0;   result[2][1] =  sn;   result[2][2] =  cs;   result[2][3] =   0;
-  result[3][0] =   0;   result[3][1] =   0;   result[3][2] =   0;   result[3][3] =   1;
-}
+#define Mat_dilate(dx, dy, dz) \
+  { { (dx), 0 , 0 , 0 }, \
+    { 0 , (dy), 0 , 0 }, \
+    { 0 , 0 , (dz), 0 }, \
+    { 0 , 0 , 0 , 1 } }
 
-void Mat_x_rotation_M(_Mat result, const float theta) {
-  Mat_x_rotation_cs_M(result, cos(theta), sin(theta));
-}
+#define Mat_dilate_v(v) \
+  Mat_dilate((v)[0], (v)[1], (v)[2])
 
-void Mat_y_rotation_cs_M(_Mat result, const float cs, const float sn) {
-  result[0][0] =  cs;   result[0][1] =   0;   result[0][2] =  sn;   result[0][3] =   0;
-  result[1][0] =   0;   result[1][1] =   1;   result[1][2] =   0;   result[1][3] =   0;
-  result[2][0] = -sn;   result[2][1] =   0;   result[2][2] =  cs;   result[2][3] =   0;
-  result[3][0] =   0;   result[3][1] =   0;   result[3][2] =   0;   result[3][3] =   1;
-}
+#define Mat_x_rot(t) \
+  { { 1, 0     , 0      , 0 }, \
+    { 0, cos(t), -sin(t), 0 }, \
+    { 0, sin(t),  cos(t), 0 }, \
+    { 0, 0     , 0      , 1 } }
 
-void Mat_y_rotation_M(_Mat result, const float theta) {
-  Mat_y_rotation_cs_M(result, cos(theta), sin(theta));
-}
+#define Mat_y_rot(t) \
+  { {  cos(t), 0, sin(t), 0 }, \
+    { 0      , 1, 0     , 0 }, \
+    { -sin(t), 0, cos(t), 0 }, \
+    { 0      , 0, 0     , 1 } }
+
+#define Mat_z_rot(t) \
+  { { cos(t), -sin(t), 0, 0 }, \
+    { sin(t),  cos(t), 0, 0 }, \
+    { 0     , 0      , 1, 0 }, \
+    { 0     , 0      , 0, 1 } }
 
 
 void Mat_mult_M(_Mat result, const _Mat a, const _Mat b) {
@@ -118,84 +104,21 @@ void Mat_mult_M(_Mat result, const _Mat a, const _Mat b) {
   }
 }
 
-void Mat_mult_right(_Mat mat, const _Mat x) {
-  Mat_mult_M(mat, mat, x);
-}
-
-void Mat_mult_left(_Mat mat, const _Mat x) {
-  Mat_mult_M(mat, x, mat);
-}
-
-void Mat_compose_M(_Mat result, const int count, ...) {
-  // Mat_compose(r, a, b, c) makes r = I*a*b*c
-
-  va_list args;
-  va_start(args, count);
-
-  Mat_identity_M(result);
-  for (int i = 0; i < count; i++) {
-    // Expecting pointer to array due to decay
-    float (*mat)[] = va_arg(args, float(*)[]);
-    Mat_mult_M(result, result, mat);
-  }
-
-  va_end(args);
-}
-
 void Mat_chain_M(_Mat result, const int count, ...) {
   // Mat_chain(r, a, b, c) makes r = c*b*a*I
 
   va_list args;
   va_start(args, count);
 
-  Mat_identity_M(result);
+  const _Mat id = Mat_identity();
+  Mat_clone_M(result, id);
+
   for (int i = 0; i < count; i++) {
     float (*mat)[] = va_arg(args, float(*)[]);
     Mat_mult_M(result, mat, result);
   }
 
   va_end(args);
-}
-
-void Mat_mat_mult_pt_M(float result[3], const _Mat m, const float Q[3]) {
-  // result = m*Q
-  // SAFE, user may make a call like M2d_mat_mult_pt (W, m,W);
-  float u[2];
-  u[0] = Q[0];
-  u[1] = Q[1];
-  for (int i = 0; i < 2; i++) {
-    result[i] = m[i][0] * u[0]
-              + m[i][1] * u[1]
-              + m[i][2] * 1   ;
-  }
-}
-
-void Mat_mat_mult_points_M(float result_X[], float result_Y[], float result_Z[],
-                           const _Mat m,
-                           const float x[], const float y[], const float z[],
-                           const int numpoints) {
-  // |X0 X1 X2 ...|       |x0 x1 x2 ...|
-  // |Y0 Y1 Y2 ...| = m * |y0 y1 y2 ...|
-  // |Z0 Z1 Z2 ...|       |z0 z1 z2 ...|
-  // | 1  1  1 ...|       | 1  1  1 ...|
-
-  // SAFE, user may make a call like M2d_mat_mult_points (x,y, m, x,y, n);
-  float copyX[numpoints];
-  float copyY[numpoints];
-  float copyZ[numpoints];
-
-  for (int i = 0; i < numpoints; i++) {
-    copyX[i] = x[i];
-    copyY[i] = y[i];
-    copyZ[i] = z[i];
-  }
-
-  for (int j = 0; j < numpoints; j++) {
-    result_X[j] = m[0][0] * copyX[j] + m[0][1] * copyY[j] + m[0][2] * copyZ[j] + m[0][3] * 1;
-    result_Y[j] = m[1][0] * copyX[j] + m[1][1] * copyY[j] + m[1][2] * copyZ[j] + m[1][3] * 1;
-    result_Z[j] = m[2][0] * copyX[j] + m[2][1] * copyY[j] + m[2][2] * copyZ[j] + m[2][3] * 1;
-  }
-
 }
 
 #endif // Mat_mat_tools_INCLUDED

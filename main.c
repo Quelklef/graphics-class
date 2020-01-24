@@ -39,77 +39,50 @@ void on_key(Model *model, const char key) {
 
   static int already_init = 0;
 
-  static _Mat translate_backwards_abs;
-  static _Mat translate_forwards_abs;
-  static _Mat translate_left_abs;
-  static _Mat translate_right_abs;
-  static _Mat translate_up_abs;
-  static _Mat translate_down_abs;
-
-  if (!already_init) {
-    Mat_translation_M(translate_backwards_abs, 0, 0, -abs_speed);
-    Mat_translation_M(translate_forwards_abs , 0, 0, +abs_speed);
-    Mat_translation_M(translate_left_abs     , -abs_speed, 0, 0);
-    Mat_translation_M(translate_right_abs    , +abs_speed, 0, 0);
-    Mat_translation_M(translate_up_abs       , 0, +abs_speed, 0);
-    Mat_translation_M(translate_down_abs     , 0, -abs_speed, 0);
-    already_init = 1;
-  }
+  static const _Mat translate_backwards_abs = Mat_translate(0, 0, -abs_speed);
+  static const _Mat translate_forwards_abs  = Mat_translate(0, 0, +abs_speed);
+  static const _Mat translate_left_abs      = Mat_translate(-abs_speed, 0, 0);
+  static const _Mat translate_right_abs     = Mat_translate(+abs_speed, 0, 0);
+  static const _Mat translate_up_abs        = Mat_translate(0, +abs_speed, 0);
+  static const _Mat translate_down_abs      = Mat_translate(0, -abs_speed, 0);
 
   // Relative transformations
 
-  _Mat translate_backwards_rel;
-  _Mat translate_forwards_rel;
-  _Mat translate_left_rel;
-  _Mat translate_right_rel;
-  _Mat translate_up_rel;
-  _Mat translate_down_rel;
-
   float model_x_size, model_y_size, model_z_size;
   Model_size_M(&model_x_size, &model_y_size, &model_z_size, model);
-  Mat_translation_M(translate_backwards_rel, 0, 0, -rel_speed * model_z_size);
-  Mat_translation_M(translate_forwards_rel , 0, 0, +rel_speed * model_z_size);
-  Mat_translation_M(translate_left_rel     , -rel_speed * model_x_size, 0, 0);
-  Mat_translation_M(translate_right_rel    , +rel_speed * model_x_size, 0, 0);
-  Mat_translation_M(translate_up_rel       , 0, +rel_speed * model_y_size, 0);
-  Mat_translation_M(translate_down_rel     , 0, -rel_speed * model_y_size, 0);
+
+  const _Mat translate_backwards_rel = Mat_translate(0, 0, -rel_speed * model_z_size);
+  const _Mat translate_forwards_rel  = Mat_translate(0, 0, +rel_speed * model_z_size);
+  const _Mat translate_left_rel      = Mat_translate(-rel_speed * model_x_size, 0, 0);
+  const _Mat translate_right_rel     = Mat_translate(+rel_speed * model_x_size, 0, 0);
+  const _Mat translate_up_rel        = Mat_translate(0, +rel_speed * model_y_size, 0);
+  const _Mat translate_down_rel      = Mat_translate(0, -rel_speed * model_y_size, 0);
 
   const v3 model_center = Model_center(model);
 
-  _Mat translate_to_origin;
-  _Mat translate_from_origin;
-
-  Mat_translation_M(translate_to_origin, -model_center[0], -model_center[1], -model_center[2]);
-  Mat_translation_M(translate_from_origin, model_center[0], model_center[1], model_center[2]);
+  const _Mat translate_to_origin   = Mat_translate_v(-model_center);
+  const _Mat translate_from_origin = Mat_translate_v(+model_center);
 
 #define make_rel_to_origin(name) \
-  Mat_mult_right(name, translate_to_origin); \
-  Mat_mult_left(name, translate_from_origin);
+  Mat_mult_M(name, name, translate_to_origin); \
+  Mat_mult_M(name, translate_from_origin, name);
 
   const float scale_amt = 0.01;
 
-  _Mat scale_up;
-  Mat_scaling_M(scale_up, 1 + scale_amt, 1 + scale_amt, 1 + scale_amt);
+  _Mat scale_up = Mat_dilate(1 + scale_amt, 1 + scale_amt, 1 + scale_amt);
   make_rel_to_origin(scale_up);
 
-  _Mat scale_down;
-  Mat_scaling_M(scale_down, 1 - scale_amt, 1 - scale_amt, 1 - scale_amt);
+  _Mat scale_down = Mat_dilate(1 - scale_amt, 1 - scale_amt, 1 - scale_amt);
   make_rel_to_origin(scale_down);
 
   const float angle = M_PI / 16;
 
-#define make_rot_with_sign(name, axis, sign) \
-  _Mat name; \
-  Mat_ ## axis ## _rotation_cs_M(name, cos(sign * angle), sin(sign * angle)); \
-  make_rel_to_origin(name)
-
-#define make_rot_mats(axis) \
-  make_rot_with_sign(rotate_ ## axis ## _positive, axis, +1); \
-  make_rot_with_sign(rotate_ ## axis ## _negative, axis, -1);
-
-  make_rot_mats(x)
-  make_rot_mats(y)
-  make_rot_mats(z)
+  const _Mat rotate_x_positive = Mat_x_rot(+angle);
+  const _Mat rotate_x_negative = Mat_x_rot(-angle);
+  const _Mat rotate_y_positive = Mat_y_rot(+angle);
+  const _Mat rotate_y_negative = Mat_y_rot(-angle);
+  const _Mat rotate_z_positive = Mat_z_rot(+angle);
+  const _Mat rotate_z_negative = Mat_z_rot(-angle);
 
   switch(key) {
     case 'w': Model_transform(model, translate_forwards_rel ); break;
@@ -368,10 +341,7 @@ void event_loop() {
 
 void place_at_origin(Model *model) {
   const v3 center = Model_center(model);
-
-  _Mat translate;
-  Mat_translation_M(translate, -center[0], -center[1], -center[2]);
-  Model_transform(model, translate);
+  Model_transform(model, (_Mat) Mat_translate_v(-center));
 }
 
 void setup_scene() {
@@ -381,9 +351,7 @@ void setup_scene() {
   Model *sphere = load_model("xyz/sphere.xyz");
   place_at_origin(sphere);
 
-  _Mat sph_dilate;
-  Mat_scaling_M(sph_dilate, 0.25, 0.25, 0.25);
-  Model_transform(sphere, sph_dilate);
+  Model_transform(sphere, (_Mat) Mat_dilate(0.25, 0.25, 0.25));
 
   add_model(sphere);
 
@@ -392,13 +360,8 @@ void setup_scene() {
   Model *cyl = load_model("xyz/cylinder.xyz");
   place_at_origin(cyl);
 
-  _Mat cyl_translate;
-  Mat_translation_M(cyl_translate, 1, 0, 0);
-  Model_transform(cyl, cyl_translate);
-
-  _Mat cyl_dilate;
-  Mat_scaling_M(cyl_dilate, 2, 1, 1);
-  Model_transform(cyl, cyl_dilate);
+  Model_transform(cyl, (_Mat) Mat_translate(1, 0, 0));
+  Model_transform(cyl, (_Mat) Mat_dilate(2, 1, 1));
 
   // x cylinder
 
@@ -408,28 +371,19 @@ void setup_scene() {
   // y cylinder
 
   Model *y_cyl = Model_clone(cyl);
-
   // Rotate to be on y-axis
-  _Mat y_cyl_rot;
-  Mat_z_rotation_M(y_cyl_rot, M_PI / 2);
-  Model_transform(y_cyl, y_cyl_rot);
-
+  Model_transform(y_cyl, (_Mat) Mat_z_rot(M_PI / 2));
   add_model(y_cyl);
 
 
   // z cylinder
 
   Model *z_cyl = Model_clone(cyl);
-
   // Rotate to be on z-axis
-  _Mat z_cyl_rot;
-  Mat_y_rotation_M(z_cyl_rot, -M_PI / 2);
-  Model_transform(z_cyl, z_cyl_rot);
-
+  Model_transform(z_cyl, (_Mat) Mat_y_rot(-M_PI / 2));
   add_model(z_cyl);
 
   // cleanup
-
   Model_destroy(cyl);
 
 }
@@ -450,7 +404,6 @@ void do_animation() {
       draw_box();
 
       const float t = (float) frame_idx / frame_count;
-      printf("t = %f\n", t);
 
       eye[0] = 15 * cos(2 * M_PI * t),
       eye[1] = 6 * t,

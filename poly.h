@@ -105,20 +105,21 @@ void Poly_transform(Poly *poly, const float transformation[4][4]) {
 }
 
 void Poly_scale_relative(Poly *poly, const float ratio) {
-  v3 poly_center = Poly_center(poly);
+  const v3 poly_center = Poly_center(poly);
 
-  _Mat scale;
-  Mat_scaling_M(scale, ratio, ratio, ratio);
+  _Mat scale = Mat_dilate(ratio, ratio, ratio);
+  _Mat to_origin = Mat_translate_v(-poly_center);
+  _Mat from_origin = Mat_translate_v(+poly_center);
 
-  _Mat to_origin;
-  Mat_translation_M(to_origin, -poly_center[0], -poly_center[1], -poly_center[2]);
-  Mat_mult_right(scale, to_origin);
+  _Mat composed;
+  Mat_chain_M(
+    composed, 3,
+    to_origin,
+    scale,
+    from_origin
+  );
 
-  _Mat from_origin;
-  Mat_translation_M(from_origin, +poly_center[0], +poly_center[1], +poly_center[2]);
-  Mat_mult_left(scale, from_origin);
-
-  Poly_transform(poly, scale);
+  Poly_transform(poly, composed);
 }
 
 #endif // poly_h_INCLUDED
