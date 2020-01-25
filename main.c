@@ -37,8 +37,6 @@ void on_key(Model *model, const char key) {
 
   // Absolute transformations
 
-  static int already_init = 0;
-
   static const _Mat translate_backwards_abs = Mat_translate(0, 0, -abs_speed);
   static const _Mat translate_forwards_abs  = Mat_translate(0, 0, +abs_speed);
   static const _Mat translate_left_abs      = Mat_translate(-abs_speed, 0, 0);
