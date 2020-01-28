@@ -75,12 +75,18 @@ void on_key(Model *model, const char key) {
 
   const float angle = M_PI / 16;
 
-  const _Mat rotate_x_positive = Mat_x_rot(+angle);
-  const _Mat rotate_x_negative = Mat_x_rot(-angle);
-  const _Mat rotate_y_positive = Mat_y_rot(+angle);
-  const _Mat rotate_y_negative = Mat_y_rot(-angle);
-  const _Mat rotate_z_positive = Mat_z_rot(+angle);
-  const _Mat rotate_z_negative = Mat_z_rot(-angle);
+  _Mat rotate_x_positive = Mat_x_rot(+angle);
+  make_rel_to_origin(rotate_x_positive);
+  _Mat rotate_x_negative = Mat_x_rot(-angle);
+  make_rel_to_origin(rotate_x_negative);
+  _Mat rotate_y_positive = Mat_y_rot(+angle);
+  make_rel_to_origin(rotate_y_positive);
+  _Mat rotate_y_negative = Mat_y_rot(-angle);
+  make_rel_to_origin(rotate_y_negative);
+  _Mat rotate_z_positive = Mat_z_rot(+angle);
+  make_rel_to_origin(rotate_z_positive);
+  _Mat rotate_z_negative = Mat_z_rot(-angle);
+  make_rel_to_origin(rotate_z_negative);
 
   switch(key) {
     case 'w': Model_transform(model, translate_forwards_rel ); break;
@@ -440,9 +446,9 @@ int main(const int argc, const char **argv) {
 
   // Main
 
-  //load_files(&argv[1], argc - 1);
-  //event_loop();
-  do_animation(); 
+  load_files(&argv[1], argc - 1);
+  event_loop();
+  //do_animation(); 
 
   // Teardown
 
