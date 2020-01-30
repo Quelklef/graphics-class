@@ -8,9 +8,9 @@ const int SCREEN_HEIGHT = 800;
 
 #define ENOUGH 5000
 
-#define degrees(deg) ((float) (deg) / 180 * M_PI)
+#define DEGREES(deg) ((float) (deg) / 180 * M_PI)
 
-float HALF_ANGLE                = degrees(30);
+float HALF_ANGLE                = DEGREES(30);
 
 int   DO_WIREFRAME              = 1;
 int   DO_BACKFACE_ELIMINATION   = 0;

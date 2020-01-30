@@ -196,7 +196,7 @@ Model *load_model(const char *filename) {
 }
 
 Model *make_small_model() {
-  /* Make a small model. No specified shape. Just small. */
+  /* Make a small model. No specified size or shape. Just small. */
 
   v3 p0 = (v3) { 0, 0, 0 };
   v3 p1 = (v3) { 1, 0, 1 };
@@ -235,6 +235,7 @@ Model *make_small_model() {
   Model_add_poly(model, poly2);
   Model_add_poly(model, poly3);
 
+  // TODO: this should not be in this location
   nicely_place_model(model);
 
   return model;

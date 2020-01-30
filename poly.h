@@ -122,4 +122,24 @@ void Poly_scale_relative(Poly *poly, const float ratio) {
   Poly_transform(poly, composed);
 }
 
+Poly *Poly_from_parametric(
+  float (*x)(float t),
+  float (*y)(float t),
+  float (*z)(float t),
+  float t0,
+  float tf,
+  float step
+) {
+
+  Poly *poly = Poly_new();
+
+  for (float t = t0; t <= tf; t += step) {
+    v3 point = { x(t), y(t), z(t) };
+    Poly_add_point(poly, point);
+  }
+
+  return poly;
+
+}
+
 #endif // poly_h_INCLUDED
