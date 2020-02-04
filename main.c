@@ -350,63 +350,198 @@ void event_loop() {
 
 
 
-void display_naive(const Poly *poly) {
-  for (int i = 0; i < poly->point_count; i++) {
+float const_0(float t) { return 0; }
+
+float circle_x(float t) { return cos(t); }
+float circle_y(float t) { return sin(t); }
+
+float sum4_x(float t) {
+  t = fmod(t, 2 * M_PI);
+  if (t < M_PI / 2 || t > 3 * M_PI / 2) return sqrt(fabs(cos(t)));
+  else return -sqrt(fabs(cos(t)));
+}
+
+float sum4_y(float t) {
+  t = fmod(t, 2 * M_PI);
+  if (t < M_PI) return sqrt(fabs(sin(t)));
+  else return -sqrt(fabs(sin(t)));
+}
+
+float square_x(float t) {
+  t = fmod(t, 2 * M_PI);
+  if (t < M_PI / 2 || t > 3 * M_PI / 2) return pow(cos(t), 2);
+  else return -pow(cos(t), 2);
+}
+
+float square_y(float t) {
+  t = fmod(t, 2 * M_PI);
+  if (t < M_PI) return pow(sin(t), 2);
+  else return -pow(sin(t), 2);
+}
+
+float asteroid_x(float t) {
+  t = fmod(t, 2 * M_PI);
+  if (t < M_PI / 2 || t > 3 * M_PI / 2) return pow(cos(t), 4);
+  else return -pow(cos(t), 4);
+}
+
+float asteroid_y(float t) {
+  t = fmod(t, 2 * M_PI);
+  if (t < M_PI) return pow(sin(t), 4);
+  else return -pow(sin(t), 4);
+}
+
+float hyperbola_x(float t) { return cosh(t); }
+float hyperbola_y(float t) { return sinh(t); }
+
+float parabola_x(float t) { return t; }
+float parabola_y(float t) { return pow(t, 2); }
+
+float lemon_x(float t) { return pow(cos(t), 3); }
+float lemon_y(float t) { return sin(t); }
+
+void display_with_normals(const Poly *poly) {
+
+  const normal_spacing = 20;
+
+  for (int i = 0; i < poly->point_count - 1; i++) {
     const v3 p0 = poly->points[i];
-    const v3 p1 = poly->points[(i + 1) % poly->point_count];
+    const v3 p1 = poly->points[i+1];
+
     G_line(p0[0], p0[1], p1[0], p1[1]);
+
+    if (i % normal_spacing == 0) {
+      const v3 d = p1 - p0;
+      const float theta = -M_PI / 2 + atan2(d[1], d[0]);
+      const v3 normal = 50 * (v3) { cos(theta), sin(theta), 0 };
+      const v3 tip = p1 + normal;
+
+      G_line(p1[0], p1[1], tip[0], tip[1]);
+    }
+
   }
+
 }
 
+void show_2d_lab() {
 
-void show_stickman_lab() {
+  // == Circle == //
 
-  Poly *stickman = Poly_new();
+  Poly *circle = Poly_from_parametric(
+    circle_x, circle_y, const_0,
+    M_PI / 4, M_PI * 3/2, 0.01
+  );
 
-  double xs[13] = { 175, 225, 225, 300, 225, 225, 250, 200, 150, 175, 175, 100, 175 };
-  double ys[13] = { 300, 300, 250, 225, 225, 200, 100, 175, 100, 200, 225, 225, 250 };
-  double zs[13] = { 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0  , 0   };
+  _Mat c_d = Mat_dilate(50, 100, 1);
+  _Mat c_t = Mat_translate(300, 500, 0);
 
-  for (int i = 0; i < 13; i++) {
-    v3 point = { xs[i], ys[i], zs[i] };
-    Poly_add_point(stickman, point);
-  }
+  _Mat c_composed;
+  Mat_chain_M(c_composed, 2, c_d, c_t);
+  Poly_transform(circle, c_composed);
 
-  _Mat st0 = Mat_translate(-200, -200, 0);
-  _Mat st1 = Mat_dilate(2.0, 2.0, 1);
-  _Mat st2 = Mat_translate(300, 300, 0);
+  display_with_normals(circle);
 
-  _Mat starting_transform;
-  Mat_chain_M(starting_transform, 3, st0, st1, st2);
+  // == Sum4 == //
 
-  _Mat ft0 = Mat_translate(-300, -300, 0);
-  _Mat ft1 = Mat_dilate(0.95, 0.95, 1);
-  _Mat ft2 = Mat_z_rot(DEGREES(4));
-  _Mat ft3 = Mat_translate(300, 300, 0);
+  Poly *sum4 = Poly_from_parametric(
+    sum4_x, sum4_y, const_0,
+    M_PI / 2, 1.75 * M_PI, 0.01
+  );
 
-  _Mat frame_transform;
-  Mat_chain_M(frame_transform, 4, ft0, ft1, ft2, ft3);
+  _Mat s4_d = Mat_dilate(30, 60, 1);
+  _Mat s4_t = Mat_translate(300, 300, 0);
 
-  // --
+  _Mat s4_composed;
+  Mat_chain_M(s4_composed, 2, s4_d, s4_t);
+  Poly_transform(sum4, s4_composed);
 
-  Poly_transform(stickman, starting_transform);
+  display_with_normals(sum4);
 
-  for (int frame_i = 0; frame_i < 100; frame_i++) {
-    G_rgb(0, 0, 0);
-    G_clear();
+  // == Square == //
 
-    G_rgb(1, 0, 0);
-    draw_box();
-    display_naive(stickman);
-    Poly_transform(stickman, frame_transform);
+  Poly *square = Poly_from_parametric(
+    square_x, square_y, const_0,
+    0, 2 * M_PI, 0.01
+  );
 
-    G_display_image();
-    usleep(25000);
-  }
+  _Mat sq_d = Mat_dilate(150, 100, 1);
+  _Mat sq_t = Mat_translate(500, 500, 0);
 
-  Poly_destroy(stickman);
+  _Mat sq_composed;
+  Mat_chain_M(sq_composed, 2, sq_d, sq_t);
+  Poly_transform(square, sq_composed);
+
+  display_with_normals(square);
+
+  // == Asteroid == //
+
+  Poly *asteroid = Poly_from_parametric(
+    asteroid_x, asteroid_y, const_0,
+    0, 2 * M_PI, 0.01
+  );
+
+  _Mat a_d = Mat_dilate(80, 40, 1);
+  _Mat a_r = Mat_z_rot(DEGREES(45));
+  _Mat a_t = Mat_translate(500, 300, 0);
+
+  _Mat a_composed;
+  Mat_chain_M(a_composed, 3, a_d, a_r, a_t);
+  Poly_transform(asteroid, a_composed);
+
+  display_with_normals(asteroid);
+
+  // == Hyperbola == //
+
+  Poly *hyperbola = Poly_from_parametric(
+    hyperbola_x, hyperbola_y, const_0,
+    -1, 2, 0.01
+  );
+
+  _Mat h_d = Mat_dilate(100, -100, 1);
+  _Mat h_t = Mat_translate(250, 250, 0);
+
+  _Mat h_composed;
+  Mat_chain_M(h_composed, 2, h_d, h_t);
+  Poly_transform(hyperbola, h_composed);
+
+  display_with_normals(hyperbola);
+
+  // == Parabola == //
+
+  Poly *parabola = Poly_from_parametric(
+    parabola_x, parabola_y, const_0,
+    -1, 2, 0.01
+  );
+
+  _Mat p_d = Mat_dilate(150, 50, 1);
+  _Mat p_r = Mat_z_rot(DEGREES(60));
+  _Mat p_t = Mat_translate(250, 250, 0);
+
+  _Mat p_composed;
+  Mat_chain_M(p_composed, 3, p_d, p_r, p_t);
+  Poly_transform(parabola, p_composed);
+
+  display_with_normals(parabola);
+
+  // == Lemon == //
+
+  Poly *lemon = Poly_from_parametric(
+    lemon_x, lemon_y, const_0,
+    0, 2 * M_PI, 0.01
+  );
+
+  _Mat l_d = Mat_dilate(150, 150, 1);
+  _Mat l_r = Mat_z_rot(DEGREES(60));
+  _Mat l_t = Mat_translate(600, 150, 0);
+
+  _Mat l_composed;
+  Mat_chain_M(l_composed, 3, l_d, l_r, l_t);
+  Poly_transform(lemon, l_composed);
+
+  display_with_normals(lemon);
 
 }
+
 
 int main(const int argc, const char **argv) {
 
@@ -423,7 +558,8 @@ int main(const int argc, const char **argv) {
 
   // == Main == //
 
-  show_stickman_lab();
+  show_2d_lab();
+  G_wait_key();
 
   //event_loop();
 
