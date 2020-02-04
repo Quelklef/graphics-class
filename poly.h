@@ -26,7 +26,9 @@ Poly *Poly_new() {
 void Poly_print(const Poly* poly) {
   printf("POLY [\n");
   for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+    printf("\t");
     v3_print(poly->points[point_idx]);
+    printf("\n");
   }
   printf("] POLY\n");
 }
