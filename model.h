@@ -195,19 +195,108 @@ Model *load_model(const char *filename) {
 
 }
 
+Model *Model_from_parametric(
+  v3 (*f)(float t, float s),
+  const float t0,
+  const float tf,
+  const int t_count,
+  const int do_t_wrapping,
+  const float s0,
+  const float sf,
+  const int s_count,
+  const int do_s_wrapping
+) {
+
+  const float dt = (tf - t0) / t_count;
+  const float ds = (sf - s0) / s_count;
+
+  // Point is a 2d array of v3
+  // Major axis is t_idx, minor is s_idx
+  // This array is almost always too large for the stack,
+  // so we we have to dynamically allocate it.
+  v3 *points = malloc(t_count * s_count * sizeof(v3));
+#define point_at(i, j) (*(points + (size_t) (i) * (size_t) s_count + (size_t) (j)))
+// use of size_t as per https://stackoverflow.com/a/3463745/4608364
+
+  if (points == NULL) {
+    printf("malloc failed");
+    exit(1);
+  }
+
+  for (int t_idx = 0; t_idx < t_count; t_idx++) {
+    for (int s_idx = 0; s_idx < s_count; s_idx++) {
+      const float t = t0 + t_idx * dt;
+      const float s = s0 + s_idx * ds;
+
+      const v3 v = f(t, s);
+      point_at(t_idx, s_idx) = v;
+    }
+  }
+
+  // Each quadruplet of adjacent items becomes a polygon
+
+  Model *model = Model_new();
+
+  for (int t_idx = 0; t_idx < t_count - 1; t_idx++) {
+    for (int s_idx = 0; s_idx < s_count - 1; s_idx++) {
+      const v3 top_left     = point_at(t_idx    , s_idx    );
+      const v3 top_right    = point_at(t_idx + 1, s_idx    );
+      const v3 bottom_left  = point_at(t_idx    , s_idx + 1);
+      const v3 bottom_right = point_at(t_idx + 1, s_idx + 1);
+
+      Poly *poly = Poly_from_points(4, top_left, top_right, bottom_right, bottom_left);
+      Model_add_poly(model, poly);
+    }
+  }
+
+  if (do_t_wrapping) {
+    for (int s_idx = 0; s_idx < s_count - 1; s_idx++ ) {
+      const v3 top_left     = point_at(t_count - 1, s_idx    );
+      const v3 top_right    = point_at(0          , s_idx    );
+      const v3 bottom_left  = point_at(t_count - 1, s_idx + 1);
+      const v3 bottom_right = point_at(0          , s_idx + 1);
+
+      Poly *poly = Poly_from_points(4, top_left, top_right, bottom_right, bottom_left);
+      Model_add_poly(model, poly);
+    }
+  }
+
+  if (do_s_wrapping) {
+    for (int t_idx = 0; t_idx < t_count - 1; t_idx++) {
+      const v3 top_left     = point_at(t_idx    , s_count - 1);
+      const v3 top_right    = point_at(t_idx + 1, s_count - 1);
+      const v3 bottom_left  = point_at(t_idx    , 0          );
+      const v3 bottom_right = point_at(t_idx + 1, 0          );
+
+      Poly *poly = Poly_from_points(4, top_left, top_right, bottom_right, bottom_left);
+      Model_add_poly(model, poly);
+    }
+  }
+
+  if (do_t_wrapping && do_s_wrapping) {
+    const v3 top_left     = point_at(t_count - 1, s_count - 1);
+    const v3 top_right    = point_at(0          , s_count - 1);
+    const v3 bottom_left  = point_at(t_count - 1, 0          );
+    const v3 bottom_right = point_at(0          , 0          );
+
+    Poly *poly = Poly_from_points(4, top_left, top_right, bottom_left, bottom_right);
+    Model_add_poly(model, poly);
+  }
+
+  free(points);
+  return model;
+
+}
+
 Model *make_small_model() {
   /* Make a small model. No specified size or shape. Just small. */
 
-  v3 p0 = (v3) { 0, 0, 0 };
-  v3 p1 = (v3) { 1, 0, 1 };
-  v3 p2 = (v3) { 1, 1, 0 };
-  v3 p3 = (v3) { 0, 1, 1 };
-
   const float scale = 0.1;
-  p0 *= scale;
-  p1 *= scale;
-  p2 *= scale;
-  p3 *= scale;
+
+  const v3 p0 = scale * (v3) { 0, 0, 0 };
+  const v3 p1 = scale * (v3) { 1, 0, 1 };
+  const v3 p2 = scale * (v3) { 1, 1, 0 };
+  const v3 p3 = scale * (v3) { 0, 1, 1 };
 
   Poly *poly0 = Poly_new();
   Poly_add_point(poly0, p1);

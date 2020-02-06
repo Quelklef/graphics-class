@@ -144,4 +144,20 @@ Poly *Poly_from_parametric(
 
 }
 
+Poly *Poly_from_points(const int point_count, ...) {
+  Poly *poly = Poly_new();
+
+  va_list args;
+  va_start(args, point_count);
+
+  for (int i = 0; i < point_count; i++) {
+    v3 point = va_arg(args, v3);
+    Poly_add_point(poly, point);
+  }
+
+  va_end(args);
+
+  return poly;
+}
+
 #endif // poly_h_INCLUDED

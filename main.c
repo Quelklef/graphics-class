@@ -116,6 +116,7 @@ void on_key(Model *model, const char key) {
     case ']': Model_transform(model, scale_up           ); break;
 
     case 'O': Model_transform(model, translate_to_origin); break;
+    case 'L': printf("Object at (%f, %f, %f)\n", model_center[0], model_center[1], model_center[2]); break;
 
     case '!': DO_WIREFRAME            = 1 - DO_WIREFRAME;            break;
     case '@': DO_BACKFACE_ELIMINATION = 1 - DO_BACKFACE_ELIMINATION; break;
@@ -271,6 +272,7 @@ void show_help() {
   printf("Some controls:\n");
   printf("  e    - Exit program\n");
   printf("  O    - Move object to user\n");
+  printf("  L    - Print object location\n");
   printf("  []   - Scale selected object down and up\n");
   printf("  0-9  - Switch models\n");
   printf("\n");
@@ -349,196 +351,68 @@ void event_loop() {
 
 
 
+v3 sphere_f(float t, float s) {
+  const float x = cos(t) * sin(s);
+  const float y = cos(s);
+  const float z = sin(t) * sin(s);
 
-float const_0(float t) { return 0; }
-
-float circle_x(float t) { return cos(t); }
-float circle_y(float t) { return sin(t); }
-
-float sum4_x(float t) {
-  t = fmod(t, 2 * M_PI);
-  if (t < M_PI / 2 || t > 3 * M_PI / 2) return sqrt(fabs(cos(t)));
-  else return -sqrt(fabs(cos(t)));
+  return (v3) { x, y, z };
 }
 
-float sum4_y(float t) {
-  t = fmod(t, 2 * M_PI);
-  if (t < M_PI) return sqrt(fabs(sin(t)));
-  else return -sqrt(fabs(sin(t)));
+v3 sphere_g(float t, float s) {
+  const float r = sqrt(1 - s * s);
+
+  const float x = r * cos(t);
+  const float y = s;
+  const float z = r * sin(t);
+
+  return (v3) { x, y, z };
 }
 
-float square_x(float t) {
-  t = fmod(t, 2 * M_PI);
-  if (t < M_PI / 2 || t > 3 * M_PI / 2) return pow(cos(t), 2);
-  else return -pow(cos(t), 2);
+v3 vase_f(float t, float s) {
+  const float r = sqrt(1 + s * s);
+
+  const float x = r * cos(t);
+  const float y = s;
+  const float z = r * sin(t);
+
+  return (v3) { x, y, z };
 }
 
-float square_y(float t) {
-  t = fmod(t, 2 * M_PI);
-  if (t < M_PI) return pow(sin(t), 2);
-  else return -pow(sin(t), 2);
-}
+void prepare_3d_lab() {
 
-float asteroid_x(float t) {
-  t = fmod(t, 2 * M_PI);
-  if (t < M_PI / 2 || t > 3 * M_PI / 2) return pow(cos(t), 4);
-  else return -pow(cos(t), 4);
-}
-
-float asteroid_y(float t) {
-  t = fmod(t, 2 * M_PI);
-  if (t < M_PI) return pow(sin(t), 4);
-  else return -pow(sin(t), 4);
-}
-
-float hyperbola_x(float t) { return cosh(t); }
-float hyperbola_y(float t) { return sinh(t); }
-
-float parabola_x(float t) { return t; }
-float parabola_y(float t) { return pow(t, 2); }
-
-float lemon_x(float t) { return pow(cos(t), 3); }
-float lemon_y(float t) { return sin(t); }
-
-void display_with_normals(const Poly *poly) {
-
-  const normal_spacing = 20;
-
-  for (int i = 0; i < poly->point_count - 1; i++) {
-    const v3 p0 = poly->points[i];
-    const v3 p1 = poly->points[i+1];
-
-    G_line(p0[0], p0[1], p1[0], p1[1]);
-
-    if (i % normal_spacing == 0) {
-      const v3 d = p1 - p0;
-      const float theta = -M_PI / 2 + atan2(d[1], d[0]);
-      const v3 normal = 50 * (v3) { cos(theta), sin(theta), 0 };
-      const v3 tip = p1 + normal;
-
-      G_line(p1[0], p1[1], tip[0], tip[1]);
-    }
-
-  }
-
-}
-
-void show_2d_lab() {
-
-  // == Circle == //
-
-  Poly *circle = Poly_from_parametric(
-    circle_x, circle_y, const_0,
-    M_PI / 4, M_PI * 3/2, 0.01
+  Model *sphere1 = Model_from_parametric(
+    sphere_f,
+    0, 2 * M_PI, 25,
+    1,
+    0, 2 * M_PI, 25,
+    1
   );
 
-  _Mat c_d = Mat_dilate(50, 100, 1);
-  _Mat c_t = Mat_translate(300, 500, 0);
+  nicely_place_model(sphere1);
+  add_model(sphere1);
 
-  _Mat c_composed;
-  Mat_chain_M(c_composed, 2, c_d, c_t);
-  Poly_transform(circle, c_composed);
-
-  display_with_normals(circle);
-
-  // == Sum4 == //
-
-  Poly *sum4 = Poly_from_parametric(
-    sum4_x, sum4_y, const_0,
-    M_PI / 2, 1.75 * M_PI, 0.01
+  Model *sphere2 = Model_from_parametric(
+    sphere_g,
+    0, 2 * M_PI, 25,
+    1,
+    -1, 1, 25,
+    0
   );
 
-  _Mat s4_d = Mat_dilate(30, 60, 1);
-  _Mat s4_t = Mat_translate(300, 300, 0);
+  nicely_place_model(sphere2);
+  add_model(sphere2);
 
-  _Mat s4_composed;
-  Mat_chain_M(s4_composed, 2, s4_d, s4_t);
-  Poly_transform(sum4, s4_composed);
-
-  display_with_normals(sum4);
-
-  // == Square == //
-
-  Poly *square = Poly_from_parametric(
-    square_x, square_y, const_0,
-    0, 2 * M_PI, 0.01
+  Model *vase = Model_from_parametric(
+    vase_f,
+    0, 2 * M_PI, 25,
+    1,
+    -2, 2, 25,
+    0
   );
 
-  _Mat sq_d = Mat_dilate(150, 100, 1);
-  _Mat sq_t = Mat_translate(500, 500, 0);
-
-  _Mat sq_composed;
-  Mat_chain_M(sq_composed, 2, sq_d, sq_t);
-  Poly_transform(square, sq_composed);
-
-  display_with_normals(square);
-
-  // == Asteroid == //
-
-  Poly *asteroid = Poly_from_parametric(
-    asteroid_x, asteroid_y, const_0,
-    0, 2 * M_PI, 0.01
-  );
-
-  _Mat a_d = Mat_dilate(80, 40, 1);
-  _Mat a_r = Mat_z_rot(DEGREES(45));
-  _Mat a_t = Mat_translate(500, 300, 0);
-
-  _Mat a_composed;
-  Mat_chain_M(a_composed, 3, a_d, a_r, a_t);
-  Poly_transform(asteroid, a_composed);
-
-  display_with_normals(asteroid);
-
-  // == Hyperbola == //
-
-  Poly *hyperbola = Poly_from_parametric(
-    hyperbola_x, hyperbola_y, const_0,
-    -1, 2, 0.01
-  );
-
-  _Mat h_d = Mat_dilate(100, -100, 1);
-  _Mat h_t = Mat_translate(250, 250, 0);
-
-  _Mat h_composed;
-  Mat_chain_M(h_composed, 2, h_d, h_t);
-  Poly_transform(hyperbola, h_composed);
-
-  display_with_normals(hyperbola);
-
-  // == Parabola == //
-
-  Poly *parabola = Poly_from_parametric(
-    parabola_x, parabola_y, const_0,
-    -1, 2, 0.01
-  );
-
-  _Mat p_d = Mat_dilate(150, 50, 1);
-  _Mat p_r = Mat_z_rot(DEGREES(60));
-  _Mat p_t = Mat_translate(250, 250, 0);
-
-  _Mat p_composed;
-  Mat_chain_M(p_composed, 3, p_d, p_r, p_t);
-  Poly_transform(parabola, p_composed);
-
-  display_with_normals(parabola);
-
-  // == Lemon == //
-
-  Poly *lemon = Poly_from_parametric(
-    lemon_x, lemon_y, const_0,
-    0, 2 * M_PI, 0.01
-  );
-
-  _Mat l_d = Mat_dilate(150, 150, 1);
-  _Mat l_r = Mat_z_rot(DEGREES(60));
-  _Mat l_t = Mat_translate(600, 150, 0);
-
-  _Mat l_composed;
-  Mat_chain_M(l_composed, 3, l_d, l_r, l_t);
-  Poly_transform(lemon, l_composed);
-
-  display_with_normals(lemon);
+  nicely_place_model(vase);
+  add_model(vase);
 
 }
 
@@ -549,19 +423,18 @@ int main(const int argc, const char **argv) {
 
   G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-  //show_help();
+  show_help();
 
-  //light_source = make_small_model();
-  //add_model(light_source);
+  light_source = make_small_model();
+  add_model(light_source);
 
   //load_files(&argv[1], argc - 1);
 
   // == Main == //
 
-  show_2d_lab();
-  G_wait_key();
+  prepare_3d_lab();
 
-  //event_loop();
+  event_loop();
 
   // == Teardown == //
 
