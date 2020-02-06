@@ -383,8 +383,8 @@ void display_models_aux(Model *models[], int model_count, Model *focused_model, 
   int total_poly_count = 0;
   for (int model_idx = 0; model_idx < model_count; model_idx++) {
     const Model *model = models[model_idx];
-    for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
-      const Poly *poly = model->polys[poly_idx];
+    for (int poly_idx = 0; poly_idx < model->length; poly_idx++) {
+      const Poly *poly = Model_get(model, poly_idx);
       if (shouldnt_display(poly)) continue;
       total_poly_count++;
 
@@ -399,8 +399,8 @@ void display_models_aux(Model *models[], int model_count, Model *focused_model, 
   for (int model_idx = 0; model_idx < model_count; model_idx++) {
     const Model *model = models[model_idx];
     const int is_focused = model == focused_model;
-    for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
-      const Poly *poly = model->polys[poly_idx];
+    for (int poly_idx = 0; poly_idx < model->length; poly_idx++) {
+      const Poly *poly = Model_get(model, poly_idx);
 
       if (shouldnt_display(poly)) continue;
 

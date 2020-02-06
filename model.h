@@ -9,54 +9,31 @@
 #include "poly.h"
 #include "matrix.h"
 
-typedef struct Model {
-  Poly *polys[ENOUGH];
-  int poly_count;
-} Model;
-
-void Model_init(Model *model) {
-  model->poly_count = 0;
-}
-
-Model *Model_new() {
-  Model *model = malloc(sizeof(Model));
-  Model_init(model);
-  return model;
-}
-
-void Model_destroy(Model *model) {
-  for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
-    Poly_destroy(model->polys[poly_idx]);
-  }
-  free(model);
-}
+#define DYN_TYPE Poly*
+#include "dyn.h"
+DYN_INIT(Model)
 
 void Model_print(const Model *model) {
   printf("MODEL [\n");
-  for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
-    Poly_print(model->polys[poly_idx]);
+  for (int poly_idx = 0; poly_idx < model->length; poly_idx++) {
+    Poly_print(Model_get(model, poly_idx));
   }
   printf("] MODEL\n");
 }
 
-void Model_add_poly(Model *model, Poly *poly) {
-  model->polys[model->poly_count] = poly;
-  model->poly_count++;
-}
-
 Model *Model_clone(const Model *source) {
-  Model *result = Model_new();
-  for (int poly_i = 0; poly_i < source->poly_count; poly_i++) {
-    const Poly *poly = source->polys[poly_i];
+  Model *result = Model_new(source->length);
+  for (int poly_i = 0; poly_i < source->length; poly_i++) {
+    const Poly *poly = Model_get(source, poly_i);
     Poly *clone = Poly_clone(poly);
-    Model_add_poly(result, clone);
+    Model_append(result, clone);
   }
   return result;
 }
 
 void Model_transform(Model *model, const _Mat transformation) {
-  for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
-    Poly *poly = model->polys[poly_idx];
+  for (int poly_idx = 0; poly_idx < model->length; poly_idx++) {
+    Poly *poly = Model_get(model, poly_idx);
     Poly_transform(poly, transformation);
   }
 }
@@ -75,8 +52,8 @@ void Model_bounds_M(
   *result_min_z = +DBL_MAX;
   *result_max_z = -DBL_MAX;
 
-  for (int poly_idx = 0; poly_idx < model->poly_count; poly_idx++) {
-    const Poly *poly = model->polys[poly_idx];
+  for (int poly_idx = 0; poly_idx < model->length; poly_idx++) {
+    const Poly *poly = Model_get(model, poly_idx);
     for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
       const v3 point = poly->points[point_idx];
       float x = point[0];
@@ -155,10 +132,10 @@ Model *load_model(const char *filename) {
     fscanf(file, "%lf", &zs[point_idx]);
   }
 
-  Model *model = Model_new();
-
   int model_poly_count;
   fscanf(file, "%d", &model_poly_count);
+
+  Model *model = Model_new(model_poly_count);
 
   for (int poly_idx = 0; poly_idx < model_poly_count; poly_idx++) {
     Poly *poly = Poly_new();
@@ -183,7 +160,7 @@ Model *load_model(const char *filename) {
       Poly_add_point(poly, point);
     }
 
-    Model_add_poly(model, poly);
+    Model_append(model, poly);
   }
 
   // TODO: this should not be in this location
@@ -235,7 +212,10 @@ Model *Model_from_parametric(
 
   // Each quadruplet of adjacent items becomes a polygon
 
-  Model *model = Model_new();
+  Model *model = Model_new(t_count * s_count);
+  // t_count * s_count is the length if wrapping in both directions.
+  // Thus it acts as an upper bound for all cases,
+  // with maximum error t_count + s_count + 1, which is pretty low
 
   for (int t_idx = 0; t_idx < t_count - 1; t_idx++) {
     for (int s_idx = 0; s_idx < s_count - 1; s_idx++) {
@@ -245,7 +225,7 @@ Model *Model_from_parametric(
       const v3 bottom_right = point_at(t_idx + 1, s_idx + 1);
 
       Poly *poly = Poly_from_points(4, top_left, top_right, bottom_right, bottom_left);
-      Model_add_poly(model, poly);
+      Model_append(model, poly);
     }
   }
 
@@ -257,7 +237,7 @@ Model *Model_from_parametric(
       const v3 bottom_right = point_at(0          , s_idx + 1);
 
       Poly *poly = Poly_from_points(4, top_left, top_right, bottom_right, bottom_left);
-      Model_add_poly(model, poly);
+      Model_append(model, poly);
     }
   }
 
@@ -269,7 +249,7 @@ Model *Model_from_parametric(
       const v3 bottom_right = point_at(t_idx + 1, 0          );
 
       Poly *poly = Poly_from_points(4, top_left, top_right, bottom_right, bottom_left);
-      Model_add_poly(model, poly);
+      Model_append(model, poly);
     }
   }
 
@@ -280,12 +260,28 @@ Model *Model_from_parametric(
     const v3 bottom_right = point_at(0          , 0          );
 
     Poly *poly = Poly_from_points(4, top_left, top_right, bottom_left, bottom_right);
-    Model_add_poly(model, poly);
+    Model_append(model, poly);
   }
 
   free(points);
   return model;
 
+}
+
+Model *Model_from_polys(const int poly_count, ...) {
+  va_list args;
+  va_start(args, poly_count);
+
+  Model *model = Model_new(poly_count);
+
+  for (int i = 0; i < poly_count; i++) {
+    Poly *poly = va_arg(args, Poly*);
+    Model_append(model, poly);
+  }
+
+  va_end(args);
+
+  return model;
 }
 
 Model *make_small_model() {
@@ -298,31 +294,12 @@ Model *make_small_model() {
   const v3 p2 = scale * (v3) { 1, 1, 0 };
   const v3 p3 = scale * (v3) { 0, 1, 1 };
 
-  Poly *poly0 = Poly_new();
-  Poly_add_point(poly0, p1);
-  Poly_add_point(poly0, p2);
-  Poly_add_point(poly0, p3);
+  Poly *poly0 = Poly_from_points(3,     p1, p2, p3);
+  Poly *poly1 = Poly_from_points(3, p0,     p2, p3);
+  Poly *poly2 = Poly_from_points(3, p0, p1,     p3);
+  Poly *poly3 = Poly_from_points(3, p0, p1, p2    );
 
-  Poly *poly1 = Poly_new();
-  Poly_add_point(poly1, p0);
-  Poly_add_point(poly1, p2);
-  Poly_add_point(poly1, p3);
-
-  Poly *poly2 = Poly_new();
-  Poly_add_point(poly2, p0);
-  Poly_add_point(poly2, p1);
-  Poly_add_point(poly2, p3);
-
-  Poly *poly3 = Poly_new();
-  Poly_add_point(poly3, p0);
-  Poly_add_point(poly3, p1);
-  Poly_add_point(poly3, p2);
-
-  Model *model = Model_new();
-  Model_add_poly(model, poly0);
-  Model_add_poly(model, poly1);
-  Model_add_poly(model, poly2);
-  Model_add_poly(model, poly3);
+  Model *model = Model_from_polys(4, poly0, poly1, poly2, poly3);
 
   // TODO: this should not be in this location
   nicely_place_model(model);
@@ -331,3 +308,4 @@ Model *make_small_model() {
 }
 
 #endif // model_h_INCLUDED
+

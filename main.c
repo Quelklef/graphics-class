@@ -423,7 +423,7 @@ int main(const int argc, const char **argv) {
 
   G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
 
-  show_help();
+  //show_help();
 
   light_source = make_small_model();
   add_model(light_source);
