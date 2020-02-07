@@ -13,6 +13,13 @@ DYN_INIT(ModelList, Model*)
 ModelList *models;
 Model *light_source = NULL;
 
+void ModelList_destroy(ModelList *models) {
+  for (int model_idx = 0; model_idx < models->length; model_idx++) {
+    Model_destroy(ModelList_get(models, model_idx));
+  }
+  Dyn_destroy(models);
+}
+
 
 // Currently selected parameter
 static const int param_HALF_ANGLE     = 1;
@@ -379,9 +386,9 @@ void prepare_3d_lab() {
 
   Model *sphere1 = Model_from_parametric(
     sphere_f,
-    0, 2 * M_PI, 25,
+    0, 2 * M_PI, 50,
     1,
-    0, 2 * M_PI, 25,
+    0, 2 * M_PI, 50,
     1
   );
 
@@ -433,14 +440,11 @@ int main(const int argc, const char **argv) {
   // == Main == //
 
   prepare_3d_lab();
-
   event_loop();
 
   // == Teardown == //
 
-  for (int model_idx = 0; model_idx < models->length; model_idx++) {
-    Model_destroy(ModelList_get(models, model_idx));
-  }
+  ModelList_destroy(models);
 
   G_close();
 

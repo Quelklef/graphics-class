@@ -4,11 +4,10 @@
 // Generic variable-length list
 
 // Set the macro DYN_TYPE to be the type of the list
-// then include this file and call DYN_INIT(DYN_NAME)
+// then include this file and call DYN_INIT(NAME, TYPE)
 // For instance,
-//   #define DYN_TYPE int
 //   #include "dyn.h"
-//   DYN_INIT(iArray)
+//   DYN_INIT(iArray, int)
 // generates stuff like
 //   iArray iArray_new() ;
 // and
@@ -77,7 +76,7 @@ static void Dyn_set(Dyn *dyn, const size_t idx, const void *item) {
 }
 
 static void Dyn_append(Dyn *dyn, void *item) {
-  if (dyn->length == dyn->size - 1) {
+  if (dyn->length == dyn->size) {
     Dyn_resize(dyn, 2 * dyn->size);
   }
 
@@ -85,7 +84,16 @@ static void Dyn_append(Dyn *dyn, void *item) {
   dyn->length++;
 }
 
-static void Dyn_destroy(Dyn *dyn) {
+/* Dyn_destroy is not automatically lifted
+ * into the client's given type. This is to
+ * force the client to write their own
+ * destroy method to ensure that they're
+ * not accidentally using the dyn shallow destroy
+ * when they want a deep destructor.
+ * Client destroy should call Dyn_destroy as
+ * the last line.
+ */
+void Dyn_destroy(Dyn *dyn) {
   free(dyn->items);
   free(dyn);
 }
@@ -99,6 +107,5 @@ static void Dyn_destroy(Dyn *dyn) {
   void NAME ## _append (Dyn *dyn, TYPE item                  ) { return Dyn_append(dyn, &item);                         } \
   TYPE NAME ## _get    (const Dyn *dyn, const size_t idx     ) { return *( (TYPE*) (dyn->items + idx * sizeof(TYPE)) ); } \
   void NAME ## _set    (Dyn *dyn, const size_t idx, TYPE item) { return Dyn_set(dyn, idx, &item);                       } \
-  void NAME ## _destroy(Dyn *dyn                             ) { return Dyn_destroy(dyn);                               }
 
 #endif // dyn_h_INCLUDED

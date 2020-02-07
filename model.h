@@ -37,6 +37,13 @@ void Model_transform(Model *model, const _Mat transformation) {
   }
 }
 
+void Model_destroy(Model *model) {
+  for (int i = 0; i < model->length; i++) {
+    Poly_destroy(Model_get(model, i));
+  }
+  Dyn_destroy(model);
+}
+
 void Model_bounds_M(
       float *result_min_x, float *result_max_x,
       float *result_min_y, float *result_max_y,

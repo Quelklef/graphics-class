@@ -31,6 +31,10 @@ Poly *Poly_clone(const Poly *source) {
   return poly;
 }
 
+void Poly_destroy(Poly *poly) {
+  Dyn_destroy(poly);
+}
+
 v3 Poly_center(const Poly *poly) {
   float min_x = DBL_MAX;
   float max_x = DBL_MIN;
