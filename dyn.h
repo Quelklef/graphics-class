@@ -1,3 +1,6 @@
+#ifndef dyn_h_INCLUDED
+#define dyn_h_INCLUDED
+
 // Generic variable-length list
 
 // Set the macro DYN_TYPE to be the type of the list
@@ -15,22 +18,28 @@
 typedef struct Dyn {
 
   // Content
-  DYN_TYPE *items;
+  void *items;
+
+  // Size of contained type
+  // (in bytes)
+  size_t type_size;
 
   // Size to reset to
+  // (in multiples of type_size)
   size_t starting_size;
 
   // Number of contained items
   size_t length;
 
   // Amount of memory allocated
+  // (in multiples of type_size)
   size_t size;
 
 } Dyn;
 
 
 static void Dyn_resize(Dyn *dyn, const size_t new_size) {
-  dyn->items = realloc(dyn->items, new_size * sizeof(DYN_TYPE));
+  dyn->items = realloc(dyn->items, new_size * dyn->type_size);
   dyn->size = new_size;
 }
 
@@ -39,30 +48,41 @@ static void Dyn_clear(Dyn *dyn) {
   dyn->length = 0;
 }
 
-static void Dyn_init(Dyn *dyn, const size_t starting_size) {
+static void Dyn_init(Dyn *dyn, const size_t starting_size, const size_t type_size) {
+  dyn->type_size = type_size;
   dyn->starting_size = starting_size;
+
   dyn->length = 0;
-  dyn->items = malloc(starting_size * sizeof(DYN_TYPE));
+  dyn->items = malloc(starting_size * dyn->type_size);
   dyn->size = starting_size;
 }
 
-static Dyn *Dyn_new(const size_t starting_size) {
+static Dyn *Dyn_new(const size_t starting_size, const size_t type_size) {
   Dyn *dyn = malloc(sizeof(Dyn));
-  Dyn_init(dyn, starting_size);
+  Dyn_init(dyn, starting_size, type_size);
   return dyn;
 }
 
-static void Dyn_append(Dyn *dyn, DYN_TYPE item) {
-  if (dyn->length == dyn->size) {
+static void Dyn_set_(Dyn *dyn, const size_t idx, const void *item) {
+  /* Dyn_set with no checks */
+  memcpy(dyn->items + idx * dyn->type_size, item, dyn->type_size);
+}
+
+static void Dyn_set(Dyn *dyn, const size_t idx, const void *item) {
+  if (idx < 0 || idx >= dyn->length) {
+    printf("dyn access out of bounds\n");
+    exit(1);
+  }
+  Dyn_set_(dyn, idx, item);
+}
+
+static void Dyn_append(Dyn *dyn, void *item) {
+  if (dyn->length == dyn->size - 1) {
     Dyn_resize(dyn, 2 * dyn->size);
   }
 
-  dyn->items[dyn->length] = item;
+  Dyn_set_(dyn, dyn->length, item);
   dyn->length++;
-}
-
-static DYN_TYPE Dyn_get(const Dyn *dyn, const size_t idx) {
-  return dyn->items[idx];
 }
 
 static void Dyn_destroy(Dyn *dyn) {
@@ -70,12 +90,15 @@ static void Dyn_destroy(Dyn *dyn) {
   free(dyn);
 }
 
-#define DYN_INIT(NAME) \
+#define DYN_INIT(NAME, TYPE) \
   typedef Dyn NAME; \
-  Dyn*     NAME ## _new    (const size_t starting_size          ) { return Dyn_new(starting_size);    } \
-  Dyn*     NAME ## _init   (Dyn *dyn, const size_t starting_size) { return Dyn_new(starting_size);    } \
-  void     NAME ## _resize (Dyn *dyn, const size_t new_size     ) { return Dyn_resize(dyn, new_size); } \
-  void     NAME ## _clear  (Dyn *dyn                            ) { return Dyn_clear(dyn);            } \
-  void     NAME ## _append (Dyn *dyn, DYN_TYPE item             ) { return Dyn_append(dyn, item);     } \
-  DYN_TYPE NAME ## _get    (const Dyn *dyn, const size_t idx    ) { return Dyn_get(dyn, idx);         } \
-  void     NAME ## _destroy(Dyn *dyn                            ) { return Dyn_destroy(dyn);          }
+  void NAME ## _init   (Dyn *dyn, const size_t starting_size ) { return Dyn_init(dyn, starting_size, sizeof(TYPE));     } \
+  Dyn* NAME ## _new    (const size_t starting_size           ) { return Dyn_new(starting_size, sizeof(TYPE));           } \
+  void NAME ## _resize (Dyn *dyn, const size_t new_size      ) { return Dyn_resize(dyn, new_size);                      } \
+  void NAME ## _clear  (Dyn *dyn                             ) { return Dyn_clear(dyn);                                 } \
+  void NAME ## _append (Dyn *dyn, TYPE item                  ) { return Dyn_append(dyn, &item);                         } \
+  TYPE NAME ## _get    (const Dyn *dyn, const size_t idx     ) { return *( (TYPE*) (dyn->items + idx * sizeof(TYPE)) ); } \
+  void NAME ## _set    (Dyn *dyn, const size_t idx, TYPE item) { return Dyn_set(dyn, idx, &item);                       } \
+  void NAME ## _destroy(Dyn *dyn                             ) { return Dyn_destroy(dyn);                               }
+
+#endif // dyn_h_INCLUDED

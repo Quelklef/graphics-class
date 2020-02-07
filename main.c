@@ -7,14 +7,10 @@
 #include "display.h"
 #include "observer.h"
 
-Model *models[ENOUGH];
-int model_count = 0;
+#include "dyn.h"
+DYN_INIT(ModelList, Model*)
 
-void add_model(Model *model) {
-  models[model_count] = model;
-  model_count++;
-}
-
+ModelList *models;
 Model *light_source = NULL;
 
 
@@ -248,8 +244,8 @@ void display_state() {
   draw_param(20,  20, "Y", param_YON           , "Yon    : %lf      ", YON);
 
   // Draw indices for each model
-  for (int model_i = 0; model_i < model_count; model_i++) {
-    const Model *model = models[model_i];
+  for (int model_i = 0; model_i < models->length; model_i++) {
+    const Model *model = ModelList_get(models, model_i);
 
     float min_x, max_x, min_y, max_y, min_z, max_z;
     Model_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, model);
@@ -314,7 +310,7 @@ void load_files(const char **filenames, const int file_count) {
   for (int i = 0; i < file_count; i++) {
     const char *filename = filenames[i];
     Model *model = load_model(filename);
-    add_model(model);
+    ModelList_append(models, model);
   }
 }
 
@@ -331,13 +327,13 @@ void event_loop() {
     draw_box();
 
     const int model_idx = key - '0';
-    if (0 <= model_idx && model_idx < model_count) {
-      focused_model = models[model_idx];
+    if (0 <= model_idx && model_idx < models->length) {
+      focused_model = ModelList_get(models, model_idx);
     }
 
     on_key(focused_model, key);
 
-    display_models(models, model_count, focused_model, light_source);
+    display_models(models->items, models->length, focused_model, light_source);
 
     display_state();
 
@@ -390,7 +386,7 @@ void prepare_3d_lab() {
   );
 
   nicely_place_model(sphere1);
-  add_model(sphere1);
+  ModelList_append(models, sphere1);
 
   Model *sphere2 = Model_from_parametric(
     sphere_g,
@@ -401,7 +397,7 @@ void prepare_3d_lab() {
   );
 
   nicely_place_model(sphere2);
-  add_model(sphere2);
+  ModelList_append(models, sphere2);
 
   Model *vase = Model_from_parametric(
     vase_f,
@@ -412,21 +408,25 @@ void prepare_3d_lab() {
   );
 
   nicely_place_model(vase);
-  add_model(vase);
+  ModelList_append(models, vase);
 
 }
 
 
+DYN_INIT(LongList, long);
+
 int main(const int argc, const char **argv) {
 
   // == Setup == //
+
+  models = ModelList_new(1);
 
   G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
 
   //show_help();
 
   light_source = make_small_model();
-  add_model(light_source);
+  ModelList_append(models, light_source);
 
   //load_files(&argv[1], argc - 1);
 
@@ -438,8 +438,8 @@ int main(const int argc, const char **argv) {
 
   // == Teardown == //
 
-  for (int model_idx = 0; model_idx < model_count; model_idx++) {
-    Model_destroy(models[model_idx]);
+  for (int model_idx = 0; model_idx < models->length; model_idx++) {
+    Model_destroy(ModelList_get(models, model_idx));
   }
 
   G_close();

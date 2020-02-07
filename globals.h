@@ -6,8 +6,6 @@
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 800;
 
-#define ENOUGH 5000
-
 #define DEGREES(deg) ((float) (deg) / 180 * M_PI)
 
 float HALF_ANGLE                = DEGREES(30);

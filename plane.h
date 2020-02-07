@@ -29,12 +29,12 @@ void Plane_from_points(Plane *result, v3 a, v3 b, v3 c) {
 }
 
 void Plane_from_poly(Plane *result, const Poly *poly) {
-  if (poly->point_count < 3) {
+  if (poly->length < 3) {
     printf("Error in Plane_from_poly: poly requires >= 3 points!\n");
     exit(1);
   }
 
-  Plane_from_points(result, poly->points[0], poly->points[1], poly->points[2]);
+  Plane_from_points(result, Poly_get(poly, 0), Poly_get(poly, 1), Poly_get(poly, 2));
 }
 
 v3 Poly_normal(const Poly *poly) {

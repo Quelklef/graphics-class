@@ -45,7 +45,7 @@ int shouldnt_display(const Poly *poly) {
   if (!DO_BACKFACE_ELIMINATION) return 0;
 
   const v3 origin = { 0, 0, 0 };
-  const v3 T = poly->points[0] - origin;
+  const v3 T = Poly_get(poly, 0) - origin;
   const v3 N = Poly_normal(poly);
   return BACKFACE_ELIMINATION_SIGN * v3_dot(T, N) < 0;
 }
@@ -132,24 +132,24 @@ void _fill_polygon(const float *xs, const float *ys, const int count) {
 }
 
 void Poly_display_minimal(const Poly *poly) {
-  float pxs[poly->point_count];
-  float pys[poly->point_count];
+  float pxs[poly->length];
+  float pys[poly->length];
 
-  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-    const v3 p = poly->points[point_idx];
+  for (int point_idx = 0; point_idx < poly->length; point_idx++) {
+    const v3 p = Poly_get(poly, point_idx);
     pixel_coords_M(&pxs[point_idx], &pys[point_idx], p);
   }
 
-  _fill_polygon(pxs, pys, poly->point_count);
+  _fill_polygon(pxs, pys, poly->length);
 }
 
 void Poly_display_as_halo(const Poly *poly) {
   const float scale_amt = 3;
 
-  float pxs[poly->point_count];
-  float pys[poly->point_count];
-  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-    const v3 p = poly->points[point_idx];
+  float pxs[poly->length];
+  float pys[poly->length];
+  for (int point_idx = 0; point_idx < poly->length; point_idx++) {
+    const v3 p = Poly_get(poly, point_idx);
     pixel_coords_M(&pxs[point_idx], &pys[point_idx], p);
   }
 
@@ -160,7 +160,7 @@ void Poly_display_as_halo(const Poly *poly) {
     float min_py = +DBL_MAX;
     float max_py = -DBL_MAX;
 
-    for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+    for (int point_idx = 0; point_idx < poly->length; point_idx++) {
       float px = pxs[point_idx];
       float py = pys[point_idx];
 
@@ -174,13 +174,13 @@ void Poly_display_as_halo(const Poly *poly) {
     center_py = min_py / 2 + max_py / 2;
   }
 
-  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+  for (int point_idx = 0; point_idx < poly->length; point_idx++) {
     pxs[point_idx] = (pxs[point_idx] - center_px) * scale_amt + center_px;
     pys[point_idx] = (pys[point_idx] - center_py) * scale_amt + center_py;
   }
 
   G_rgb(1, 0, 0);
-  _fill_polygon(pxs, pys, poly->point_count);
+  _fill_polygon(pxs, pys, poly->length);
 }
 
 void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
@@ -197,15 +197,16 @@ void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
   }
 
   Poly result_poly;
-  Poly_init(&result_poly);
+  Poly_init(&result_poly, poly->length + 1);
+  // We can gain at most one point from clipping, so poly->length+1 is an upper bound
 
   // Create a point that's definitely inside the clipping region
   const v3 inside_point = { 0, 0, YON / 2 + HITHER / 2 };
   const int inside_side = Plane_side_of(plane, inside_point);
 
-  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-    v3 this_point = poly->points[point_idx];
-    v3 next_point = poly->points[(point_idx + 1) % poly->point_count];
+  for (int point_idx = 0; point_idx < poly->length; point_idx++) {
+    v3 this_point = Poly_get(poly, point_idx);
+    v3 next_point = Poly_get(poly, (point_idx + 1) % poly->length);
 
     const int this_is_inside = inside_side == Plane_side_of(plane, this_point);
     const int next_is_inside = inside_side == Plane_side_of(plane, next_point);
@@ -214,7 +215,7 @@ void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
     Line_between(&this_to_next, this_point, next_point);
 
     if (this_is_inside) {
-      Poly_add_point(&result_poly, this_point);
+      Poly_append(&result_poly, this_point);
     }
 
     // If crosses over, add itersection
@@ -227,7 +228,7 @@ void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
         exit(1);
       }
 
-      Poly_add_point(&result_poly, intersection);
+      Poly_append(&result_poly, intersection);
     }
 
   }
@@ -297,7 +298,7 @@ void Poly_display(const Poly *poly, const int is_focused, const int is_halo, con
     Poly_clip(clipped);
   }
 
-  if (clipped->point_count != 0) {
+  if (clipped->length != 0) {
     // Only display if there are points
     // (Some display subroutines require a minimum point count)
 
@@ -328,9 +329,9 @@ void Poly_display(const Poly *poly, const int is_focused, const int is_halo, con
         G_rgb(.3, .3, .3);
       }
 
-      for (int point_idx = 0; point_idx < clipped->point_count; point_idx++) {
-        const v3 p0 = clipped->points[point_idx];
-        const v3 pf = clipped->points[(point_idx + 1) % clipped->point_count];
+      for (int point_idx = 0; point_idx < clipped->length; point_idx++) {
+        const v3 p0 = Poly_get(clipped, point_idx);
+        const v3 pf = Poly_get(clipped, (point_idx + 1) % clipped->length);
 
         Line line;
         Line_between(&line, p0, pf);

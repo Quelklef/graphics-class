@@ -9,9 +9,8 @@
 #include "poly.h"
 #include "matrix.h"
 
-#define DYN_TYPE Poly*
 #include "dyn.h"
-DYN_INIT(Model)
+DYN_INIT(Model, Poly*)
 
 void Model_print(const Model *model) {
   printf("MODEL [\n");
@@ -54,18 +53,19 @@ void Model_bounds_M(
 
   for (int poly_idx = 0; poly_idx < model->length; poly_idx++) {
     const Poly *poly = Model_get(model, poly_idx);
-    for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-      const v3 point = poly->points[point_idx];
-      float x = point[0];
-      float y = point[1];
-      float z = point[2];
+    for (int point_idx = 0; point_idx < poly->length; point_idx++) {
+      const v3 point = Poly_get(poly, point_idx);
 
-      if (x < *result_min_x) *result_min_x = x;
-      if (x > *result_max_x) *result_max_x = x;
-      if (y < *result_min_y) *result_min_y = y;
-      if (y > *result_max_y) *result_max_y = y;
-      if (z < *result_min_z) *result_min_z = z;
-      if (z > *result_max_z) *result_max_z = z;
+      const float x = point[0];
+      const float y = point[1];
+      const float z = point[2];
+
+           if (x < *result_min_x) *result_min_x = x;
+      else if (x > *result_max_x) *result_max_x = x;
+           if (y < *result_min_y) *result_min_y = y;
+      else if (y > *result_max_y) *result_max_y = y;
+           if (z < *result_min_z) *result_min_z = z;
+      else if (z > *result_max_z) *result_max_z = z;
     }
   }
 }
@@ -138,10 +138,11 @@ Model *load_model(const char *filename) {
   Model *model = Model_new(model_poly_count);
 
   for (int poly_idx = 0; poly_idx < model_poly_count; poly_idx++) {
-    Poly *poly = Poly_new();
 
     int poly_point_count;
     fscanf(file, "%d", &poly_point_count);
+
+    Poly *poly = Poly_new(poly_point_count);
 
     for (int point_idx = 0; point_idx < poly_point_count; point_idx++) {
       int crossref_idx;
@@ -157,7 +158,7 @@ Model *load_model(const char *filename) {
         (float) ys[crossref_idx],
         (float) zs[crossref_idx]
       };
-      Poly_add_point(poly, point);
+      Poly_append(poly, point);
     }
 
     Model_append(model, poly);

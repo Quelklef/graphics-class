@@ -8,54 +8,27 @@
 #include "globals.h"
 #include "v3.h"
 
-typedef struct Poly {
-  v3 points[ENOUGH];
-  int point_count;
-} Poly;
-
-void Poly_init(Poly *poly) {
-  poly->point_count = 0;
-}
-
-Poly *Poly_new() {
-  Poly *poly = malloc(sizeof(Poly));
-  Poly_init(poly);
-  return poly;
-}
+#include "dyn.h"
+DYN_INIT(Poly, v3);
 
 void Poly_print(const Poly* poly) {
   printf("POLY [\n");
-  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
+  for (int point_idx = 0; point_idx < poly->length; point_idx++) {
     printf("\t");
-    v3_print(poly->points[point_idx]);
+    v3_print(Poly_get(poly, point_idx));
     printf("\n");
   }
   printf("] POLY\n");
 }
 
-void Poly_add_point(Poly *poly, v3 point) {
-  /* Assumes that the added point is coplanar; does not verify */
-  poly->points[poly->point_count] = point;
-  poly->point_count++;
-}
-
 Poly *Poly_clone(const Poly *source) {
-  Poly *poly = Poly_new();
+  Poly *poly = Poly_new(source->length);
 
-  for (int point_idx = 0; point_idx < source->point_count; point_idx++) {
-    Poly_add_point(poly, source->points[point_idx]);
+  for (int point_idx = 0; point_idx < source->length; point_idx++) {
+    Poly_append(poly, Poly_get(source, point_idx));
   }
 
   return poly;
-}
-
-void Poly_clear(Poly *poly) {
-  poly->point_count = 0;
-}
-
-void Poly_destroy(Poly *poly) {
-  Poly_clear(poly);
-  free(poly);
 }
 
 v3 Poly_center(const Poly *poly) {
@@ -66,8 +39,8 @@ v3 Poly_center(const Poly *poly) {
   float min_z = DBL_MAX;
   float max_z = DBL_MIN;
 
-  for (int point_idx = 0; point_idx < poly->point_count; point_idx++) {
-    const v3 point = poly->points[point_idx];
+  for (int point_idx = 0; point_idx < poly->length; point_idx++) {
+    const v3 point = Poly_get(poly, point_idx);
     const float x = point[0];
     const float y = point[1];
     const float z = point[2];
@@ -88,21 +61,21 @@ v3 Poly_center(const Poly *poly) {
 }
 
 void Poly_xs_M(float *xs, const Poly *poly) {
-  for (int i = 0; i < poly->point_count; i++) xs[i] = poly->points[i][0];
+  for (int i = 0; i < poly->length; i++) xs[i] = Poly_get(poly, i)[0];
 }
 
 void Poly_ys_M(float *ys, const Poly *poly) {
-  for (int i = 0; i < poly->point_count; i++) ys[i] = poly->points[i][1];
+  for (int i = 0; i < poly->length; i++) ys[i] = Poly_get(poly, i)[1];
 }
 
 void Poly_zs_M(float *zs, const Poly *poly) {
-  for (int i = 0; i < poly->point_count; i++) zs[i] = poly->points[i][2];
+  for (int i = 0; i < poly->length; i++) zs[i] = Poly_get(poly, i)[2];
 }
 
 void Poly_transform(Poly *poly, const float transformation[4][4]) {
   // This just does matrix multiplication
-  for (int i = 0; i < poly->point_count; i++) {
-    poly->points[i] = v3_transform(poly->points[i], transformation);
+  for (int i = 0; i < poly->length; i++) {
+    Poly_set(poly, i, v3_transform(Poly_get(poly, i), transformation));
   }
 }
 
@@ -133,11 +106,12 @@ Poly *Poly_from_parametric(
   float step
 ) {
 
-  Poly *poly = Poly_new();
+  const size_t count = (tf - t0) / step;
+  Poly *poly = Poly_new(count);
 
   for (float t = t0; t <= tf; t += step) {
     v3 point = { x(t), y(t), z(t) };
-    Poly_add_point(poly, point);
+    Poly_append(poly, point);
   }
 
   return poly;
@@ -145,14 +119,14 @@ Poly *Poly_from_parametric(
 }
 
 Poly *Poly_from_points(const int point_count, ...) {
-  Poly *poly = Poly_new();
+  Poly *poly = Poly_new(point_count);
 
   va_list args;
   va_start(args, point_count);
 
   for (int i = 0; i < point_count; i++) {
     v3 point = va_arg(args, v3);
-    Poly_add_point(poly, point);
+    Poly_append(poly, point);
   }
 
   va_end(args);
