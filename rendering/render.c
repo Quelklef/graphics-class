@@ -5,14 +5,14 @@
 
 #include <math.h>
 
-#include "misc.c"
-#include "polygon.c"
-#include "polyhedron.c"
-#include "figure.c"
-#include "plane.c"
 #include "observer.c"
-#include "v2.c"
 #include "draw.c"
+#include "../util/misc.c"
+#include "../shapes/polygon.c"
+#include "../shapes/polyhedron.c"
+#include "../shapes/figure.c"
+#include "../shapes/plane.c"
+#include "../shapes/v2.c"
 
 
 

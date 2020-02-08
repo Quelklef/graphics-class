@@ -1,7 +1,7 @@
 #ifndef plane_c_INCLUDED
 #define plane_c_INCLUDED
 
-#include "misc.c"
+#include "../util/misc.c"
 #include "polygon.c"
 #include "line.c"
 #include "v3.c"

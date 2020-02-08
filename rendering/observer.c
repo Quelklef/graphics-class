@@ -3,8 +3,8 @@
 
 #include <math.h>
 
-#include "v3.c"
-#include "matrix.c"
+#include "../shapes/v3.c"
+#include "../shapes/matrix.c"
 
 // v3s that define the observer
 v3 eye                = { 0, 0, 0 };

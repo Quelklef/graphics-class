@@ -9,7 +9,7 @@
 #include "polygon.c"
 #include "matrix.c"
 
-#include "dyn.c"
+#include "../util/dyn.c"
 DYN_INIT(Polyhedron, Polygon*)
 
 void Polyhedron_print(const Polyhedron *polyhedron) {

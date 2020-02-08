@@ -9,7 +9,7 @@
 #include "matrix.c"
 #include "polyhedron.c"
 
-#include "dyn.c"
+#include "../util/dyn.c"
 DYN_INIT(Locus, v3)
 
 void Locus_transform(Locus *locus, const _Mat transformation) {

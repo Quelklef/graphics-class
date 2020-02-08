@@ -3,7 +3,7 @@
 
 // Low-level 2d drawing functions
 
-#include "line.c"
+#include "../shapes/line.c"
 
 void G_rgbv(const v3 rgb) {
   G_rgb(rgb[0], rgb[1], rgb[2]);
