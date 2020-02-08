@@ -1,5 +1,6 @@
-#include <FPT.h>
 #include <math.h>
+
+#include <FPT.h>
 
 #include "matrix.c"
 #include "polygon.c"
@@ -218,7 +219,7 @@ void on_key(Figure *figure, const char key) {
     char buffer[len]; \
     buffer[0] = '\0'; \
     snprintf(buffer, len, fstring, ##__VA_ARGS__); \
-    G_draw_string(buffer,  llx, lly); \
+    G_draw_string(buffer, llx, lly); \
   }
 
 #define draw_param(llx, lly, key, code, fstring, ...) \

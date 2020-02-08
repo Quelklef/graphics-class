@@ -3,6 +3,16 @@
 
 // Low-level 2d drawing functions
 
+void G_rgbv(const v3 rgb) {
+  G_rgb(rgb[0], rgb[1], rgb[2]);
+}
+
+void G_pointv(const v2 point) {
+  G_point(point[0], point[1]);
+}
+
+
+
 typedef float Zbuf[SCREEN_WIDTH][SCREEN_HEIGHT];
 
 void zbuf_init(Zbuf zbuf) {
@@ -17,14 +27,18 @@ void zbuf_draw(Zbuf zbuf, const v2 pixel, const float z) {
   const int x = pixel[0];
   const int y = pixel[1];
 
-  if (x < 0 || x > SCREEN_WIDTH || y < 0 || y > SCREEN_HEIGHT) {
+  if (   pixel[0] < 0
+      || pixel[0] > SCREEN_WIDTH
+      || pixel[1] < 0
+      || pixel[1] > SCREEN_HEIGHT
+  ) {
     return;
   }
 
   // Overwrite on z == zbuf[x][y] so that things
   // can be given explicit priority by being drawn later 
   if (z <= zbuf[x][y]) {
-    G_point(x, y);
+    G_pointv(pixel);
     zbuf[x][y] = z;
   }
 }
