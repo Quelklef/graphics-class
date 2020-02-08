@@ -120,13 +120,13 @@ void Polygon_render_as_is(const Polygon *polygon, Zbuf zbuf) {
   for (int i = 0; i < polygon->length; i++) {
     const v3 point = Polygon_get(polygon, i);
     const v2 pixel = pixel_coords(point);
+    pixels[i] = pixel;
     const float x = pixel[0];
     const float y = pixel[1];
     if (x < min_px) min_px = x;
     if (x > max_px) max_px = x;
     if (y < min_py) min_py = y;
     if (y > max_py) max_py = y;
-    pixels[i] = pixel;
   }
 
   // Range of iteration
@@ -171,8 +171,7 @@ void Polygon_render_as_is(const Polygon *polygon, Zbuf zbuf) {
         if (intersection[1] < y) above_intersection_count++;
       }
 
-      // We know the point is inside if the intersection
-      // count is odd
+      // We know the point is inside if the intersection count is odd
       if (above_intersection_count % 2 == 1) {
 
         // We want to calculate the z value corresponding to this pixel
@@ -183,8 +182,7 @@ void Polygon_render_as_is(const Polygon *polygon, Zbuf zbuf) {
         Line line;
         pixel_coords_inv(&line, px);
 
-        // Now find the point on it that intersects with
-        // the polygon
+        // Now find the point on it that intersects with the polygon
         v3 intersection;
         const int found_intersection =
           Plane_intersect_line_M(&intersection, &polygon_plane, &line);
