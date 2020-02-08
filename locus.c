@@ -86,10 +86,12 @@ void Locus_bounds_M(
       const Locus *locus
     ) {
 
+#ifdef DEBUG
   if (locus->length == 0) {
     printf("cannot find bounds of empty locus\n");
     exit(1);
   }
+#endif
 
   if (locus->length == 1) {
     const v3 point = Locus_get(locus, 0);

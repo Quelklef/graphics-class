@@ -68,10 +68,12 @@ static void Dyn_set_(Dyn *dyn, const size_t idx, const void *item) {
 }
 
 static void Dyn_set(Dyn *dyn, const size_t idx, const void *item) {
+#ifdef DEBUG
   if (idx < 0 || idx >= dyn->length) {
     printf("dyn access out of bounds\n");
     exit(1);
   }
+#endif
   Dyn_set_(dyn, idx, item);
 }
 

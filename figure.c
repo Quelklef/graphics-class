@@ -18,10 +18,12 @@ typedef struct {
 } Figure;
 
 Figure *Figure_from_Polyhedron(Polyhedron *polyhedron) {
+#ifdef DEBUG
   if (polyhedron == NULL) {
     printf("will not wrap null polyhedron\n");
     exit(1);
   }
+#endif
 
   Figure *figure = malloc(sizeof(Figure));
   figure->kind = fk_Polyhedron;
@@ -30,10 +32,12 @@ Figure *Figure_from_Polyhedron(Polyhedron *polyhedron) {
 }
 
 Figure *Figure_from_Locus(Locus *locus) {
+#ifdef DEBUG
   if (locus == NULL) {
     printf("will not wrap null locus\n");
     exit(1);
   }
+#endif
 
   Figure *figure = malloc(sizeof(Figure));
   figure->kind = fk_Locus;

@@ -13,10 +13,12 @@ typedef struct Plane {
 } Plane;
 
 void Plane_from_point_normal(Plane *result, v3 p0, v3 normal) {
+#ifdef DEBUG
   if (v3_mag(normal) != 1) {
     printf("Error in Plane_from_point_normal: normal vector must have magnitude 1!\n");
     exit(1);
   }
+#endif
 
   result->p0 = p0;
   result->normal = normal;
@@ -29,10 +31,12 @@ void Plane_from_points(Plane *result, v3 a, v3 b, v3 c) {
 }
 
 void Plane_from_polygon(Plane *result, const Polygon *polygon) {
+#ifdef DEBUG
   if (polygon->length < 3) {
     printf("Error in Plane_from_polygon: polygon requires >= 3 points!\n");
     exit(1);
   }
+#endif
 
   Plane_from_points(result, Polygon_get(polygon, 0), Polygon_get(polygon, 1), Polygon_get(polygon, 2));
 }

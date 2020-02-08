@@ -51,10 +51,12 @@ void Polyhedron_bounds_M(
       const Polyhedron *polyhedron
     ) {
 
+#ifdef DEBUG
   if (polyhedron->length == 0) {
     printf("cannot find bounds of empty polyhedron\n");
     exit(1);
   }
+#endif
 
   *result_min_x = +DBL_MAX;
   *result_max_x = -DBL_MAX;
@@ -120,10 +122,12 @@ Polyhedron *load_polyhedron(const char *filename) {
       int crossref_idx;
       fscanf(file, "%d", &crossref_idx);
 
+#ifdef DEBUG
       if (crossref_idx > number_of_indexed_points) {
         printf("Internal error in load_polyhedron.\n");
         exit(1);
       }
+#endif
 
       v3 point = {
         (float) xs[crossref_idx],
@@ -164,10 +168,12 @@ Polyhedron *Polyhedron_from_parametric(
 #define point_at(i, j) (*(points + (size_t) (i) * (size_t) s_count + (size_t) (j)))
 // use of size_t as per https://stackoverflow.com/a/3463745/4608364
 
+#ifdef DEBUG
   if (points == NULL) {
     printf("malloc failed");
     exit(1);
   }
+#endif
 
   for (int t_idx = 0; t_idx < t_count; t_idx++) {
     for (int s_idx = 0; s_idx < s_count; s_idx++) {

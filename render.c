@@ -189,10 +189,12 @@ void Polygon_render_as_is(const Polygon *polygon, Zbuf zbuf) {
         const int found_intersection =
           Plane_intersect_line_M(&intersection, &polygon_plane, &line);
 
+#ifdef DEBUG
         if (!found_intersection) {
           printf("internal error: didn't find intersection\n");
           exit(1);
         }
+#endif
 
         const float z = intersection[2];
         zbuf_draw(zbuf, px, z);
@@ -243,11 +245,14 @@ void Polygon_clip_with_plane(Polygon *polygon, const Plane *plane) {
     if (this_is_inside != next_is_inside) {
       v3 intersection;
       const int found_intersection = Plane_intersect_line_M(&intersection, plane, &this_to_next);
+
+#ifdef DEBUG
       // We know there should be an intersection since the points are on opposite sides of the plane
       if (!found_intersection) {
         printf("Error in Polygon_clip_with_plane: intersection not found.\n");
         exit(1);
       }
+#endif
 
       Polygon_append(&result_polygon, intersection);
     }
