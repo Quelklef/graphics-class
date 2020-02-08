@@ -1,7 +1,7 @@
-#ifndef line_h_INCLUDED
-#define line_h_INCLUDED
+#ifndef line_c_INCLUDED
+#define line_c_INCLUDED
 
-#include "v3.h"
+#include "v3.c"
 
 // We define a line by two points
 typedef struct Line {
@@ -18,5 +18,5 @@ v3 Line_vector(const Line *line) {
   return line->pf - line->p0;
 }
 
-#endif // line_h_INCLUDED
+#endif // line_c_INCLUDED
 

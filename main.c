@@ -1,14 +1,14 @@
 #include <FPT.h>
 #include <math.h>
 
-#include "matrix.h"
-#include "polygon.h"
-#include "polyhedron.h"
-#include "render.h"
-#include "observer.h"
-#include "figure.h"
+#include "matrix.c"
+#include "polygon.c"
+#include "polyhedron.c"
+#include "render.c"
+#include "observer.c"
+#include "figure.c"
 
-#include "dyn.h"
+#include "dyn.c"
 DYN_INIT(FigureList, Figure*)
 
 FigureList *figures;

@@ -1,15 +1,15 @@
-#ifndef polyhedron_h_INCLUDED
-#define polyhedron_h_INCLUDED
+#ifndef polyhedron_c_INCLUDED
+#define polyhedron_c_INCLUDED
 
 // The Polyhedron data type, which is a collection of polygongons
 
 #include <float.h>
 
-#include "v3.h"
-#include "polygon.h"
-#include "matrix.h"
+#include "v3.c"
+#include "polygon.c"
+#include "matrix.c"
 
-#include "dyn.h"
+#include "dyn.c"
 DYN_INIT(Polyhedron, Polygon*)
 
 void Polyhedron_print(const Polyhedron *polyhedron) {
@@ -253,5 +253,5 @@ Polyhedron *Polyhedron_from_polygons(const int polygon_count, ...) {
   return polyhedron;
 }
 
-#endif // polyhedron_h_INCLUDED
+#endif // polyhedron_c_INCLUDED
 

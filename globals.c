@@ -1,5 +1,5 @@
-#ifndef globals_h_INCLUDED
-#define globals_h_INCLUDED
+#ifndef globals_c_INCLUDED
+#define globals_c_INCLUDED
 
 #include <math.h>
 
@@ -29,5 +29,5 @@ float HITHER                    = 1;
 //Threshold for which objects too far from the observer aren't shown
 float YON                       = 30;
 
-#endif // globals_h_INCLUDED
+#endif // globals_c_INCLUDED
 

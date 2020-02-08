@@ -1,10 +1,10 @@
-#ifndef plane_h_INCLUDED
-#define plane_h_INCLUDED
+#ifndef plane_c_INCLUDED
+#define plane_c_INCLUDED
 
-#include "misc.h"
-#include "polygon.h"
-#include "line.h"
-#include "v3.h"
+#include "misc.c"
+#include "polygon.c"
+#include "line.c"
+#include "v3.c"
 
 // We store a plane as a point and a normal
 typedef struct Plane {
@@ -69,5 +69,5 @@ int Plane_intersect_line_M(v3 *result, const Plane *plane, const Line *line) {
   return 1;
 }
 
-#endif // plane_h_INCLUDED
+#endif // plane_c_INCLUDED
 

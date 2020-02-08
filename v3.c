@@ -1,5 +1,5 @@
-#ifndef vec3_h_INCLUDED
-#define vec3_h_INCLUDED
+#ifndef v3_c_INCLUDED
+#define v3_c_INCLUDED
 
 // Points and vectors are combined into one type
 
@@ -56,5 +56,4 @@ v3 v3_transform(v3 v, const _Mat transformation) {
   return (v3) { result_x, result_y, result_z };
 }
 
-#endif // vec3_h_INCLUDED
-
+#endif // v3_c_INCLUDED

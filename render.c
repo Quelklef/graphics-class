@@ -1,17 +1,17 @@
-#ifndef render_h_INCLUDED
-#define render_h_INCLUDED
+#ifndef render_c_INCLUDED
+#define render_c_INCLUDED
 
 // Functia relating to rendering stuff
 
 #include <math.h>
 
-#include "misc.h"
-#include "polygon.h"
-#include "polyhedron.h"
-#include "figure.h"
-#include "plane.h"
-#include "observer.h"
-#include "v2.h"
+#include "misc.c"
+#include "polygon.c"
+#include "polyhedron.c"
+#include "figure.c"
+#include "plane.c"
+#include "observer.c"
+#include "v2.c"
 
 
 
@@ -487,5 +487,5 @@ void render_figures(Figure *figures[], const int figure_count, const Figure *foc
 }
 
 
-#endif // render_h_INCLUDED
+#endif // render_c_INCLUDED
 

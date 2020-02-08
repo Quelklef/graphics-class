@@ -1,5 +1,5 @@
-#ifndef dyn_h_INCLUDED
-#define dyn_h_INCLUDED
+#ifndef dyn_c_INCLUDED
+#define dyn_c_INCLUDED
 
 // Generic variable-length list
 
@@ -108,4 +108,4 @@ void Dyn_destroy(Dyn *dyn) {
   TYPE NAME ## _get    (const Dyn *dyn, const size_t idx     ) { return *( (TYPE*) (dyn->items + idx * sizeof(TYPE)) ); } \
   void NAME ## _set    (Dyn *dyn, const size_t idx, TYPE item) { return Dyn_set(dyn, idx, &item);                       } \
 
-#endif // dyn_h_INCLUDED
+#endif // dyn_c_INCLUDED

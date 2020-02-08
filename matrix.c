@@ -1,5 +1,5 @@
-#ifndef Mat_mat_tools_INCLUDED
-#define Mat_mat_tools_INCLUDED
+#ifndef matrix_c_INCLUDED
+#define matrix_c_INCLUDED
 
 #include <stdio.h>
 #include <math.h>
@@ -215,4 +215,4 @@ void Mat_chain_M(_Mat result, const int count, ...) {
   va_end(args);
 }
 
-#endif // Mat_mat_tools_INCLUDED
+#endif // matrix_c_INCLUDED

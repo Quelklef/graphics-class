@@ -1,5 +1,5 @@
-#ifndef misc_h_INCLUDED
-#define misc_h_INCLUDED
+#ifndef misc_c_INCLUDED
+#define misc_c_INCLUDED
 
 float sgn(float x) {
   if (x < 0) return -1;
@@ -7,5 +7,5 @@ float sgn(float x) {
   return 0;
 }
 
-#endif // misc_h_INCLUDED
+#endif // misc_c_INCLUDED
 

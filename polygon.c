@@ -1,14 +1,14 @@
-#ifndef polygon_h_INCLUDED
-#define polygon_h_INCLUDED
+#ifndef polygon_c_INCLUDED
+#define polygon_c_INCLUDED
 
 // Polygongon data structure
 
 #include <float.h>
 
-#include "globals.h"
-#include "v3.h"
+#include "globals.c"
+#include "v3.c"
 
-#include "dyn.h"
+#include "dyn.c"
 DYN_INIT(Polygon, v3);
 
 void Polygon_print(const Polygon* polygon) {
@@ -138,4 +138,4 @@ Polygon *Polygon_from_points(const int point_count, ...) {
   return polygon;
 }
 
-#endif // polygon_h_INCLUDED
+#endif // polygon_c_INCLUDED

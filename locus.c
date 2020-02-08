@@ -1,15 +1,15 @@
-#ifndef locus_h_INCLUDED
-#define locus_h_INCLUDED
+#ifndef locus_c_INCLUDED
+#define locus_c_INCLUDED
 
 /*
  * The Locus data type, which is a 3d collection of points.
  */
 
-#include "v3.h"
-#include "matrix.h"
-#include "polyhedron.h"
+#include "v3.c"
+#include "matrix.c"
+#include "polyhedron.c"
 
-#include "dyn.h"
+#include "dyn.c"
 DYN_INIT(Locus, v3)
 
 void Locus_transform(Locus *locus, const _Mat transformation) {
@@ -125,5 +125,5 @@ void Locus_bounds_M(
   }
 }
 
-#endif // locus_h_INCLUDED
+#endif // locus_c_INCLUDED
 
