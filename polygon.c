@@ -5,10 +5,10 @@
 
 #include <float.h>
 
-#include "globals.h"
-#include "v3.h"
+#include "globals.c"
+#include "v3.c"
 
-#include "dyn.h"
+#include "dyn.c"
 DYN_INIT(Polygon, v3);
 
 void Polygon_print(const Polygon* polygon) {

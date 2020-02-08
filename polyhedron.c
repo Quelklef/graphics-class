@@ -5,11 +5,11 @@
 
 #include <float.h>
 
-#include "v3.h"
-#include "polygon.h"
-#include "matrix.h"
+#include "v3.c"
+#include "polygon.c"
+#include "matrix.c"
 
-#include "dyn.h"
+#include "dyn.c"
 DYN_INIT(Polyhedron, Polygon*)
 
 void Polyhedron_print(const Polyhedron *polyhedron) {

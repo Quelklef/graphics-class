@@ -1,10 +1,10 @@
 #ifndef plane_h_INCLUDED
 #define plane_h_INCLUDED
 
-#include "misc.h"
-#include "polygon.h"
-#include "line.h"
-#include "v3.h"
+#include "misc.c"
+#include "polygon.c"
+#include "line.c"
+#include "v3.c"
 
 // We store a plane as a point and a normal
 typedef struct Plane {

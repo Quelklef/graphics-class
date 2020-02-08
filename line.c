@@ -1,7 +1,7 @@
 #ifndef line_h_INCLUDED
 #define line_h_INCLUDED
 
-#include "v3.h"
+#include "v3.c"
 
 // We define a line by two points
 typedef struct Line {

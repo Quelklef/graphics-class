@@ -1,8 +1,8 @@
 #ifndef figure_h_INCLUDED
 #define figure_h_INCLUDED
 
-#include "locus.h"
-#include "polyhedron.h"
+#include "locus.c"
+#include "polyhedron.c"
 
 typedef enum {
   fk_Polyhedron,
