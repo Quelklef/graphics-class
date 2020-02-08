@@ -7,13 +7,13 @@
 
 #include "v3.h"
 #include "matrix.h"
-#include "poly.h"
+#include "polyhedron.h"
 
-#include "dyn.H"
+#include "dyn.h"
 DYN_INIT(Locus, v3)
 
 void Locus_transform(Locus *locus, const _Mat transformation) {
-  for (int i = 0; i < Locus_length(locus); i++) {
+  for (int i = 0; i < locus->length; i++) {
     const v3 point = Locus_get(locus, i);
     const v3 transformed = v3_transform(point, transformation);
     Locus_set(locus, i, transformed);
@@ -54,6 +54,24 @@ Locus *Locus_from_parametric(
 
   return locus;
 
+}
+
+v3 Locus_center(Locus *locus) {
+  v3 highs = { -INFINITY, -INFINITY, -INFINITY };
+  v3 lows  = { +INFINITY, +INFINITY, +INFINITY };
+
+  for (int i = 0; i < locus->length; i++) {
+    const v3 point = Locus_get(locus, i);
+
+         if (point[0] > highs[0]) highs[0] = point[0];
+    else if (point[0] <  lows[0])  lows[0] = point[0];
+         if (point[1] > highs[1]) highs[1] = point[1];
+    else if (point[1] <  lows[1])  lows[1] = point[1];
+         if (point[2] > highs[2]) highs[2] = point[2];
+    else if (point[2] <  lows[2])  lows[2] = point[2];
+  }
+
+  return highs / 2 + lows / 2;
 }
 
 #endif // locus_h_INCLUDED

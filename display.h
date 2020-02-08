@@ -1,7 +1,7 @@
 #ifndef display_h_INCLUDED
 #define display_h_INCLUDED
 
-// Functions relating to displaying stuff
+// Functia relating to displaying stuff
 
 #include <math.h>
 
@@ -348,13 +348,13 @@ int comparator(const void *_dPolygon0, const void *_dPolygon1) {
   const float dist0 = v3_mag(center0);
   const float dist1 = v3_mag(center1);
 
-  // If they belong to the same polyhedron, place  focused polygongons at the back.
+  // If they belong to the same polyhedron, place  focused polygonga at the back.
   if (dPolygon0->belongs_to == dPolygon1->belongs_to) {
     if (dPolygon0->is_halo && !dPolygon1->is_halo) return -1;
     if (dPolygon1->is_halo && !dPolygon0->is_halo) return +1;
   }
 
-  // Place distant polygongons before
+  // Place distant polygonga before
   if (dist0 > dist1) return -1;
   if (dist1 > dist0) return +1;
 
@@ -364,7 +364,7 @@ int comparator(const void *_dPolygon0, const void *_dPolygon1) {
 void display_polyhedra_aux(Polyhedron *polyhedra[], int polyhedron_count, Polyhedron *focused_polyhedron, Polyhedron *light_source) {
   v3 light_source_loc = Polyhedron_center(light_source);
 
-  // We need to draw all polygongons at once, not polyhedron-by-polyhedron, in order to
+  // We need to draw all polygonga at once, not polyhedron-by-polyhedron, in order to
   // correctly handle overlapping polyhedra.
   int total_polygon_count = 0;
   for (int polyhedron_idx = 0; polyhedron_idx < polyhedron_count; polyhedron_idx++) {
@@ -374,13 +374,13 @@ void display_polyhedra_aux(Polyhedron *polyhedra[], int polyhedron_count, Polyhe
       if (shouldnt_display(polygon)) continue;
       total_polygon_count++;
 
-      // Will have a focused duplicate
+      // Will have a focused dupliconste
       if (DO_POLY_FILL && DO_HALO && polyhedron == focused_polyhedron) total_polygon_count++;
     }
   }
 
-  DisplayPolygon aggregate_dPolygons[total_polygon_count];
-  int aggregate_dPolygons_i = 0;
+  DisplayPolygon aggregate_dPolyga[total_polygon_count];
+  int aggregate_dPolyga_i = 0;
 
   for (int polyhedron_idx = 0; polyhedron_idx < polyhedron_count; polyhedron_idx++) {
     const Polyhedron *polyhedron = polyhedra[polyhedron_idx];
@@ -395,8 +395,8 @@ void display_polyhedra_aux(Polyhedron *polyhedra[], int polyhedron_count, Polyhe
         .belongs_to = (Polyhedron *) polyhedron,
         .is_halo = 0 };
 
-      aggregate_dPolygons[aggregate_dPolygons_i] = dPolygon;
-      aggregate_dPolygons_i++;
+      aggregate_dPolyga[aggregate_dPolyga_i] = dPolygon;
+      aggregate_dPolyga_i++;
 
       // Create halo clone
       if (DO_POLY_FILL && DO_HALO && is_focused) {
@@ -405,26 +405,26 @@ void display_polyhedra_aux(Polyhedron *polyhedra[], int polyhedron_count, Polyhe
           .belongs_to = (Polyhedron *) polyhedron,
           .is_halo = 1 };
 
-        aggregate_dPolygons[aggregate_dPolygons_i] = focusedDPolygon;
-        aggregate_dPolygons_i++;
+        aggregate_dPolyga[aggregate_dPolyga_i] = focusedDPolygon;
+        aggregate_dPolyga_i++;
       }
     }
   }
 
-  qsort((void *) aggregate_dPolygons, total_polygon_count, sizeof(DisplayPolygon), comparator);
+  qsort((void *) aggregate_dPolyga, total_polygon_count, sizeof(DisplayPolygon), comparator);
 
   for (int dPolygon_idx = 0; dPolygon_idx < total_polygon_count; dPolygon_idx++) {
-    DisplayPolygon dPolygon = aggregate_dPolygons[dPolygon_idx];
+    DisplayPolygon dPolygon = aggregate_dPolyga[dPolygon_idx];
     Polygon_display(dPolygon.polygon, dPolygon.belongs_to == focused_polyhedron, dPolygon.is_halo, light_source_loc);
   }
 }
 
-void display_polyhedra(Polyhedron *polyhedra[], const int polyhedron_count, const Polyhedron *focused_polyhedron, const Polyhedron *light_source) {
+void display_polyhedra(Polyhedron **polyhedra, const int polyhedron_count, const Polyhedron *focused_polyhedron, const Polyhedron *light_source) {
 
   // Move from world space to eyespace
 
   // Will clone all polyhedra and store their transformed
-  // versions in this array
+  // versia in this array
   Polyhedron *in_eyespace[polyhedron_count];
   Polyhedron *focused_clone = NULL;
   Polyhedron *light_source_clone = NULL;
