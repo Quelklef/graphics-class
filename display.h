@@ -6,7 +6,7 @@
 #include <math.h>
 
 #include "misc.h"
-#include "poly.h"
+#include "polygon.h"
 #include "model.h"
 #include "plane.h"
 #include "observer.h"
@@ -40,41 +40,41 @@ void Line_display(const Line *line) {
   G_line(pixel0[0], pixel0[1], pixelf[0], pixelf[1]);
 }
 
-int shouldnt_display(const Poly *poly) {
+int shouldnt_display(const Polygon *polygon) {
   // Implements backface elimination
 
   if (!DO_BACKFACE_ELIMINATION) return 0;
 
   const v3 origin = { 0, 0, 0 };
-  const v3 T = Poly_get(poly, 0) - origin;
-  const v3 N = Poly_normal(poly);
+  const v3 T = Polygon_get(polygon, 0) - origin;
+  const v3 N = Polygon_normal(polygon);
   return BACKFACE_ELIMINATION_SIGN * v3_dot(T, N) < 0;
 }
 
-float Poly_calc_intensity(const Poly *poly, const v3 light_source_loc) {
-  const v3 poly_center = Poly_center(poly);
-  const v3 to_light = v3_normalize(light_source_loc - poly_center);
+float Polygon_calc_intensity(const Polygon *polygon, const v3 light_source_loc) {
+  const v3 polygon_center = Polygon_center(polygon);
+  const v3 to_light = v3_normalize(light_source_loc - polygon_center);
 
-  v3 poly_normal = Poly_normal(poly);
+  v3 polygon_normal = Polygon_normal(polygon);
   // Make sure normal is going correct direction
-  if (v3_dot(poly_normal, to_light) < 0) {
-    poly_normal = -poly_normal;
+  if (v3_dot(polygon_normal, to_light) < 0) {
+    polygon_normal = -polygon_normal;
   }
 
-  const float cos_alpha = v3_dot(poly_normal, to_light);
+  const float cos_alpha = v3_dot(polygon_normal, to_light);
   const float cos_alpha_0 = fmax(0, cos_alpha);
 
   const v3 observer = { 0, 0, 0 };
-  const v3 to_observer = v3_normalize(observer - poly_center);
+  const v3 to_observer = v3_normalize(observer - polygon_center);
 
-  // If observer is on other side of polygon, no reflected light is seen.
-  const float A = v3_dot(poly_normal, to_light);
-  const float B = v3_dot(poly_normal, to_observer);
+  // If observer is on other side of polygongon, no reflected light is seen.
+  const float A = v3_dot(polygon_normal, to_light);
+  const float B = v3_dot(polygon_normal, to_observer);
   if (sgn(A) != sgn(B)) {
     return AMBIENT;
   }
 
-  const v3 scaled_normal = poly_normal * (float) (2 * cos_alpha);
+  const v3 scaled_normal = polygon_normal * (float) (2 * cos_alpha);
   const v3 reflection = -to_light + scaled_normal;
 
   const float cos_beta = v3_dot(reflection, to_observer);
@@ -85,8 +85,8 @@ float Poly_calc_intensity(const Poly *poly, const v3 light_source_loc) {
          + (1 - AMBIENT - DIFFUSE_MAX) * pow(cos_beta_0, SPECULAR_POWER);
 }
 
-v3 Poly_calc_color(const Poly *poly, const v3 light_source_loc, const v3 inherent_rgb) {
-  const float intensity = Poly_calc_intensity(poly, light_source_loc);
+v3 Polygon_calc_color(const Polygon *polygon, const v3 light_source_loc, const v3 inherent_rgb) {
+  const float intensity = Polygon_calc_intensity(polygon, light_source_loc);
   const float full = AMBIENT + DIFFUSE_MAX;
 
   if (intensity > full) {
@@ -109,7 +109,7 @@ void floats_to_doubles_M(double *result, const float *xs, const int count) {
   }
 }
 
-void _fill_polygon(const float *xs, const float *ys, const int count) {
+void _fill_polygongon(const float *xs, const float *ys, const int count) {
   double dxs[count];
   double dys[count];
   floats_to_doubles_M(dxs, xs, count);
@@ -117,27 +117,27 @@ void _fill_polygon(const float *xs, const float *ys, const int count) {
   G_fill_polygon(dxs, dys, count);
 }
 
-void Poly_display_minimal(const Poly *poly) {
-  float pxs[poly->length];
-  float pys[poly->length];
+void Polygon_display_minimal(const Polygon *polygon) {
+  float pxs[polygon->length];
+  float pys[polygon->length];
 
-  for (int point_idx = 0; point_idx < poly->length; point_idx++) {
-    const v3 point = Poly_get(poly, point_idx);
+  for (int point_idx = 0; point_idx < polygon->length; point_idx++) {
+    const v3 point = Polygon_get(polygon, point_idx);
     const v2 pixel = pixel_coords(point);
     pxs[point_idx] = pixel[0];
     pys[point_idx] = pixel[1];
   }
 
-  _fill_polygon(pxs, pys, poly->length);
+  _fill_polygongon(pxs, pys, polygon->length);
 }
 
-void Poly_display_as_halo(const Poly *poly) {
+void Polygon_display_as_halo(const Polygon *polygon) {
   const float scale_amt = 3;
 
-  float pxs[poly->length];
-  float pys[poly->length];
-  for (int point_idx = 0; point_idx < poly->length; point_idx++) {
-    const v3 point = Poly_get(poly, point_idx);
+  float pxs[polygon->length];
+  float pys[polygon->length];
+  for (int point_idx = 0; point_idx < polygon->length; point_idx++) {
+    const v3 point = Polygon_get(polygon, point_idx);
     const v2 pixel = pixel_coords(point);
     pxs[point_idx] = pixel[0];
     pys[point_idx] = pixel[1];
@@ -150,7 +150,7 @@ void Poly_display_as_halo(const Poly *poly) {
     float min_py = +DBL_MAX;
     float max_py = -DBL_MAX;
 
-    for (int point_idx = 0; point_idx < poly->length; point_idx++) {
+    for (int point_idx = 0; point_idx < polygon->length; point_idx++) {
       float px = pxs[point_idx];
       float py = pys[point_idx];
 
@@ -164,17 +164,17 @@ void Poly_display_as_halo(const Poly *poly) {
     center_py = min_py / 2 + max_py / 2;
   }
 
-  for (int point_idx = 0; point_idx < poly->length; point_idx++) {
+  for (int point_idx = 0; point_idx < polygon->length; point_idx++) {
     pxs[point_idx] = (pxs[point_idx] - center_px) * scale_amt + center_px;
     pys[point_idx] = (pys[point_idx] - center_py) * scale_amt + center_py;
   }
 
   G_rgb(1, 0, 0);
-  _fill_polygon(pxs, pys, poly->length);
+  _fill_polygongon(pxs, pys, polygon->length);
 }
 
-void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
-  // Clip a polygon with a plane
+void Polygon_clip_with_plane(Polygon *polygon, const Plane *plane) {
+  // Clip a polygongon with a plane
   // The portion of the shape on the on the same side as the point
   //   (0, 0, (YON + HITHER)/2) will be kept
   //   (given that YON > HITHER)
@@ -182,21 +182,21 @@ void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
 
   // If HITHER >= YON, then all models are entirely clipped
   if (HITHER >= YON) {
-    Poly_clear(poly);
+    Polygon_clear(polygon);
     return;
   }
 
-  Poly result_poly;
-  Poly_init(&result_poly, poly->length + 1);
-  // We can gain at most one point from clipping, so poly->length+1 is an upper bound
+  Polygon result_polygon;
+  Polygon_init(&result_polygon, polygon->length + 1);
+  // We can gain at most one point from clipping, so polygon->length+1 is an upper bound
 
   // Create a point that's definitely inside the clipping region
   const v3 inside_point = { 0, 0, YON / 2 + HITHER / 2 };
   const int inside_side = Plane_side_of(plane, inside_point);
 
-  for (int point_idx = 0; point_idx < poly->length; point_idx++) {
-    v3 this_point = Poly_get(poly, point_idx);
-    v3 next_point = Poly_get(poly, (point_idx + 1) % poly->length);
+  for (int point_idx = 0; point_idx < polygon->length; point_idx++) {
+    v3 this_point = Polygon_get(polygon, point_idx);
+    v3 next_point = Polygon_get(polygon, (point_idx + 1) % polygon->length);
 
     const int this_is_inside = inside_side == Plane_side_of(plane, this_point);
     const int next_is_inside = inside_side == Plane_side_of(plane, next_point);
@@ -205,7 +205,7 @@ void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
     Line_between(&this_to_next, this_point, next_point);
 
     if (this_is_inside) {
-      Poly_append(&result_poly, this_point);
+      Polygon_append(&result_polygon, this_point);
     }
 
     // If crosses over, add itersection
@@ -214,20 +214,20 @@ void Poly_clip_with_plane(Poly *poly, const Plane *plane) {
       const int found_intersection = Plane_intersect_line_M(&intersection, plane, &this_to_next);
       // We know there should be an intersection since the points are on opposite sides of the plane
       if (!found_intersection) {
-        printf("Error in Poly_clip_with_plane: intersection not found.\n");
+        printf("Error in Polygon_clip_with_plane: intersection not found.\n");
         exit(1);
       }
 
-      Poly_append(&result_poly, intersection);
+      Polygon_append(&result_polygon, intersection);
     }
 
   }
 
-  *poly = result_poly;
+  *polygon = result_polygon;
 }
 
-void Poly_clip(Poly *poly) {
-  // Clip a polygon according to HALF_ANGLE, YON, and HITHER
+void Polygon_clip(Polygon *polygon) {
+  // Clip a polygongon according to HALF_ANGLE, YON, and HITHER
   // Frees removed points
 
   v3 observer = { 0, 0, 0 };
@@ -271,21 +271,21 @@ void Poly_clip(Poly *poly) {
 
   // --
 
-  Poly_clip_with_plane(poly, &above_plane);
-  Poly_clip_with_plane(poly, &left_plane);
-  Poly_clip_with_plane(poly, &bottom_plane);
-  Poly_clip_with_plane(poly, &right_plane);
-  Poly_clip_with_plane(poly, &hither_plane);
-  Poly_clip_with_plane(poly, &yon_plane);
+  Polygon_clip_with_plane(polygon, &above_plane);
+  Polygon_clip_with_plane(polygon, &left_plane);
+  Polygon_clip_with_plane(polygon, &bottom_plane);
+  Polygon_clip_with_plane(polygon, &right_plane);
+  Polygon_clip_with_plane(polygon, &hither_plane);
+  Polygon_clip_with_plane(polygon, &yon_plane);
 }
 
-void Poly_display(const Poly *poly, const int is_focused, const int is_halo, const v3 light_source_loc) {
-  // focused: is the polygon part of the focused model? (NOT part of the halo)
-  // halo: is the polygon part of a halo?
+void Polygon_display(const Polygon *polygon, const int is_focused, const int is_halo, const v3 light_source_loc) {
+  // focused: is the polygongon part of the focused model? (NOT part of the halo)
+  // halo: is the polygongon part of a halo?
 
-  Poly *clipped = Poly_clone(poly);
+  Polygon *clipped = Polygon_clone(polygon);
   if (DO_CLIPPING) {
-    Poly_clip(clipped);
+    Polygon_clip(clipped);
   }
 
   if (clipped->length != 0) {
@@ -294,16 +294,16 @@ void Poly_display(const Poly *poly, const int is_focused, const int is_halo, con
 
     if (DO_POLY_FILL) {
       if (is_halo) {
-        Poly_display_as_halo(clipped);
+        Polygon_display_as_halo(clipped);
       } else {
         v3 rgb = { 0.8, 0.5, 0.8 };
 
         if (DO_LIGHT_MODEL) {
-          rgb = Poly_calc_color(clipped, light_source_loc, rgb);
+          rgb = Polygon_calc_color(clipped, light_source_loc, rgb);
         }
 
         G_rgb(rgb[0], rgb[1], rgb[2]);
-        Poly_display_minimal(clipped);
+        Polygon_display_minimal(clipped);
       }
     }
 
@@ -315,8 +315,8 @@ void Poly_display(const Poly *poly, const int is_focused, const int is_halo, con
       }
 
       for (int point_idx = 0; point_idx < clipped->length; point_idx++) {
-        const v3 p0 = Poly_get(clipped, point_idx);
-        const v3 pf = Poly_get(clipped, (point_idx + 1) % clipped->length);
+        const v3 p0 = Polygon_get(clipped, point_idx);
+        const v3 pf = Polygon_get(clipped, (point_idx + 1) % clipped->length);
 
         Line line;
         Line_between(&line, p0, pf);
@@ -326,35 +326,35 @@ void Poly_display(const Poly *poly, const int is_focused, const int is_halo, con
 
   }
 
-  Poly_destroy(clipped);
+  Polygon_destroy(clipped);
 }
 
 
 
 
 typedef struct {
-  Poly *poly;
+  Polygon *polygon;
   Model *belongs_to;
   int is_halo;
-} DisplayPoly;
+} DisplayPolygon;
 
-int comparator(const void *_dPoly0, const void *_dPoly1) {
-  const DisplayPoly *dPoly0 = (const DisplayPoly *) _dPoly0;
-  const DisplayPoly *dPoly1 = (const DisplayPoly *) _dPoly1;
+int comparator(const void *_dPolygon0, const void *_dPolygon1) {
+  const DisplayPolygon *dPolygon0 = (const DisplayPolygon *) _dPolygon0;
+  const DisplayPolygon *dPolygon1 = (const DisplayPolygon *) _dPolygon1;
 
-  v3 center0 = Poly_center(dPoly0->poly);
-  v3 center1 = Poly_center(dPoly1->poly);
+  v3 center0 = Polygon_center(dPolygon0->polygon);
+  v3 center1 = Polygon_center(dPolygon1->polygon);
 
   const float dist0 = v3_mag(center0);
   const float dist1 = v3_mag(center1);
 
-  // If they belong to the same model, place  focused polygons at the back.
-  if (dPoly0->belongs_to == dPoly1->belongs_to) {
-    if (dPoly0->is_halo && !dPoly1->is_halo) return -1;
-    if (dPoly1->is_halo && !dPoly0->is_halo) return +1;
+  // If they belong to the same model, place  focused polygongons at the back.
+  if (dPolygon0->belongs_to == dPolygon1->belongs_to) {
+    if (dPolygon0->is_halo && !dPolygon1->is_halo) return -1;
+    if (dPolygon1->is_halo && !dPolygon0->is_halo) return +1;
   }
 
-  // Place distant polygons before
+  // Place distant polygongons before
   if (dist0 > dist1) return -1;
   if (dist1 > dist0) return +1;
 
@@ -364,58 +364,58 @@ int comparator(const void *_dPoly0, const void *_dPoly1) {
 void display_models_aux(Model *models[], int model_count, Model *focused_model, Model *light_source) {
   v3 light_source_loc = Model_center(light_source);
 
-  // We need to draw all polygons at once, not model-by-model, in order to
+  // We need to draw all polygongons at once, not model-by-model, in order to
   // correctly handle overlapping models.
-  int total_poly_count = 0;
+  int total_polygon_count = 0;
   for (int model_idx = 0; model_idx < model_count; model_idx++) {
     const Model *model = models[model_idx];
-    for (int poly_idx = 0; poly_idx < model->length; poly_idx++) {
-      const Poly *poly = Model_get(model, poly_idx);
-      if (shouldnt_display(poly)) continue;
-      total_poly_count++;
+    for (int polygon_idx = 0; polygon_idx < model->length; polygon_idx++) {
+      const Polygon *polygon = Model_get(model, polygon_idx);
+      if (shouldnt_display(polygon)) continue;
+      total_polygon_count++;
 
       // Will have a focused duplicate
-      if (DO_POLY_FILL && DO_HALO && model == focused_model) total_poly_count++;
+      if (DO_POLY_FILL && DO_HALO && model == focused_model) total_polygon_count++;
     }
   }
 
-  DisplayPoly aggregate_dPolys[total_poly_count];
-  int aggregate_dPolys_i = 0;
+  DisplayPolygon aggregate_dPolygons[total_polygon_count];
+  int aggregate_dPolygons_i = 0;
 
   for (int model_idx = 0; model_idx < model_count; model_idx++) {
     const Model *model = models[model_idx];
     const int is_focused = model == focused_model;
-    for (int poly_idx = 0; poly_idx < model->length; poly_idx++) {
-      const Poly *poly = Model_get(model, poly_idx);
+    for (int polygon_idx = 0; polygon_idx < model->length; polygon_idx++) {
+      const Polygon *polygon = Model_get(model, polygon_idx);
 
-      if (shouldnt_display(poly)) continue;
+      if (shouldnt_display(polygon)) continue;
 
-      const DisplayPoly dPoly = {
-        .poly = (Poly *) poly,
+      const DisplayPolygon dPolygon = {
+        .polygon = (Polygon *) polygon,
         .belongs_to = (Model *) model,
         .is_halo = 0 };
 
-      aggregate_dPolys[aggregate_dPolys_i] = dPoly;
-      aggregate_dPolys_i++;
+      aggregate_dPolygons[aggregate_dPolygons_i] = dPolygon;
+      aggregate_dPolygons_i++;
 
       // Create halo clone
       if (DO_POLY_FILL && DO_HALO && is_focused) {
-        const DisplayPoly focusedDPoly = {
-          .poly = (Poly *) poly,
+        const DisplayPolygon focusedDPolygon = {
+          .polygon = (Polygon *) polygon,
           .belongs_to = (Model *) model,
           .is_halo = 1 };
 
-        aggregate_dPolys[aggregate_dPolys_i] = focusedDPoly;
-        aggregate_dPolys_i++;
+        aggregate_dPolygons[aggregate_dPolygons_i] = focusedDPolygon;
+        aggregate_dPolygons_i++;
       }
     }
   }
 
-  qsort((void *) aggregate_dPolys, total_poly_count, sizeof(DisplayPoly), comparator);
+  qsort((void *) aggregate_dPolygons, total_polygon_count, sizeof(DisplayPolygon), comparator);
 
-  for (int dPoly_idx = 0; dPoly_idx < total_poly_count; dPoly_idx++) {
-    DisplayPoly dPoly = aggregate_dPolys[dPoly_idx];
-    Poly_display(dPoly.poly, dPoly.belongs_to == focused_model, dPoly.is_halo, light_source_loc);
+  for (int dPolygon_idx = 0; dPolygon_idx < total_polygon_count; dPolygon_idx++) {
+    DisplayPolygon dPolygon = aggregate_dPolygons[dPolygon_idx];
+    Polygon_display(dPolygon.polygon, dPolygon.belongs_to == focused_model, dPolygon.is_halo, light_source_loc);
   }
 }
 

@@ -1,45 +1,45 @@
 #ifndef model_h_INCLUDED
 #define model_h_INCLUDED
 
-// The Model data type, which is a collection of polygons
+// The Model data type, which is a collection of polygongons
 
 #include <float.h>
 
 #include "v3.h"
-#include "poly.h"
+#include "polygon.h"
 #include "matrix.h"
 
 #include "dyn.h"
-DYN_INIT(Model, Poly*)
+DYN_INIT(Model, Polygon*)
 
 void Model_print(const Model *model) {
   printf("MODEL [\n");
-  for (int poly_idx = 0; poly_idx < model->length; poly_idx++) {
-    Poly_print(Model_get(model, poly_idx));
+  for (int polygon_idx = 0; polygon_idx < model->length; polygon_idx++) {
+    Polygon_print(Model_get(model, polygon_idx));
   }
   printf("] MODEL\n");
 }
 
 Model *Model_clone(const Model *source) {
   Model *result = Model_new(source->length);
-  for (int poly_i = 0; poly_i < source->length; poly_i++) {
-    const Poly *poly = Model_get(source, poly_i);
-    Poly *clone = Poly_clone(poly);
+  for (int polygon_i = 0; polygon_i < source->length; polygon_i++) {
+    const Polygon *polygon = Model_get(source, polygon_i);
+    Polygon *clone = Polygon_clone(polygon);
     Model_append(result, clone);
   }
   return result;
 }
 
 void Model_transform(Model *model, const _Mat transformation) {
-  for (int poly_idx = 0; poly_idx < model->length; poly_idx++) {
-    Poly *poly = Model_get(model, poly_idx);
-    Poly_transform(poly, transformation);
+  for (int polygon_idx = 0; polygon_idx < model->length; polygon_idx++) {
+    Polygon *polygon = Model_get(model, polygon_idx);
+    Polygon_transform(polygon, transformation);
   }
 }
 
 void Model_destroy(Model *model) {
   for (int i = 0; i < model->length; i++) {
-    Poly_destroy(Model_get(model, i));
+    Polygon_destroy(Model_get(model, i));
   }
   Dyn_destroy(model);
 }
@@ -58,10 +58,10 @@ void Model_bounds_M(
   *result_min_z = +DBL_MAX;
   *result_max_z = -DBL_MAX;
 
-  for (int poly_idx = 0; poly_idx < model->length; poly_idx++) {
-    const Poly *poly = Model_get(model, poly_idx);
-    for (int point_idx = 0; point_idx < poly->length; point_idx++) {
-      const v3 point = Poly_get(poly, point_idx);
+  for (int polygon_idx = 0; polygon_idx < model->length; polygon_idx++) {
+    const Polygon *polygon = Model_get(model, polygon_idx);
+    for (int point_idx = 0; point_idx < polygon->length; point_idx++) {
+      const v3 point = Polygon_get(polygon, point_idx);
 
       const float x = point[0];
       const float y = point[1];
@@ -139,19 +139,19 @@ Model *load_model(const char *filename) {
     fscanf(file, "%lf", &zs[point_idx]);
   }
 
-  int model_poly_count;
-  fscanf(file, "%d", &model_poly_count);
+  int model_polygon_count;
+  fscanf(file, "%d", &model_polygon_count);
 
-  Model *model = Model_new(model_poly_count);
+  Model *model = Model_new(model_polygon_count);
 
-  for (int poly_idx = 0; poly_idx < model_poly_count; poly_idx++) {
+  for (int polygon_idx = 0; polygon_idx < model_polygon_count; polygon_idx++) {
 
-    int poly_point_count;
-    fscanf(file, "%d", &poly_point_count);
+    int polygon_point_count;
+    fscanf(file, "%d", &polygon_point_count);
 
-    Poly *poly = Poly_new(poly_point_count);
+    Polygon *polygon = Polygon_new(polygon_point_count);
 
-    for (int point_idx = 0; point_idx < poly_point_count; point_idx++) {
+    for (int point_idx = 0; point_idx < polygon_point_count; point_idx++) {
       int crossref_idx;
       fscanf(file, "%d", &crossref_idx);
 
@@ -165,10 +165,10 @@ Model *load_model(const char *filename) {
         (float) ys[crossref_idx],
         (float) zs[crossref_idx]
       };
-      Poly_append(poly, point);
+      Polygon_append(polygon, point);
     }
 
-    Model_append(model, poly);
+    Model_append(model, polygon);
   }
 
   // TODO: this should not be in this location
@@ -218,7 +218,7 @@ Model *Model_from_parametric(
     }
   }
 
-  // Each quadruplet of adjacent items becomes a polygon
+  // Each quadruplet of adjacent items becomes a polygongon
 
   Model *model = Model_new(t_count * s_count);
   // t_count * s_count is the length if wrapping in both directions.
@@ -232,8 +232,8 @@ Model *Model_from_parametric(
       const v3 bottom_left  = point_at(t_idx    , s_idx + 1);
       const v3 bottom_right = point_at(t_idx + 1, s_idx + 1);
 
-      Poly *poly = Poly_from_points(4, top_left, top_right, bottom_right, bottom_left);
-      Model_append(model, poly);
+      Polygon *polygon = Polygon_from_points(4, top_left, top_right, bottom_right, bottom_left);
+      Model_append(model, polygon);
     }
   }
 
@@ -244,8 +244,8 @@ Model *Model_from_parametric(
       const v3 bottom_left  = point_at(t_count - 1, s_idx + 1);
       const v3 bottom_right = point_at(0          , s_idx + 1);
 
-      Poly *poly = Poly_from_points(4, top_left, top_right, bottom_right, bottom_left);
-      Model_append(model, poly);
+      Polygon *polygon = Polygon_from_points(4, top_left, top_right, bottom_right, bottom_left);
+      Model_append(model, polygon);
     }
   }
 
@@ -256,8 +256,8 @@ Model *Model_from_parametric(
       const v3 bottom_left  = point_at(t_idx    , 0          );
       const v3 bottom_right = point_at(t_idx + 1, 0          );
 
-      Poly *poly = Poly_from_points(4, top_left, top_right, bottom_right, bottom_left);
-      Model_append(model, poly);
+      Polygon *polygon = Polygon_from_points(4, top_left, top_right, bottom_right, bottom_left);
+      Model_append(model, polygon);
     }
   }
 
@@ -267,8 +267,8 @@ Model *Model_from_parametric(
     const v3 bottom_left  = point_at(t_count - 1, 0          );
     const v3 bottom_right = point_at(0          , 0          );
 
-    Poly *poly = Poly_from_points(4, top_left, top_right, bottom_left, bottom_right);
-    Model_append(model, poly);
+    Polygon *polygon = Polygon_from_points(4, top_left, top_right, bottom_left, bottom_right);
+    Model_append(model, polygon);
   }
 
   free(points);
@@ -276,15 +276,15 @@ Model *Model_from_parametric(
 
 }
 
-Model *Model_from_polys(const int poly_count, ...) {
+Model *Model_from_polygons(const int polygon_count, ...) {
   va_list args;
-  va_start(args, poly_count);
+  va_start(args, polygon_count);
 
-  Model *model = Model_new(poly_count);
+  Model *model = Model_new(polygon_count);
 
-  for (int i = 0; i < poly_count; i++) {
-    Poly *poly = va_arg(args, Poly*);
-    Model_append(model, poly);
+  for (int i = 0; i < polygon_count; i++) {
+    Polygon *polygon = va_arg(args, Polygon*);
+    Model_append(model, polygon);
   }
 
   va_end(args);
@@ -302,12 +302,12 @@ Model *make_small_model() {
   const v3 p2 = scale * (v3) { 1, 1, 0 };
   const v3 p3 = scale * (v3) { 0, 1, 1 };
 
-  Poly *poly0 = Poly_from_points(3,     p1, p2, p3);
-  Poly *poly1 = Poly_from_points(3, p0,     p2, p3);
-  Poly *poly2 = Poly_from_points(3, p0, p1,     p3);
-  Poly *poly3 = Poly_from_points(3, p0, p1, p2    );
+  Polygon *polygon0 = Polygon_from_points(3,     p1, p2, p3);
+  Polygon *polygon1 = Polygon_from_points(3, p0,     p2, p3);
+  Polygon *polygon2 = Polygon_from_points(3, p0, p1,     p3);
+  Polygon *polygon3 = Polygon_from_points(3, p0, p1, p2    );
 
-  Model *model = Model_from_polys(4, poly0, poly1, poly2, poly3);
+  Model *model = Model_from_polygons(4, polygon0, polygon1, polygon2, polygon3);
 
   // TODO: this should not be in this location
   nicely_place_model(model);

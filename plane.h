@@ -2,7 +2,7 @@
 #define plane_h_INCLUDED
 
 #include "misc.h"
-#include "poly.h"
+#include "polygon.h"
 #include "line.h"
 #include "v3.h"
 
@@ -28,18 +28,18 @@ void Plane_from_points(Plane *result, v3 a, v3 b, v3 c) {
   result->normal = normal;
 }
 
-void Plane_from_poly(Plane *result, const Poly *poly) {
-  if (poly->length < 3) {
-    printf("Error in Plane_from_poly: poly requires >= 3 points!\n");
+void Plane_from_polygon(Plane *result, const Polygon *polygon) {
+  if (polygon->length < 3) {
+    printf("Error in Plane_from_polygon: polygon requires >= 3 points!\n");
     exit(1);
   }
 
-  Plane_from_points(result, Poly_get(poly, 0), Poly_get(poly, 1), Poly_get(poly, 2));
+  Plane_from_points(result, Polygon_get(polygon, 0), Polygon_get(polygon, 1), Polygon_get(polygon, 2));
 }
 
-v3 Poly_normal(const Poly *poly) {
+v3 Polygon_normal(const Polygon *polygon) {
   Plane plane;
-  Plane_from_poly(&plane, poly);
+  Plane_from_polygon(&plane, polygon);
   return plane.normal;
 }
 

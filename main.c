@@ -2,7 +2,7 @@
 #include <math.h>
 
 #include "matrix.h"
-#include "poly.h"
+#include "polygon.h"
 #include "model.h"
 #include "display.h"
 #include "observer.h"
