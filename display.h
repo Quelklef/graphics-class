@@ -10,8 +10,9 @@
 #include "model.h"
 #include "plane.h"
 #include "observer.h"
+#include "v2.h"
 
-void pixel_coords_M(float *result_x, float *result_y, const v3 point) {
+v2 pixel_coords(const v3 point) {
   /* Find the pixel coordinates on the screen of a given
    * (x, y, z) point. */
 
@@ -27,16 +28,16 @@ void pixel_coords_M(float *result_x, float *result_y, const v3 point) {
   const float x_bar_bar = x_bar / H * (minor / 2);
   const float y_bar_bar = y_bar / H * (minor / 2);
 
-  *result_x = x_bar_bar + minor / 2;
-  *result_y = y_bar_bar + minor / 2;
+  const float result_x = x_bar_bar + minor / 2;
+  const float result_y = y_bar_bar + minor / 2;
+
+  return (v2) { result_x, result_y };
 }
 
 void Line_display(const Line *line) {
-  float pixel_x0, pixel_y0, pixel_xf, pixel_yf;
-  pixel_coords_M(&pixel_x0, &pixel_y0, line->p0);
-  pixel_coords_M(&pixel_xf, &pixel_yf, line->pf);
-
-  G_line(pixel_x0, pixel_y0, pixel_xf, pixel_yf);
+  const v2 pixel0 = pixel_coords(line->p0);
+  const v2 pixelf = pixel_coords(line->pf);
+  G_line(pixel0[0], pixel0[1], pixelf[0], pixelf[1]);
 }
 
 int shouldnt_display(const Poly *poly) {
@@ -84,37 +85,22 @@ float Poly_calc_intensity(const Poly *poly, const v3 light_source_loc) {
          + (1 - AMBIENT - DIFFUSE_MAX) * pow(cos_beta_0, SPECULAR_POWER);
 }
 
-void Poly_calc_color_M(
-      float *result_r, float *result_g, float *result_b, 
-      const Poly *poly, const v3 light_source_loc,
-      const float inherent_r, const float inherent_g, const float inherent_b
-    ) {
-
+v3 Poly_calc_color(const Poly *poly, const v3 light_source_loc, const v3 inherent_rgb) {
   const float intensity = Poly_calc_intensity(poly, light_source_loc);
   const float full = AMBIENT + DIFFUSE_MAX;
 
-  if (intensity == full) {
-    *result_r = inherent_r;
-    *result_g = inherent_g;
-    *result_b = inherent_b;
-    return;
-  }
-
   if (intensity > full) {
     const float ratio = (intensity - full) / (1 - full);
-    *result_r = inherent_r + (1 - inherent_r) * ratio;
-    *result_g = inherent_g + (1 - inherent_g) * ratio;
-    *result_b = inherent_b + (1 - inherent_b) * ratio;
-    return;
+    return inherent_rgb + (1 - inherent_rgb) * ratio;
   }
 
   if (intensity < full) {
     const float ratio = intensity / full;
-    *result_r = inherent_r * ratio;
-    *result_g = inherent_g * ratio;
-    *result_b = inherent_b * ratio;
-    return;
+    return inherent_rgb * ratio;
   }
+
+  // intensity == full
+  return inherent_rgb;
 }
 
 void floats_to_doubles_M(double *result, const float *xs, const int count) {
@@ -136,8 +122,10 @@ void Poly_display_minimal(const Poly *poly) {
   float pys[poly->length];
 
   for (int point_idx = 0; point_idx < poly->length; point_idx++) {
-    const v3 p = Poly_get(poly, point_idx);
-    pixel_coords_M(&pxs[point_idx], &pys[point_idx], p);
+    const v3 point = Poly_get(poly, point_idx);
+    const v2 pixel = pixel_coords(point);
+    pxs[point_idx] = pixel[0];
+    pys[point_idx] = pixel[1];
   }
 
   _fill_polygon(pxs, pys, poly->length);
@@ -149,8 +137,10 @@ void Poly_display_as_halo(const Poly *poly) {
   float pxs[poly->length];
   float pys[poly->length];
   for (int point_idx = 0; point_idx < poly->length; point_idx++) {
-    const v3 p = Poly_get(poly, point_idx);
-    pixel_coords_M(&pxs[point_idx], &pys[point_idx], p);
+    const v3 point = Poly_get(poly, point_idx);
+    const v2 pixel = pixel_coords(point);
+    pxs[point_idx] = pixel[0];
+    pys[point_idx] = pixel[1];
   }
 
   float center_px, center_py;
@@ -306,18 +296,13 @@ void Poly_display(const Poly *poly, const int is_focused, const int is_halo, con
       if (is_halo) {
         Poly_display_as_halo(clipped);
       } else {
-        float r = 0.8;
-        float g = 0.5;
-        float b = 0.8;
+        v3 rgb = { 0.8, 0.5, 0.8 };
 
         if (DO_LIGHT_MODEL) {
-          Poly_calc_color_M(
-            &r, &g, &b,
-            clipped, light_source_loc,
-            r, g, b);
+          rgb = Poly_calc_color(clipped, light_source_loc, rgb);
         }
 
-        G_rgb(r, g, b);
+        G_rgb(rgb[0], rgb[1], rgb[2]);
         Poly_display_minimal(clipped);
       }
     }

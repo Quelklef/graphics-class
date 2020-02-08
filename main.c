@@ -21,6 +21,13 @@ void ModelList_destroy(ModelList *models) {
 }
 
 
+float clamp(float x, float lo, float hi) {
+  if (x < lo) return lo;
+  if (x > hi) return hi;
+  return x;
+}
+
+
 // Currently selected parameter
 static const int param_HALF_ANGLE     = 1;
 static const int param_AMBIENT        = 2;
@@ -258,16 +265,12 @@ void display_state() {
     Model_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, model);
 
     const v3 center = Model_center(model);
-    float px, py;
-    pixel_coords_M(&px, &py, center);
+    const v2 pixel = pixel_coords(center);
 
     // TODO: better way to show off-bounds objects
-    if (px < 0) px = 0;
-    else if (px > SCREEN_WIDTH) px = SCREEN_WIDTH;
-    if (py < 0) py = 0;
-    else if (py > SCREEN_HEIGHT) py = SCREEN_HEIGHT;
-
-    draw_stringf(px, py, "%d        ", model_i);
+    pixel[0] = clamp(pixel[0], 0, SCREEN_WIDTH);
+    pixel[1] = clamp(pixel[1], 0, SCREEN_HEIGHT);
+    draw_stringf(pixel[0], pixel[1], "%d        ", model_i);
   }
 }
 
