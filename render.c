@@ -362,7 +362,7 @@ int point_in_bounds(const v3 point) {
   /* Is the point in bounds according to YON, HITHER, and HALF_ANGLE ? */
   if (point[2] < HITHER) return 0;
   if (point[2] > YON) return 0;
-  if (fabs(atan2(point[1], point[0])) > HALF_ANGLE) return 0;
+  if (fabs(atan2(point[1], point[2])) > HALF_ANGLE) return 0;
   return 1;
 }
 

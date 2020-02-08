@@ -404,11 +404,11 @@ void prepare_3d_lab() {
   nicely_place_figure(sphere1);
   FigureList_append(figures, sphere1);
 
-  Figure *sphere2 = Figure_from_Polyhedron(Polyhedron_from_parametric(
+  Figure *sphere2 = Figure_from_Locus(Locus_from_parametric(
     sphere_g,
-    0, 2 * M_PI, 25,
+    0, 2 * M_PI, 100,
     1,
-    -1, 1, 25,
+    -1, 1, 100,
     0
   ));
 
