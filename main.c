@@ -3,21 +3,21 @@
 
 #include "matrix.h"
 #include "polygon.h"
-#include "model.h"
+#include "polyhedron.h"
 #include "display.h"
 #include "observer.h"
 
 #include "dyn.h"
-DYN_INIT(ModelList, Model*)
+DYN_INIT(PolyhedraList, Polyhedron*)
 
-ModelList *models;
-Model *light_source = NULL;
+PolyhedraList *polyhedra;
+Polyhedron *light_source = NULL;
 
-void ModelList_destroy(ModelList *models) {
-  for (int model_idx = 0; model_idx < models->length; model_idx++) {
-    Model_destroy(ModelList_get(models, model_idx));
+void PolyhedraList_destroy(PolyhedraList *polyhedra) {
+  for (int polyhedron_idx = 0; polyhedron_idx < polyhedra->length; polyhedron_idx++) {
+    Polyhedron_destroy(PolyhedraList_get(polyhedra, polyhedron_idx));
   }
-  Dyn_destroy(models);
+  Dyn_destroy(polyhedra);
 }
 
 
@@ -39,7 +39,7 @@ static int current_parameter = 0;
 
 int display_overlay = 0;
 
-void on_key(Model *model, const char key) {
+void on_key(Polyhedron *polyhedron, const char key) {
   // Two ways to move: with an absolute distance
   static const float abs_speed = 0.5;
   // or moving as a percentage of the object's size
@@ -56,20 +56,20 @@ void on_key(Model *model, const char key) {
 
   // Relative transformations
 
-  float model_x_size, model_y_size, model_z_size;
-  Model_size_M(&model_x_size, &model_y_size, &model_z_size, model);
+  float polyhedron_x_size, polyhedron_y_size, polyhedron_z_size;
+  Polyhedron_size_M(&polyhedron_x_size, &polyhedron_y_size, &polyhedron_z_size, polyhedron);
 
-  const _Mat translate_backwards_rel = Mat_translate(0, 0, -rel_speed * model_z_size);
-  const _Mat translate_forwards_rel  = Mat_translate(0, 0, +rel_speed * model_z_size);
-  const _Mat translate_left_rel      = Mat_translate(-rel_speed * model_x_size, 0, 0);
-  const _Mat translate_right_rel     = Mat_translate(+rel_speed * model_x_size, 0, 0);
-  const _Mat translate_up_rel        = Mat_translate(0, +rel_speed * model_y_size, 0);
-  const _Mat translate_down_rel      = Mat_translate(0, -rel_speed * model_y_size, 0);
+  const _Mat translate_backwards_rel = Mat_translate(0, 0, -rel_speed * polyhedron_z_size);
+  const _Mat translate_forwards_rel  = Mat_translate(0, 0, +rel_speed * polyhedron_z_size);
+  const _Mat translate_left_rel      = Mat_translate(-rel_speed * polyhedron_x_size, 0, 0);
+  const _Mat translate_right_rel     = Mat_translate(+rel_speed * polyhedron_x_size, 0, 0);
+  const _Mat translate_up_rel        = Mat_translate(0, +rel_speed * polyhedron_y_size, 0);
+  const _Mat translate_down_rel      = Mat_translate(0, -rel_speed * polyhedron_y_size, 0);
 
-  const v3 model_center = Model_center(model);
+  const v3 polyhedron_center = Polyhedron_center(polyhedron);
 
-  const _Mat translate_to_origin   = Mat_translate_v(-model_center);
-  const _Mat translate_from_origin = Mat_translate_v(+model_center);
+  const _Mat translate_to_origin   = Mat_translate_v(-polyhedron_center);
+  const _Mat translate_from_origin = Mat_translate_v(+polyhedron_center);
 
 #define make_rel_to_origin(name) \
   Mat_mult_M(name, name, translate_to_origin); \
@@ -99,34 +99,34 @@ void on_key(Model *model, const char key) {
   make_rel_to_origin(rotate_z_negative);
 
   switch(key) {
-    case 'w': Model_transform(model, translate_forwards_rel ); break;
-    case 's': Model_transform(model, translate_backwards_rel); break;
-    case 'd': Model_transform(model, translate_right_rel    ); break;
-    case 'a': Model_transform(model, translate_left_rel     ); break;
-    case 'f': Model_transform(model, translate_down_rel     ); break;
-    case 'r': Model_transform(model, translate_up_rel       ); break;
+    case 'w': Polyhedron_transform(polyhedron, translate_forwards_rel ); break;
+    case 's': Polyhedron_transform(polyhedron, translate_backwards_rel); break;
+    case 'd': Polyhedron_transform(polyhedron, translate_right_rel    ); break;
+    case 'a': Polyhedron_transform(polyhedron, translate_left_rel     ); break;
+    case 'f': Polyhedron_transform(polyhedron, translate_down_rel     ); break;
+    case 'r': Polyhedron_transform(polyhedron, translate_up_rel       ); break;
 
-    case 'W': Model_transform(model, translate_forwards_abs ); break;
-    case 'S': Model_transform(model, translate_backwards_abs); break;
-    case 'D': Model_transform(model, translate_right_abs    ); break;
-    case 'A': Model_transform(model, translate_left_abs     ); break;
-    case 'F': Model_transform(model, translate_down_abs     ); break;
-    case 'R': Model_transform(model, translate_up_abs       ); break;
+    case 'W': Polyhedron_transform(polyhedron, translate_forwards_abs ); break;
+    case 'S': Polyhedron_transform(polyhedron, translate_backwards_abs); break;
+    case 'D': Polyhedron_transform(polyhedron, translate_right_abs    ); break;
+    case 'A': Polyhedron_transform(polyhedron, translate_left_abs     ); break;
+    case 'F': Polyhedron_transform(polyhedron, translate_down_abs     ); break;
+    case 'R': Polyhedron_transform(polyhedron, translate_up_abs       ); break;
 
-    case 'o': Model_transform(model, rotate_x_positive  ); break;
-    case 'p': Model_transform(model, rotate_x_negative  ); break;
+    case 'o': Polyhedron_transform(polyhedron, rotate_x_positive  ); break;
+    case 'p': Polyhedron_transform(polyhedron, rotate_x_negative  ); break;
 
-    case 'k': Model_transform(model, rotate_y_positive  ); break;
-    case 'l': Model_transform(model, rotate_y_negative  ); break;
+    case 'k': Polyhedron_transform(polyhedron, rotate_y_positive  ); break;
+    case 'l': Polyhedron_transform(polyhedron, rotate_y_negative  ); break;
 
-    case 'm': Model_transform(model, rotate_z_positive  ); break;
-    case ',': Model_transform(model, rotate_z_negative  ); break;
+    case 'm': Polyhedron_transform(polyhedron, rotate_z_positive  ); break;
+    case ',': Polyhedron_transform(polyhedron, rotate_z_negative  ); break;
 
-    case '[': Model_transform(model, scale_down         ); break;
-    case ']': Model_transform(model, scale_up           ); break;
+    case '[': Polyhedron_transform(polyhedron, scale_down         ); break;
+    case ']': Polyhedron_transform(polyhedron, scale_up           ); break;
 
-    case 'O': Model_transform(model, translate_to_origin); break;
-    case 'L': printf("Object at (%f, %f, %f)\n", model_center[0], model_center[1], model_center[2]); break;
+    case 'O': Polyhedron_transform(polyhedron, translate_to_origin); break;
+    case 'L': printf("Object at (%f, %f, %f)\n", polyhedron_center[0], polyhedron_center[1], polyhedron_center[2]); break;
 
     case '!': DO_WIREFRAME            = 1 - DO_WIREFRAME;            break;
     case '@': DO_BACKFACE_ELIMINATION = 1 - DO_BACKFACE_ELIMINATION; break;
@@ -257,20 +257,20 @@ void display_state() {
   draw_param(20,  40, "T", param_HITHER        , "Hither : %lf      ", HITHER);
   draw_param(20,  20, "Y", param_YON           , "Yon    : %lf      ", YON);
 
-  // Draw indices for each model
-  for (int model_i = 0; model_i < models->length; model_i++) {
-    const Model *model = ModelList_get(models, model_i);
+  // Draw indices for each polyhedron
+  for (int polyhedron_i = 0; polyhedron_i < polyhedra->length; polyhedron_i++) {
+    const Polyhedron *polyhedron = PolyhedraList_get(polyhedra, polyhedron_i);
 
     float min_x, max_x, min_y, max_y, min_z, max_z;
-    Model_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, model);
+    Polyhedron_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, polyhedron);
 
-    const v3 center = Model_center(model);
+    const v3 center = Polyhedron_center(polyhedron);
     const v2 pixel = pixel_coords(center);
 
     // TODO: better way to show off-bounds objects
     pixel[0] = clamp(pixel[0], 0, SCREEN_WIDTH);
     pixel[1] = clamp(pixel[1], 0, SCREEN_HEIGHT);
-    draw_stringf(pixel[0], pixel[1], "%d        ", model_i);
+    draw_stringf(pixel[0], pixel[1], "%d        ", polyhedron_i);
   }
 }
 
@@ -280,7 +280,7 @@ void show_help() {
   printf("  O    - Move object to user\n");
   printf("  L    - Print object location\n");
   printf("  []   - Scale selected object down and up\n");
-  printf("  0-9  - Switch models\n");
+  printf("  0-9  - Switch polyhedra\n");
   printf("\n");
   printf("Strafing (& shift-):\n");
   printf("  wasd - Strafe selected object along xz plane\n");
@@ -293,7 +293,7 @@ void show_help() {
   printf("  !    - Enable/disable wireframe\n");
   printf("  @    - Enable/disable backface elimination\n");
   printf("  #    - Enable/disable polygon filling\n");
-  printf("  $    - Enable/disable light model\n");
+  printf("  $    - Enable/disable light polyhedron\n");
   printf("  %%    - Enable/disable halos\n");
   printf("  /    - Change backface elimination sign\n");
   printf("  ^    - Enable/disable clipping\n");
@@ -319,13 +319,13 @@ void draw_box() {
 void load_files(const char **filenames, const int file_count) {
   for (int i = 0; i < file_count; i++) {
     const char *filename = filenames[i];
-    Model *model = load_model(filename);
-    ModelList_append(models, model);
+    Polyhedron *polyhedron = load_polyhedron(filename);
+    PolyhedraList_append(polyhedra, polyhedron);
   }
 }
 
 void event_loop() {
-  Model *focused_model = NULL;
+  Polyhedron *focused_polyhedron = NULL;
 
   char key = '1';
   do {
@@ -336,14 +336,14 @@ void event_loop() {
     G_rgb(1, 0, 0);
     draw_box();
 
-    const int model_idx = key - '0';
-    if (0 <= model_idx && model_idx < models->length) {
-      focused_model = ModelList_get(models, model_idx);
+    const int polyhedron_idx = key - '0';
+    if (0 <= polyhedron_idx && polyhedron_idx < polyhedra->length) {
+      focused_polyhedron = PolyhedraList_get(polyhedra, polyhedron_idx);
     }
 
-    on_key(focused_model, key);
+    on_key(focused_polyhedron, key);
 
-    display_models(models->items, models->length, focused_model, light_source);
+    display_polyhedra(polyhedra->items, polyhedra->length, focused_polyhedron, light_source);
 
     display_state();
 
@@ -387,7 +387,7 @@ v3 vase_f(float t, float s) {
 
 void prepare_3d_lab() {
 
-  Model *sphere1 = Model_from_parametric(
+  Polyhedron *sphere1 = Polyhedron_from_parametric(
     sphere_f,
     0, 2 * M_PI, 50,
     1,
@@ -395,10 +395,10 @@ void prepare_3d_lab() {
     1
   );
 
-  nicely_place_model(sphere1);
-  ModelList_append(models, sphere1);
+  nicely_place_polyhedron(sphere1);
+  PolyhedraList_append(polyhedra, sphere1);
 
-  Model *sphere2 = Model_from_parametric(
+  Polyhedron *sphere2 = Polyhedron_from_parametric(
     sphere_g,
     0, 2 * M_PI, 25,
     1,
@@ -406,10 +406,10 @@ void prepare_3d_lab() {
     0
   );
 
-  nicely_place_model(sphere2);
-  ModelList_append(models, sphere2);
+  nicely_place_polyhedron(sphere2);
+  PolyhedraList_append(polyhedra, sphere2);
 
-  Model *vase = Model_from_parametric(
+  Polyhedron *vase = Polyhedron_from_parametric(
     vase_f,
     0, 2 * M_PI, 25,
     1,
@@ -417,8 +417,8 @@ void prepare_3d_lab() {
     0
   );
 
-  nicely_place_model(vase);
-  ModelList_append(models, vase);
+  nicely_place_polyhedron(vase);
+  PolyhedraList_append(polyhedra, vase);
 
 }
 
@@ -429,14 +429,14 @@ int main(const int argc, const char **argv) {
 
   // == Setup == //
 
-  models = ModelList_new(1);
+  polyhedra = PolyhedraList_new(1);
 
   G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
 
   //show_help();
 
-  light_source = make_small_model();
-  ModelList_append(models, light_source);
+  light_source = make_small_polyhedron();
+  PolyhedraList_append(polyhedra, light_source);
 
   //load_files(&argv[1], argc - 1);
 
@@ -447,7 +447,7 @@ int main(const int argc, const char **argv) {
 
   // == Teardown == //
 
-  ModelList_destroy(models);
+  PolyhedraList_destroy(polyhedra);
 
   G_close();
 

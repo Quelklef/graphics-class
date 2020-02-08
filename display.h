@@ -7,7 +7,7 @@
 
 #include "misc.h"
 #include "polygon.h"
-#include "model.h"
+#include "polyhedron.h"
 #include "plane.h"
 #include "observer.h"
 #include "v2.h"
@@ -180,7 +180,7 @@ void Polygon_clip_with_plane(Polygon *polygon, const Plane *plane) {
   //   (given that YON > HITHER)
   // Frees removed points
 
-  // If HITHER >= YON, then all models are entirely clipped
+  // If HITHER >= YON, then all polyhedra are entirely clipped
   if (HITHER >= YON) {
     Polygon_clear(polygon);
     return;
@@ -280,7 +280,7 @@ void Polygon_clip(Polygon *polygon) {
 }
 
 void Polygon_display(const Polygon *polygon, const int is_focused, const int is_halo, const v3 light_source_loc) {
-  // focused: is the polygongon part of the focused model? (NOT part of the halo)
+  // focused: is the polygongon part of the focused polyhedron? (NOT part of the halo)
   // halo: is the polygongon part of a halo?
 
   Polygon *clipped = Polygon_clone(polygon);
@@ -334,7 +334,7 @@ void Polygon_display(const Polygon *polygon, const int is_focused, const int is_
 
 typedef struct {
   Polygon *polygon;
-  Model *belongs_to;
+  Polyhedron *belongs_to;
   int is_halo;
 } DisplayPolygon;
 
@@ -348,7 +348,7 @@ int comparator(const void *_dPolygon0, const void *_dPolygon1) {
   const float dist0 = v3_mag(center0);
   const float dist1 = v3_mag(center1);
 
-  // If they belong to the same model, place  focused polygongons at the back.
+  // If they belong to the same polyhedron, place  focused polygongons at the back.
   if (dPolygon0->belongs_to == dPolygon1->belongs_to) {
     if (dPolygon0->is_halo && !dPolygon1->is_halo) return -1;
     if (dPolygon1->is_halo && !dPolygon0->is_halo) return +1;
@@ -361,38 +361,38 @@ int comparator(const void *_dPolygon0, const void *_dPolygon1) {
   return 0;
 }
 
-void display_models_aux(Model *models[], int model_count, Model *focused_model, Model *light_source) {
-  v3 light_source_loc = Model_center(light_source);
+void display_polyhedra_aux(Polyhedron *polyhedra[], int polyhedron_count, Polyhedron *focused_polyhedron, Polyhedron *light_source) {
+  v3 light_source_loc = Polyhedron_center(light_source);
 
-  // We need to draw all polygongons at once, not model-by-model, in order to
-  // correctly handle overlapping models.
+  // We need to draw all polygongons at once, not polyhedron-by-polyhedron, in order to
+  // correctly handle overlapping polyhedra.
   int total_polygon_count = 0;
-  for (int model_idx = 0; model_idx < model_count; model_idx++) {
-    const Model *model = models[model_idx];
-    for (int polygon_idx = 0; polygon_idx < model->length; polygon_idx++) {
-      const Polygon *polygon = Model_get(model, polygon_idx);
+  for (int polyhedron_idx = 0; polyhedron_idx < polyhedron_count; polyhedron_idx++) {
+    const Polyhedron *polyhedron = polyhedra[polyhedron_idx];
+    for (int polygon_idx = 0; polygon_idx < polyhedron->length; polygon_idx++) {
+      const Polygon *polygon = Polyhedron_get(polyhedron, polygon_idx);
       if (shouldnt_display(polygon)) continue;
       total_polygon_count++;
 
       // Will have a focused duplicate
-      if (DO_POLY_FILL && DO_HALO && model == focused_model) total_polygon_count++;
+      if (DO_POLY_FILL && DO_HALO && polyhedron == focused_polyhedron) total_polygon_count++;
     }
   }
 
   DisplayPolygon aggregate_dPolygons[total_polygon_count];
   int aggregate_dPolygons_i = 0;
 
-  for (int model_idx = 0; model_idx < model_count; model_idx++) {
-    const Model *model = models[model_idx];
-    const int is_focused = model == focused_model;
-    for (int polygon_idx = 0; polygon_idx < model->length; polygon_idx++) {
-      const Polygon *polygon = Model_get(model, polygon_idx);
+  for (int polyhedron_idx = 0; polyhedron_idx < polyhedron_count; polyhedron_idx++) {
+    const Polyhedron *polyhedron = polyhedra[polyhedron_idx];
+    const int is_focused = polyhedron == focused_polyhedron;
+    for (int polygon_idx = 0; polygon_idx < polyhedron->length; polygon_idx++) {
+      const Polygon *polygon = Polyhedron_get(polyhedron, polygon_idx);
 
       if (shouldnt_display(polygon)) continue;
 
       const DisplayPolygon dPolygon = {
         .polygon = (Polygon *) polygon,
-        .belongs_to = (Model *) model,
+        .belongs_to = (Polyhedron *) polyhedron,
         .is_halo = 0 };
 
       aggregate_dPolygons[aggregate_dPolygons_i] = dPolygon;
@@ -402,7 +402,7 @@ void display_models_aux(Model *models[], int model_count, Model *focused_model, 
       if (DO_POLY_FILL && DO_HALO && is_focused) {
         const DisplayPolygon focusedDPolygon = {
           .polygon = (Polygon *) polygon,
-          .belongs_to = (Model *) model,
+          .belongs_to = (Polyhedron *) polyhedron,
           .is_halo = 1 };
 
         aggregate_dPolygons[aggregate_dPolygons_i] = focusedDPolygon;
@@ -415,39 +415,39 @@ void display_models_aux(Model *models[], int model_count, Model *focused_model, 
 
   for (int dPolygon_idx = 0; dPolygon_idx < total_polygon_count; dPolygon_idx++) {
     DisplayPolygon dPolygon = aggregate_dPolygons[dPolygon_idx];
-    Polygon_display(dPolygon.polygon, dPolygon.belongs_to == focused_model, dPolygon.is_halo, light_source_loc);
+    Polygon_display(dPolygon.polygon, dPolygon.belongs_to == focused_polyhedron, dPolygon.is_halo, light_source_loc);
   }
 }
 
-void display_models(Model *models[], const int model_count, const Model *focused_model, const Model *light_source) {
+void display_polyhedra(Polyhedron *polyhedra[], const int polyhedron_count, const Polyhedron *focused_polyhedron, const Polyhedron *light_source) {
 
   // Move from world space to eyespace
 
-  // Will clone all models and store their transformed
+  // Will clone all polyhedra and store their transformed
   // versions in this array
-  Model *in_eyespace[model_count];
-  Model *focused_clone = NULL;
-  Model *light_source_clone = NULL;
+  Polyhedron *in_eyespace[polyhedron_count];
+  Polyhedron *focused_clone = NULL;
+  Polyhedron *light_source_clone = NULL;
 
   _Mat to_eyespace;
   calc_eyespace_matrix_M(to_eyespace);
 
-  for (int model_i = 0; model_i < model_count; model_i++) {
-    const Model *model = models[model_i];
-    Model *clone = Model_clone(model);
-    Model_transform(clone, to_eyespace);
-    in_eyespace[model_i] = clone;
-    if (model == focused_model) focused_clone = clone;
-    if (model == light_source) light_source_clone = clone;
+  for (int polyhedron_i = 0; polyhedron_i < polyhedron_count; polyhedron_i++) {
+    const Polyhedron *polyhedron = polyhedra[polyhedron_i];
+    Polyhedron *clone = Polyhedron_clone(polyhedron);
+    Polyhedron_transform(clone, to_eyespace);
+    in_eyespace[polyhedron_i] = clone;
+    if (polyhedron == focused_polyhedron) focused_clone = clone;
+    if (polyhedron == light_source) light_source_clone = clone;
   }
 
   // Pass to auxiliary after moving to eyespace
-  display_models_aux(in_eyespace, model_count, focused_clone, light_source_clone);
+  display_polyhedra_aux(in_eyespace, polyhedron_count, focused_clone, light_source_clone);
 
   // Clean up
-  for (int clone_i = 0; clone_i < model_count; clone_i++) {
-    Model *clone = in_eyespace[clone_i];
-    Model_destroy(clone);
+  for (int clone_i = 0; clone_i < polyhedron_count; clone_i++) {
+    Polyhedron *clone = in_eyespace[clone_i];
+    Polyhedron_destroy(clone);
   }
 
 }
