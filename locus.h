@@ -24,6 +24,14 @@ void Locus_destroy(Locus *locus) {
   Dyn_destroy(locus);
 }
 
+Locus *Locus_clone(Locus *locus) {
+  Locus *clone = Locus_new(locus->length);
+  for (int i = 0; i < locus->length; i++) {
+    Locus_append(clone, Locus_get(locus, i));
+  }
+  return clone;
+}
+
 Locus *Locus_from_parametric(
   v3 (*f)(float t, float s),
 
@@ -56,22 +64,65 @@ Locus *Locus_from_parametric(
 
 }
 
-v3 Locus_center(Locus *locus) {
-  v3 highs = { -INFINITY, -INFINITY, -INFINITY };
-  v3 lows  = { +INFINITY, +INFINITY, +INFINITY };
+Locus *Locus_from_points(const int point_count, ...) {
+  va_list args;
+  va_start(args, point_count);
+
+  Locus *locus = Locus_new(point_count);
+
+  for (int i = 0; i < point_count; i++) {
+    const v3 point = va_arg(args, v3);
+    Locus_append(locus, point);
+  }
+
+  va_end(args);
+  return locus;
+}
+
+void Locus_bounds_M(
+      float *result_min_x, float *result_max_x,
+      float *result_min_y, float *result_max_y,
+      float *result_min_z, float *result_max_z,
+      const Locus *locus
+    ) {
+
+  if (locus->length == 0) {
+    printf("cannot find bounds of empty locus\n");
+    exit(1);
+  }
+
+  if (locus->length == 1) {
+    const v3 point = Locus_get(locus, 0);
+    *result_min_x = point[0];
+    *result_max_x = point[0];
+    *result_min_y = point[1];
+    *result_max_y = point[1];
+    *result_min_z = point[2];
+    *result_max_z = point[2];
+    return;
+  }
+
+  *result_min_x = +DBL_MAX;
+  *result_max_x = -DBL_MAX;
+  *result_min_y = +DBL_MAX;
+  *result_max_y = -DBL_MAX;
+  *result_min_z = +DBL_MAX;
+  *result_max_z = -DBL_MAX;
 
   for (int i = 0; i < locus->length; i++) {
     const v3 point = Locus_get(locus, i);
 
-         if (point[0] > highs[0]) highs[0] = point[0];
-    else if (point[0] <  lows[0])  lows[0] = point[0];
-         if (point[1] > highs[1]) highs[1] = point[1];
-    else if (point[1] <  lows[1])  lows[1] = point[1];
-         if (point[2] > highs[2]) highs[2] = point[2];
-    else if (point[2] <  lows[2])  lows[2] = point[2];
-  }
+    const float x = point[0];
+    const float y = point[1];
+    const float z = point[2];
 
-  return highs / 2 + lows / 2;
+         if (x < *result_min_x) *result_min_x = x;
+    else if (x > *result_max_x) *result_max_x = x;
+         if (y < *result_min_y) *result_min_y = y;
+    else if (y > *result_max_y) *result_max_y = y;
+         if (z < *result_min_z) *result_min_z = z;
+    else if (z > *result_max_z) *result_max_z = z;
+  }
 }
 
 #endif // locus_h_INCLUDED

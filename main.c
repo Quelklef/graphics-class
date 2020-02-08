@@ -6,18 +6,19 @@
 #include "polyhedron.h"
 #include "display.h"
 #include "observer.h"
+#include "figure.h"
 
 #include "dyn.h"
-DYN_INIT(PolyhedraList, Polyhedron*)
+DYN_INIT(FigureList, Figure*)
 
-PolyhedraList *polyhedra;
-Polyhedron *light_source = NULL;
+FigureList *figures;
+Figure *light_source = NULL;
 
-void PolyhedraList_destroy(PolyhedraList *polyhedra) {
-  for (int polyhedron_idx = 0; polyhedron_idx < polyhedra->length; polyhedron_idx++) {
-    Polyhedron_destroy(PolyhedraList_get(polyhedra, polyhedron_idx));
+void FigureList_destroy(FigureList *figures) {
+  for (int polyhedron_idx = 0; polyhedron_idx < figures->length; polyhedron_idx++) {
+    Figure_destroy(FigureList_get(figures, polyhedron_idx));
   }
-  Dyn_destroy(polyhedra);
+  Dyn_destroy(figures);
 }
 
 
@@ -39,7 +40,12 @@ static int current_parameter = 0;
 
 int display_overlay = 0;
 
-void on_key(Polyhedron *polyhedron, const char key) {
+void on_key(Figure *figure, const char key) {
+
+  // TODO: Following quickfail is only relelvant if the key
+  //       that's pressed transforms a figure.
+  if (figure == NULL) return;
+
   // Two ways to move: with an absolute distance
   static const float abs_speed = 0.5;
   // or moving as a percentage of the object's size
@@ -56,20 +62,20 @@ void on_key(Polyhedron *polyhedron, const char key) {
 
   // Relative transformations
 
-  float polyhedron_x_size, polyhedron_y_size, polyhedron_z_size;
-  Polyhedron_size_M(&polyhedron_x_size, &polyhedron_y_size, &polyhedron_z_size, polyhedron);
+  float figure_x_size, figure_y_size, figure_z_size;
+  Figure_size_M(&figure_x_size, &figure_y_size, &figure_z_size, figure);
 
-  const _Mat translate_backwards_rel = Mat_translate(0, 0, -rel_speed * polyhedron_z_size);
-  const _Mat translate_forwards_rel  = Mat_translate(0, 0, +rel_speed * polyhedron_z_size);
-  const _Mat translate_left_rel      = Mat_translate(-rel_speed * polyhedron_x_size, 0, 0);
-  const _Mat translate_right_rel     = Mat_translate(+rel_speed * polyhedron_x_size, 0, 0);
-  const _Mat translate_up_rel        = Mat_translate(0, +rel_speed * polyhedron_y_size, 0);
-  const _Mat translate_down_rel      = Mat_translate(0, -rel_speed * polyhedron_y_size, 0);
+  const _Mat translate_backwards_rel = Mat_translate(0, 0, -rel_speed * figure_z_size);
+  const _Mat translate_forwards_rel  = Mat_translate(0, 0, +rel_speed * figure_z_size);
+  const _Mat translate_left_rel      = Mat_translate(-rel_speed * figure_x_size, 0, 0);
+  const _Mat translate_right_rel     = Mat_translate(+rel_speed * figure_x_size, 0, 0);
+  const _Mat translate_up_rel        = Mat_translate(0, +rel_speed * figure_y_size, 0);
+  const _Mat translate_down_rel      = Mat_translate(0, -rel_speed * figure_y_size, 0);
 
-  const v3 polyhedron_center = Polyhedron_center(polyhedron);
+  const v3 figure_center = Figure_center(figure);
 
-  const _Mat translate_to_origin   = Mat_translate_v(-polyhedron_center);
-  const _Mat translate_from_origin = Mat_translate_v(+polyhedron_center);
+  const _Mat translate_to_origin   = Mat_translate_v(-figure_center);
+  const _Mat translate_from_origin = Mat_translate_v(+figure_center);
 
 #define make_rel_to_origin(name) \
   Mat_mult_M(name, name, translate_to_origin); \
@@ -99,34 +105,34 @@ void on_key(Polyhedron *polyhedron, const char key) {
   make_rel_to_origin(rotate_z_negative);
 
   switch(key) {
-    case 'w': Polyhedron_transform(polyhedron, translate_forwards_rel ); break;
-    case 's': Polyhedron_transform(polyhedron, translate_backwards_rel); break;
-    case 'd': Polyhedron_transform(polyhedron, translate_right_rel    ); break;
-    case 'a': Polyhedron_transform(polyhedron, translate_left_rel     ); break;
-    case 'f': Polyhedron_transform(polyhedron, translate_down_rel     ); break;
-    case 'r': Polyhedron_transform(polyhedron, translate_up_rel       ); break;
+    case 'w': Figure_transform(figure, translate_forwards_rel ); break;
+    case 's': Figure_transform(figure, translate_backwards_rel); break;
+    case 'd': Figure_transform(figure, translate_right_rel    ); break;
+    case 'a': Figure_transform(figure, translate_left_rel     ); break;
+    case 'f': Figure_transform(figure, translate_down_rel     ); break;
+    case 'r': Figure_transform(figure, translate_up_rel       ); break;
 
-    case 'W': Polyhedron_transform(polyhedron, translate_forwards_abs ); break;
-    case 'S': Polyhedron_transform(polyhedron, translate_backwards_abs); break;
-    case 'D': Polyhedron_transform(polyhedron, translate_right_abs    ); break;
-    case 'A': Polyhedron_transform(polyhedron, translate_left_abs     ); break;
-    case 'F': Polyhedron_transform(polyhedron, translate_down_abs     ); break;
-    case 'R': Polyhedron_transform(polyhedron, translate_up_abs       ); break;
+    case 'W': Figure_transform(figure, translate_forwards_abs ); break;
+    case 'S': Figure_transform(figure, translate_backwards_abs); break;
+    case 'D': Figure_transform(figure, translate_right_abs    ); break;
+    case 'A': Figure_transform(figure, translate_left_abs     ); break;
+    case 'F': Figure_transform(figure, translate_down_abs     ); break;
+    case 'R': Figure_transform(figure, translate_up_abs       ); break;
 
-    case 'o': Polyhedron_transform(polyhedron, rotate_x_positive  ); break;
-    case 'p': Polyhedron_transform(polyhedron, rotate_x_negative  ); break;
+    case 'o': Figure_transform(figure, rotate_x_positive  ); break;
+    case 'p': Figure_transform(figure, rotate_x_negative  ); break;
 
-    case 'k': Polyhedron_transform(polyhedron, rotate_y_positive  ); break;
-    case 'l': Polyhedron_transform(polyhedron, rotate_y_negative  ); break;
+    case 'k': Figure_transform(figure, rotate_y_positive  ); break;
+    case 'l': Figure_transform(figure, rotate_y_negative  ); break;
 
-    case 'm': Polyhedron_transform(polyhedron, rotate_z_positive  ); break;
-    case ',': Polyhedron_transform(polyhedron, rotate_z_negative  ); break;
+    case 'm': Figure_transform(figure, rotate_z_positive  ); break;
+    case ',': Figure_transform(figure, rotate_z_negative  ); break;
 
-    case '[': Polyhedron_transform(polyhedron, scale_down         ); break;
-    case ']': Polyhedron_transform(polyhedron, scale_up           ); break;
+    case '[': Figure_transform(figure, scale_down         ); break;
+    case ']': Figure_transform(figure, scale_up           ); break;
 
-    case 'O': Polyhedron_transform(polyhedron, translate_to_origin); break;
-    case 'L': printf("Object at (%f, %f, %f)\n", polyhedron_center[0], polyhedron_center[1], polyhedron_center[2]); break;
+    case 'O': Figure_transform(figure, translate_to_origin); break;
+    case 'L': printf("Object at (%f, %f, %f)\n", figure_center[0], figure_center[1], figure_center[2]); break;
 
     case '!': DO_WIREFRAME            = 1 - DO_WIREFRAME;            break;
     case '@': DO_BACKFACE_ELIMINATION = 1 - DO_BACKFACE_ELIMINATION; break;
@@ -243,7 +249,7 @@ void display_state() {
 
   draw_stringf(20, SCREEN_HEIGHT -  80, "(!) Wframe: %d", DO_WIREFRAME);
   draw_stringf(20, SCREEN_HEIGHT - 100, "(@) BFElim: %d", DO_BACKFACE_ELIMINATION);
-  draw_stringf(20, SCREEN_HEIGHT - 120, "(/)   Sign: %d ", BACKFACE_ELIMINATION_SIGN);
+  draw_stringf(20, SCREEN_HEIGHT - 120, "(/)   Sign: %d", BACKFACE_ELIMINATION_SIGN);
   draw_stringf(20, SCREEN_HEIGHT - 140, "(#) Fill  : %d", DO_POLY_FILL);
   draw_stringf(20, SCREEN_HEIGHT - 160, "($) Light : %d", DO_LIGHT_MODEL);
   draw_stringf(20, SCREEN_HEIGHT - 180, "(%%) Halos : %d", DO_HALO);
@@ -253,24 +259,24 @@ void display_state() {
   draw_param(20, 120, "H", param_HALF_ANGLE    , "HAngle : %lf      ", HALF_ANGLE);
   draw_param(20, 100, "B", param_AMBIENT       , "Ambient: %lf      ", AMBIENT);
   draw_param(20,  80, "M", param_DIFFUSE_MAX   , "DifMax : %lf      ", DIFFUSE_MAX);
-  draw_param(20,  60, "P", param_SPECULAR_POWER, "SpecPow: %d      ", SPECULAR_POWER);
+  draw_param(20,  60, "P", param_SPECULAR_POWER, "SpecPow: %d       ", SPECULAR_POWER);
   draw_param(20,  40, "T", param_HITHER        , "Hither : %lf      ", HITHER);
   draw_param(20,  20, "Y", param_YON           , "Yon    : %lf      ", YON);
 
-  // Draw indices for each polyhedron
-  for (int polyhedron_i = 0; polyhedron_i < polyhedra->length; polyhedron_i++) {
-    const Polyhedron *polyhedron = PolyhedraList_get(polyhedra, polyhedron_i);
+  // Draw indices for each figure
+  for (int figure_i = 0; figure_i < figures->length; figure_i++) {
+    const Figure *figure = FigureList_get(figures, figure_i);
 
     float min_x, max_x, min_y, max_y, min_z, max_z;
-    Polyhedron_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, polyhedron);
+    Figure_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, figure);
 
-    const v3 center = Polyhedron_center(polyhedron);
+    const v3 center = Figure_center(figure);
     const v2 pixel = pixel_coords(center);
 
     // TODO: better way to show off-bounds objects
     pixel[0] = clamp(pixel[0], 0, SCREEN_WIDTH);
     pixel[1] = clamp(pixel[1], 0, SCREEN_HEIGHT);
-    draw_stringf(pixel[0], pixel[1], "%d        ", polyhedron_i);
+    draw_stringf(pixel[0], pixel[1], "%d        ", figure_i);
   }
 }
 
@@ -280,7 +286,7 @@ void show_help() {
   printf("  O    - Move object to user\n");
   printf("  L    - Print object location\n");
   printf("  []   - Scale selected object down and up\n");
-  printf("  0-9  - Switch polyhedra\n");
+  printf("  0-9  - Switch figures\n");
   printf("\n");
   printf("Strafing (& shift-):\n");
   printf("  wasd - Strafe selected object along xz plane\n");
@@ -320,12 +326,13 @@ void load_files(const char **filenames, const int file_count) {
   for (int i = 0; i < file_count; i++) {
     const char *filename = filenames[i];
     Polyhedron *polyhedron = load_polyhedron(filename);
-    PolyhedraList_append(polyhedra, polyhedron);
+    Figure *figure = Figure_from_Polyhedron(polyhedron);
+    FigureList_append(figures, figure);
   }
 }
 
 void event_loop() {
-  Polyhedron *focused_polyhedron = NULL;
+  Figure *focused_figure = NULL;
 
   char key = '1';
   do {
@@ -336,15 +343,13 @@ void event_loop() {
     G_rgb(1, 0, 0);
     draw_box();
 
-    const int polyhedron_idx = key - '0';
-    if (0 <= polyhedron_idx && polyhedron_idx < polyhedra->length) {
-      focused_polyhedron = PolyhedraList_get(polyhedra, polyhedron_idx);
+    const int figure_idx = key - '0';
+    if (0 <= figure_idx && figure_idx < figures->length) {
+      focused_figure = FigureList_get(figures, figure_idx);
     }
 
-    on_key(focused_polyhedron, key);
-
-    display_polyhedra(polyhedra->items, polyhedra->length, focused_polyhedron, light_source);
-
+    on_key(focused_figure, key);
+    display_figures(figures->items, figures->length, focused_figure, light_source);
     display_state();
 
   } while ((key = G_wait_key()) != 'e');
@@ -387,38 +392,38 @@ v3 vase_f(float t, float s) {
 
 void prepare_3d_lab() {
 
-  Polyhedron *sphere1 = Polyhedron_from_parametric(
+  Figure *sphere1 = Figure_from_Polyhedron(Polyhedron_from_parametric(
     sphere_f,
     0, 2 * M_PI, 50,
     1,
     0, 2 * M_PI, 50,
     1
-  );
+  ));
 
-  nicely_place_polyhedron(sphere1);
-  PolyhedraList_append(polyhedra, sphere1);
+  nicely_place_figure(sphere1);
+  FigureList_append(figures, sphere1);
 
-  Polyhedron *sphere2 = Polyhedron_from_parametric(
+  Figure *sphere2 = Figure_from_Polyhedron(Polyhedron_from_parametric(
     sphere_g,
     0, 2 * M_PI, 25,
     1,
     -1, 1, 25,
     0
-  );
+  ));
 
-  nicely_place_polyhedron(sphere2);
-  PolyhedraList_append(polyhedra, sphere2);
+  nicely_place_figure(sphere2);
+  FigureList_append(figures, sphere2);
 
-  Polyhedron *vase = Polyhedron_from_parametric(
+  Figure *vase = Figure_from_Polyhedron(Polyhedron_from_parametric(
     vase_f,
     0, 2 * M_PI, 25,
     1,
     -2, 2, 25,
     0
-  );
+  ));
 
-  nicely_place_polyhedron(vase);
-  PolyhedraList_append(polyhedra, vase);
+  nicely_place_figure(vase);
+  FigureList_append(figures, vase);
 
 }
 
@@ -429,16 +434,16 @@ int main(const int argc, const char **argv) {
 
   // == Setup == //
 
-  polyhedra = PolyhedraList_new(1);
-
+  figures = FigureList_new(1);
   G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
 
   //show_help();
 
-  light_source = make_small_polyhedron();
-  PolyhedraList_append(polyhedra, light_source);
+  light_source = make_small_figure();
+  nicely_place_figure(light_source);
+  FigureList_append(figures, light_source);
 
-  //load_files(&argv[1], argc - 1);
+  load_files(&argv[1], argc - 1);
 
   // == Main == //
 
@@ -447,7 +452,7 @@ int main(const int argc, const char **argv) {
 
   // == Teardown == //
 
-  PolyhedraList_destroy(polyhedra);
+  FigureList_destroy(figures);
 
   G_close();
 

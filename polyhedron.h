@@ -51,6 +51,11 @@ void Polyhedron_bounds_M(
       const Polyhedron *polyhedron
     ) {
 
+  if (polyhedron->length == 0) {
+    printf("cannot find bounds of empty polyhedron\n");
+    exit(1);
+  }
+
   *result_min_x = +DBL_MAX;
   *result_max_x = -DBL_MAX;
   *result_min_y = +DBL_MAX;
@@ -75,46 +80,6 @@ void Polyhedron_bounds_M(
       else if (z > *result_max_z) *result_max_z = z;
     }
   }
-}
-
-v3 Polyhedron_center(const Polyhedron *polyhedron) {
-  float min_x, max_x, min_y, max_y, min_z, max_z;
-
-  Polyhedron_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, polyhedron);
-
-  return (v3) {
-    min_x / 2 + max_x / 2,
-    min_y / 2 + max_y / 2,
-    min_z / 2 + max_z / 2
-  };
-}
-
-void Polyhedron_size_M(float *result_x_size, float *result_y_size, float *result_z_size, const Polyhedron *polyhedron) {
-  float min_x, max_x, min_y, max_y, min_z, max_z;
-  Polyhedron_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, polyhedron);
-  *result_x_size = max_x - min_x;
-  *result_y_size = max_y - min_y;
-  *result_z_size = max_z - min_z;
-}
-
-void Polyhedron_move_to(Polyhedron *polyhedron, const v3 target) {
-  v3 polyhedron_center = Polyhedron_center(polyhedron);
-
-  const _Mat translation = Mat_translate_v(-polyhedron_center + target);
-  Polyhedron_transform(polyhedron, translation);
-}
-
-void nicely_place_polyhedron(Polyhedron *polyhedron) {
-  // Move the polyhedron to somewhere nice
-
-  float min_x, max_x, min_y, max_y, min_z, max_z;
-  Polyhedron_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, polyhedron);
-  const float width = max_z - min_z;
-
-  // We choose that "somewhere nice" means that x=y=0 and the closest z value is at some z
-  const float desired_z = 15;
-  v3 desired_location = (v3) { 0, 0, width + desired_z };
-  Polyhedron_move_to(polyhedron, desired_location);
 }
 
 Polyhedron *load_polyhedron(const char *filename) {
@@ -171,11 +136,7 @@ Polyhedron *load_polyhedron(const char *filename) {
     Polyhedron_append(polyhedron, polygon);
   }
 
-  // TODO: this should not be in this location
-  nicely_place_polyhedron(polyhedron);
-
   fclose(file);
-
   return polyhedron;
 
 }
@@ -288,29 +249,6 @@ Polyhedron *Polyhedron_from_polygons(const int polygon_count, ...) {
   }
 
   va_end(args);
-
-  return polyhedron;
-}
-
-Polyhedron *make_small_polyhedron() {
-  /* Make a small polyhedron. No specified size or shape. Just small. */
-
-  const float scale = 0.1;
-
-  const v3 p0 = scale * (v3) { 0, 0, 0 };
-  const v3 p1 = scale * (v3) { 1, 0, 1 };
-  const v3 p2 = scale * (v3) { 1, 1, 0 };
-  const v3 p3 = scale * (v3) { 0, 1, 1 };
-
-  Polygon *polygon0 = Polygon_from_points(3,     p1, p2, p3);
-  Polygon *polygon1 = Polygon_from_points(3, p0,     p2, p3);
-  Polygon *polygon2 = Polygon_from_points(3, p0, p1,     p3);
-  Polygon *polygon3 = Polygon_from_points(3, p0, p1, p2    );
-
-  Polyhedron *polyhedron = Polyhedron_from_polygons(4, polygon0, polygon1, polygon2, polygon3);
-
-  // TODO: this should not be in this location
-  nicely_place_polyhedron(polyhedron);
 
   return polyhedron;
 }
