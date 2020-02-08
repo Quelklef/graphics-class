@@ -324,7 +324,7 @@ void Polygon_render(const Polygon *polygon, const int is_focused, const v3 light
         rgb = Polygon_calc_color(clipped, light_source_loc, rgb);
       }
 
-      G_rgb(rgb[0], rgb[1], rgb[2]);
+      G_rgbv(rgb);
       Polygon_render_as_is(clipped, zbuf);
     }
 
