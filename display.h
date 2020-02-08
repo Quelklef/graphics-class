@@ -38,7 +38,9 @@ void zbuf_draw(Zbuf zbuf, const v2 pixel, const float z) {
     return;
   }
 
-  if (z < zbuf[x][y]) {
+  // Overwrite on z == zbuf[x][y] so that things
+  // can be given explicit priority by being drawn later 
+  if (z <= zbuf[x][y]) {
     G_point(x, y);
     zbuf[x][y] = z;
   }
@@ -83,10 +85,32 @@ v3 pixel_coords_inv(const v2 pixel, const float z) {
   return (v3) { x, y, z };
 }
 
-void Line_display(const Line *line) {
-  const v2 pixel0 = pixel_coords(line->p0);
-  const v2 pixelf = pixel_coords(line->pf);
-  G_line(pixel0[0], pixel0[1], pixelf[0], pixelf[1]);
+void Line_display(const Line *line, Zbuf zbuf) {
+  const v2 px0 = pixel_coords(line->p0);
+  const v2 pxf = pixel_coords(line->pf);
+
+  const int x_lo = (int) floor(px0[0]);
+  const int x_hi = (int) ceil(pxf[0]);
+  for (int x = x_lo; x <= x_hi; x++) {
+    const float t = (x - px0[0]) / (pxf[0] - px0[0]);
+    if (0 <= t && t <= 1) {
+      const v3 point = line->p0 + t * (line->pf - line->p0);
+      const v2 pixel = pixel_coords(point);
+      zbuf_draw(zbuf, pixel, point[2]);
+    }
+  }
+
+  const int y_lo = (int) floor(px0[1]);
+  const int y_hi = (int) ceil(pxf[1]);
+  for (int y = y_lo; y <= y_hi; y++) {
+    const float t = (y - px0[1]) / (pxf[1] - px0[1]);
+    if (0 <= t && t <= 1) {
+      const v3 point = line->p0 + t * (line->pf - line->p0);
+      const v2 pixel = pixel_coords(point);
+      zbuf_draw(zbuf, pixel, point[2]);
+    }
+  }
+
 }
 
 int shouldnt_display(const Polygon *polygon) {
@@ -388,7 +412,7 @@ void Polygon_display(const Polygon *polygon, const int is_focused, const v3 ligh
 
         Line line;
         Line_between(&line, p0, pf);
-        Line_display(&line);
+        Line_display(&line, zbuf);
       }
     }
 
