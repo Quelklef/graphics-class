@@ -8,6 +8,8 @@ const int SCREEN_HEIGHT = 800;
 
 #define DEGREES(deg) ((float) (deg) / 180 * M_PI)
 
+#define min(x, y) ((x) < (y) ? (x) : (y))
+
 float HALF_ANGLE                = DEGREES(30);
 
 int   DO_WIREFRAME              = 1;

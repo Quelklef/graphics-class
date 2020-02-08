@@ -437,6 +437,7 @@ int main(const int argc, const char **argv) {
 
   figures = FigureList_new(1);
   G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
+  draw_init();
 
   //show_help();
 

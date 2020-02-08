@@ -129,12 +129,16 @@ void Polygon_render_as_is(const Polygon *polygon, Zbuf zbuf) {
     pixels[i] = pixel;
   }
 
+  // Range of iteration
+  const int x_lo = (int) clamp(floor(min_px), 0, SCREEN_WIDTH);
+  const int x_hi = (int) clamp( ceil(max_px), 0, SCREEN_WIDTH);
+  const int y_lo = (int) clamp(floor(min_py), 0, SCREEN_HEIGHT);
+  const int y_hi = (int) clamp( ceil(max_py), 0, SCREEN_HEIGHT);
+
   // Find the plane of the polygon
   Plane polygon_plane;
   Plane_from_polygon(&polygon_plane, polygon);
 
-  const int x_lo = (int) clamp(floor(min_px), 0, SCREEN_WIDTH);
-  const int x_hi = (int) clamp(ceil(max_px), 0, SCREEN_WIDTH);
   for (int x = x_lo; x <= x_hi; x++) {
 
     // Loop through lines and find intersection betwen line
@@ -158,8 +162,6 @@ void Polygon_render_as_is(const Polygon *polygon, Zbuf zbuf) {
 
     // Now given these intersections we are able to paint the polygon
 
-    const int y_lo = (int) clamp(floor(min_py), 0, SCREEN_HEIGHT);
-    const int y_hi = (int) clamp(ceil(max_py), 0, SCREEN_HEIGHT);
     for (int y = y_lo; y <= y_hi; y++) {
 
       // Find the number of intersections physically above the current y
