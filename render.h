@@ -1,7 +1,7 @@
-#ifndef display_h_INCLUDED
-#define display_h_INCLUDED
+#ifndef render_h_INCLUDED
+#define render_h_INCLUDED
 
-// Functia relating to displaying stuff
+// Functia relating to rendering stuff
 
 #include <math.h>
 
@@ -85,7 +85,7 @@ v3 pixel_coords_inv(const v2 pixel, const float z) {
   return (v3) { x, y, z };
 }
 
-void Line_display(const Line *line, Zbuf zbuf) {
+void Line_render(const Line *line, Zbuf zbuf) {
   const v2 px0 = pixel_coords(line->p0);
   const v2 pxf = pixel_coords(line->pf);
 
@@ -113,7 +113,7 @@ void Line_display(const Line *line, Zbuf zbuf) {
 
 }
 
-int shouldnt_display(const Polygon *polygon) {
+int shouldnt_render(const Polygon *polygon) {
   // Implements backface elimination
 
   if (!DO_BACKFACE_ELIMINATION) return 0;
@@ -176,7 +176,7 @@ v3 Polygon_calc_color(const Polygon *polygon, const v3 light_source_loc, const v
   return inherent_rgb;
 }
 
-void Polygon_display_as_is(const Polygon *polygon, Zbuf zbuf) {
+void Polygon_render_as_is(const Polygon *polygon, Zbuf zbuf) {
 
   // Find the pixel coordinates of all the points of the polygon
   v2 pixels[polygon->length];
@@ -376,7 +376,7 @@ void Polygon_clip(Polygon *polygon) {
   Polygon_clip_with_plane(polygon, &yon_plane);
 }
 
-void Polygon_display(const Polygon *polygon, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
+void Polygon_render(const Polygon *polygon, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
   // focused: is the polygongon part of the focused polyhedron? (NOT part of the halo)
 
   Polygon *clipped = Polygon_clone(polygon);
@@ -385,8 +385,8 @@ void Polygon_display(const Polygon *polygon, const int is_focused, const v3 ligh
   }
 
   if (clipped->length != 0) {
-    // Only display if there are points
-    // (Some display subroutines require a minimum point count)
+    // Only render if there are points
+    // (Some render subroutines require a minimum point count)
 
     if (DO_POLY_FILL) {
       v3 rgb = { 0.8, 0.5, 0.8 };
@@ -396,7 +396,7 @@ void Polygon_display(const Polygon *polygon, const int is_focused, const v3 ligh
       }
 
       G_rgb(rgb[0], rgb[1], rgb[2]);
-      Polygon_display_as_is(clipped, zbuf);
+      Polygon_render_as_is(clipped, zbuf);
     }
 
     if (DO_WIREFRAME) {
@@ -412,7 +412,7 @@ void Polygon_display(const Polygon *polygon, const int is_focused, const v3 ligh
 
         Line line;
         Line_between(&line, p0, pf);
-        Line_display(&line, zbuf);
+        Line_render(&line, zbuf);
       }
     }
 
@@ -421,11 +421,11 @@ void Polygon_display(const Polygon *polygon, const int is_focused, const v3 ligh
   Polygon_destroy(clipped);
 }
 
-void Polyhedron_display(const Polyhedron *polyhedron, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
+void Polyhedron_render(const Polyhedron *polyhedron, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
   for (int i = 0; i < polyhedron->length; i++) {
     const Polygon *polygon = Polyhedron_get(polyhedron, i);
-    if (shouldnt_display(polygon)) continue;
-    Polygon_display(polygon, is_focused, light_source_loc, zbuf);
+    if (shouldnt_render(polygon)) continue;
+    Polygon_render(polygon, is_focused, light_source_loc, zbuf);
   }
 }
 
@@ -437,7 +437,7 @@ int point_in_bounds(const v3 point) {
   return 1;
 }
 
-void Locus_display(const Locus *locus, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
+void Locus_render(const Locus *locus, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
   G_rgb(1, 0, 0);
 
   for (int i = 0; i < locus->length; i++) {
@@ -449,16 +449,16 @@ void Locus_display(const Locus *locus, const int is_focused, const v3 light_sour
   }
 }
 
-void Figure_display(const Figure *figure, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
+void Figure_render(const Figure *figure, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
   switch (figure->kind) {
-    case fk_Polyhedron: return Polyhedron_display(figure->impl.polyhedron, is_focused, light_source_loc, zbuf);
-    case fk_Locus: return Locus_display(figure->impl.locus, is_focused, light_source_loc, zbuf);
+    case fk_Polyhedron: return Polyhedron_render(figure->impl.polyhedron, is_focused, light_source_loc, zbuf);
+    case fk_Locus: return Locus_render(figure->impl.locus, is_focused, light_source_loc, zbuf);
   }
 }
 
 
 
-void display_figures(Figure *figures[], const int figure_count, const Figure *focused_figure, const Figure *light_source) {
+void render_figures(Figure *figures[], const int figure_count, const Figure *focused_figure, const Figure *light_source) {
 
   _Mat to_eyespace;
   calc_eyespace_matrix_M(to_eyespace);
@@ -479,7 +479,7 @@ void display_figures(Figure *figures[], const int figure_count, const Figure *fo
     Figure *clone = Figure_clone(figure);
     Figure_transform(clone, to_eyespace);
 
-    Figure_display(clone, figure == focused_figure, light_source_loc, zbuf);
+    Figure_render(clone, figure == focused_figure, light_source_loc, zbuf);
 
     Figure_destroy(clone);
   }
@@ -487,5 +487,5 @@ void display_figures(Figure *figures[], const int figure_count, const Figure *fo
 }
 
 
-#endif // display_h_INCLUDED
+#endif // render_h_INCLUDED
 

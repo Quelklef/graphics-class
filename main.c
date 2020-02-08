@@ -4,7 +4,7 @@
 #include "matrix.h"
 #include "polygon.h"
 #include "polyhedron.h"
-#include "display.h"
+#include "render.h"
 #include "observer.h"
 #include "figure.h"
 
@@ -38,7 +38,7 @@ static const int param_HITHER         = 5;
 static const int param_YON            = 6;
 static int current_parameter = 0;
 
-int display_overlay = 0;
+int render_overlay = 0;
 
 void on_key(Figure *figure, const char key) {
 
@@ -143,7 +143,7 @@ void on_key(Figure *figure, const char key) {
 
     case '/': BACKFACE_ELIMINATION_SIGN *= -1; break;
 
-    case '`': display_overlay = 1 - display_overlay; break;
+    case '`': render_overlay = 1 - render_overlay; break;
   }
 
   // Parameter adjustment
@@ -244,8 +244,8 @@ void on_key(Figure *figure, const char key) {
 
 void display_state() {
   G_rgb(1, 1, 1);
-  draw_stringf(20, SCREEN_HEIGHT -  40, "(`) Overlay: %d", display_overlay);
-  if (!display_overlay) return;
+  draw_stringf(20, SCREEN_HEIGHT -  40, "(`) Overlay: %d", render_overlay);
+  if (!render_overlay) return;
 
   draw_stringf(20, SCREEN_HEIGHT -  80, "(!) Wframe: %d", DO_WIREFRAME);
   draw_stringf(20, SCREEN_HEIGHT - 100, "(@) BFElim: %d", DO_BACKFACE_ELIMINATION);
@@ -349,7 +349,7 @@ void event_loop() {
     }
 
     on_key(focused_figure, key);
-    display_figures(figures->items, figures->length, focused_figure, light_source);
+    render_figures(figures->items, figures->length, focused_figure, light_source);
     display_state();
 
   } while ((key = G_wait_key()) != 'e');
