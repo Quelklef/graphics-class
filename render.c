@@ -177,13 +177,9 @@ void Polygon_render_as_is(const Polygon *polygon, Zbuf zbuf) {
         const v2 px = { (float) x, (float) y };
 
         // There is an infinite line of values with
-        // the desired pixel coordinates. Find two points
-        // on it, since that defines the line.
-        const v3 z0 = pixel_coords_inv(px, 0);
-        const v3 z1 = pixel_coords_inv(px, 1);
-
-        Line line;  // The line of points with this (x,y) as pixel values
-        Line_between(&line, z0, z1);
+        // the desired pixel coordinates.
+        Line line;
+        pixel_coords_inv(&line, px);
 
         // Now find the point on it that intersects with
         // the polygon

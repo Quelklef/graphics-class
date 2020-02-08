@@ -3,6 +3,8 @@
 
 // Low-level 2d drawing functions
 
+#include "line.c"
+
 void G_rgbv(const v3 rgb) {
   G_rgb(rgb[0], rgb[1], rgb[2]);
 }
@@ -65,7 +67,7 @@ v2 pixel_coords(const v3 point) {
   return (v2) { result_x, result_y };
 }
 
-v3 pixel_coords_inv(const v2 pixel, const float z) {
+v3 pixel_coords_inv_z(const v2 pixel, const float z) {
   /* Find the point corresponding to a given pixel with
    * a given z-value */
 
@@ -78,6 +80,12 @@ v3 pixel_coords_inv(const v2 pixel, const float z) {
   const float y = (pixel[1] - m) * (z * H / m);
 
   return (v3) { x, y, z };
+}
+
+void pixel_coords_inv(Line *result, const v2 pixel) {
+  const v3 p0 = pixel_coords_inv_z(pixel, 0);
+  const v3 p1 = pixel_coords_inv_z(pixel, 1);
+  Line_between(result, p0, p1);
 }
 
 #endif // draw_c_INCLUDED
