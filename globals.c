@@ -14,7 +14,7 @@ float HALF_ANGLE                = DEGREES(30);
 
 int   DO_WIREFRAME              = 1;
 int   DO_BACKFACE_ELIMINATION   = 0;
-int   DO_HALO                   = 0;
+int   DO_HALO                   = 1;
 int   DO_CLIPPING               = 1;
 
 int   BACKFACE_ELIMINATION_SIGN = 1;
