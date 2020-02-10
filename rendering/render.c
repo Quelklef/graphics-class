@@ -460,7 +460,7 @@ void render_figures(Figure *figures[], const int figure_count, const Figure *foc
 
   Canvas *canvas = Canvas_new();
 
-  const v3 color = { .3, .3, .3 };
+  const v3 color = { .8, .5, .8 };
 
   for (int figure_i = 0; figure_i < figure_count; figure_i++) {
     const Figure *figure = figures[figure_i];
