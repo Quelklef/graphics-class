@@ -373,7 +373,11 @@ int point_in_bounds(const v3 point) {
 }
 
 void Locus_render(const Locus *locus, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
-  G_rgb(1, 0, 0);
+  if (is_focused) {
+    G_rgb(1, 0, 0);
+  } else {
+    G_rgb(.3, .3, .3);
+  }
 
   for (int i = 0; i < locus->length; i++) {
     const v3 point = Locus_get(locus, i);
