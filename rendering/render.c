@@ -313,12 +313,14 @@ void Polygon_clip(Polygon *polygon) {
 void Polygon_render(const Polygon *polygon, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
   // focused: is the polygongon part of the focused polyhedron? (NOT part of the halo)
 
-  Polygon *clipped = Polygon_clone(polygon);
+  Polygon clipped;
+  memcpy(&clipped, polygon, sizeof(Polygon));
+
   if (DO_CLIPPING) {
-    Polygon_clip(clipped);
+    Polygon_clip(&clipped);
   }
 
-  if (clipped->length != 0) {
+  if (clipped.length != 0) {
     // Only render if there are points
     // (Some render subroutines require a minimum point count)
 
@@ -326,11 +328,11 @@ void Polygon_render(const Polygon *polygon, const int is_focused, const v3 light
       v3 rgb = { 0.8, 0.5, 0.8 };
 
       if (DO_LIGHT_MODEL) {
-        rgb = Polygon_calc_color(clipped, light_source_loc, rgb);
+        rgb = Polygon_calc_color(&clipped, light_source_loc, rgb);
       }
 
       G_rgbv(rgb);
-      Polygon_render_as_is(clipped, zbuf);
+      Polygon_render_as_is(&clipped, zbuf);
     }
 
     if (DO_WIREFRAME) {
@@ -340,9 +342,9 @@ void Polygon_render(const Polygon *polygon, const int is_focused, const v3 light
         G_rgb(.3, .3, .3);
       }
 
-      for (int point_idx = 0; point_idx < clipped->length; point_idx++) {
-        const v3 p0 = Polygon_get(clipped, point_idx);
-        const v3 pf = Polygon_get(clipped, (point_idx + 1) % clipped->length);
+      for (int point_idx = 0; point_idx < clipped.length; point_idx++) {
+        const v3 p0 = Polygon_get(&clipped, point_idx);
+        const v3 pf = Polygon_get(&clipped, (point_idx + 1) % clipped.length);
 
         Line line;
         Line_between(&line, p0, pf);
@@ -352,7 +354,6 @@ void Polygon_render(const Polygon *polygon, const int is_focused, const v3 light
 
   }
 
-  Polygon_destroy(clipped);
 }
 
 void Polyhedron_render(const Polyhedron *polyhedron, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
@@ -410,12 +411,12 @@ void render_figures(Figure *figures[], const int figure_count, const Figure *foc
 
   for (int figure_i = 0; figure_i < figure_count; figure_i++) {
     const Figure *figure = figures[figure_i];
-    Figure *clone = Figure_clone(figure);
-    Figure_transform(clone, to_eyespace);
 
-    Figure_render(clone, figure == focused_figure, light_source_loc, zbuf);
+    Figure clone;
+    memcpy(&clone, figure, sizeof(Figure));
 
-    Figure_destroy(clone);
+    Figure_transform(&clone, to_eyespace);
+    Figure_render(&clone, figure == focused_figure, light_source_loc, zbuf);
   }
 
 }

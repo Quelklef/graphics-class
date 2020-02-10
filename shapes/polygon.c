@@ -21,16 +21,6 @@ void Polygon_print(const Polygon* polygon) {
   printf("] POLY\n");
 }
 
-Polygon *Polygon_clone(const Polygon *source) {
-  Polygon *polygon = Polygon_new(source->length);
-
-  for (int point_idx = 0; point_idx < source->length; point_idx++) {
-    Polygon_append(polygon, Polygon_get(source, point_idx));
-  }
-
-  return polygon;
-}
-
 void Polygon_destroy(Polygon *polygon) {
   Dyn_destroy(polygon);
 }

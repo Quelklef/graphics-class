@@ -1,6 +1,6 @@
 #include <math.h>
 
-#include <FPT.h>
+#include <libgfx.h>
 
 #include "globals.c"
 #include "matrix.c"
@@ -439,7 +439,7 @@ int main(const int argc, const char **argv) {
   G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
   draw_init();
 
-  //show_help();
+  show_help();
 
   light_source = make_small_figure();
   nicely_place_figure(light_source);

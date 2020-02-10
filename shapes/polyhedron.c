@@ -13,21 +13,11 @@
 DYN_INIT(Polyhedron, Polygon*)
 
 void Polyhedron_print(const Polyhedron *polyhedron) {
-  printf("MODEL [\n");
+  printf("POLYHEDRON [\n");
   for (int polygon_idx = 0; polygon_idx < polyhedron->length; polygon_idx++) {
     Polygon_print(Polyhedron_get(polyhedron, polygon_idx));
   }
-  printf("] MODEL\n");
-}
-
-Polyhedron *Polyhedron_clone(const Polyhedron *source) {
-  Polyhedron *result = Polyhedron_new(source->length);
-  for (int polygon_i = 0; polygon_i < source->length; polygon_i++) {
-    const Polygon *polygon = Polyhedron_get(source, polygon_i);
-    Polygon *clone = Polygon_clone(polygon);
-    Polyhedron_append(result, clone);
-  }
-  return result;
+  printf("] POLYHEDRON\n");
 }
 
 void Polyhedron_transform(Polyhedron *polyhedron, const _Mat transformation) {

@@ -3,6 +3,8 @@
 
 // Low-level 2d drawing functions
 
+#include <libgfx.h>
+
 #include "../shapes/line.c"
 
 void G_rgbv(const v3 rgb) {
@@ -30,9 +32,9 @@ void zbuf_draw(Zbuf zbuf, const v2 pixel, const float z) {
   const int y = pixel[1];
 
   if (   pixel[0] < 0
-      || pixel[0] > SCREEN_WIDTH
+      || pixel[0] >= SCREEN_WIDTH
       || pixel[1] < 0
-      || pixel[1] > SCREEN_HEIGHT
+      || pixel[1] >= SCREEN_HEIGHT
   ) {
     return;
   }

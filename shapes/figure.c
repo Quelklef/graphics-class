@@ -74,13 +74,6 @@ void Figure_destroy(Figure *figure) {
   }
 }
 
-Figure *Figure_clone(const Figure *figure) {
-  switch (figure->kind) {
-    case fk_Polyhedron: return Figure_from_Polyhedron(Polyhedron_clone(figure->impl.polyhedron));
-    case fk_Locus: return Figure_from_Locus(Locus_clone(figure->impl.locus));
-  }
-}
-
 
 // == Derived functions == //
 

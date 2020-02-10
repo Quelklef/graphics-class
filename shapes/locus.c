@@ -24,14 +24,6 @@ void Locus_destroy(Locus *locus) {
   Dyn_destroy(locus);
 }
 
-Locus *Locus_clone(Locus *locus) {
-  Locus *clone = Locus_new(locus->length);
-  for (int i = 0; i < locus->length; i++) {
-    Locus_append(clone, Locus_get(locus, i));
-  }
-  return clone;
-}
-
 Locus *Locus_from_parametric(
   v3 (*f)(float t, float s),
 
