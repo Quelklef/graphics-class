@@ -4,7 +4,7 @@
 #include <math.h>
 
 #include "../shapes/v3.c"
-#include "../shapes/matrix.c"
+#include "../matrix.c"
 
 // v3s that define the observer
 v3 eye                = { 0, 0, 0 };

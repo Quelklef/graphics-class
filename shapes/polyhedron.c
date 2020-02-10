@@ -7,7 +7,7 @@
 
 #include "v3.c"
 #include "polygon.c"
-#include "matrix.c"
+#include "../matrix.c"
 
 #include "../util/dyn.c"
 DYN_INIT(Polyhedron, Polygon*)

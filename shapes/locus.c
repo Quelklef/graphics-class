@@ -5,8 +5,8 @@
  * The Locus data type, which is a 3d collection of points.
  */
 
+#include "../matrix.c"
 #include "v3.c"
-#include "matrix.c"
 #include "polyhedron.c"
 
 #include "../util/dyn.c"

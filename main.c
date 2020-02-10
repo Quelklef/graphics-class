@@ -3,7 +3,7 @@
 #include <FPT.h>
 
 #include "globals.c"
-#include "shapes/matrix.c"
+#include "matrix.c"
 #include "shapes/figure.c"
 #include "shapes/v2.c"
 #include "rendering/draw.c"
