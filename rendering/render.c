@@ -343,7 +343,8 @@ void Polygon_render(
   }
 
   if (DO_WIREFRAME) {
-    const v3 line_color = (is_focused && !DO_HALO) ? (v3) { 1, 0, 0 } : (v3) { .3, .3, .3 };
+    const int line_is_red = is_focused && !(DO_POLY_FILL && DO_HALO);
+    const v3 line_color = line_is_red ? (v3) { 1, 0, 0 } : (v3) { .3, .3, .3 };
     G_rgbv(line_color);
 
     for (int point_idx = 0; point_idx < clipped.length; point_idx++) {
