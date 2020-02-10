@@ -440,7 +440,7 @@ int main(const int argc, const char **argv) {
   //show_help();
 
   light_source = make_small_figure();
-  nicely_place_figure(light_source);
+  Figure_move_to(light_source, (v3) { 0, 0, 0 });
   FigureList_append(figures, light_source);
 
   load_files(&argv[1], argc - 1);
