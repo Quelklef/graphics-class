@@ -16,43 +16,17 @@ void G_pointv(const v2 point) {
 }
 
 
-#define PCOUNT (SCREEN_WIDTH * SCREEN_HEIGHT)
+typedef float Zbuf[SCREEN_WIDTH][SCREEN_HEIGHT];
 
-typedef struct Canvas {
-  // zbuffer and color buffer
-  float *zbuf;
-  v3    *cbuf;
-} Canvas;
-
-#define LOC(x, y) (SCREEN_WIDTH * (y) + (x))
-
-Canvas *Canvas_new() {
-  Canvas *canv = malloc(sizeof(Canvas));
-
-  canv->zbuf = malloc(PCOUNT * sizeof(float));
-  canv->cbuf = malloc(PCOUNT * sizeof(v3));
-
-  for (int i = 0; i < SCREEN_WIDTH; i++) {
-    for (int j = 0; j < SCREEN_HEIGHT; j++) {
-      canv->zbuf[LOC(i, j)] = INFINITY;
+void zbuf_init(Zbuf zbuf) {
+  for (int x = 0; x < SCREEN_WIDTH; x++) {
+    for (int y = 0; y < SCREEN_HEIGHT; y++) {
+      zbuf[x][y] = INFINITY;
     }
   }
-
-  memset(canv->cbuf, 0, PCOUNT * sizeof(v3));
-
-  return canv;
 }
 
-void Canvas_destroy(Canvas *canv) {
-  free(canv->zbuf);
-  free(canv->cbuf);
-  free(canv);
-}
-
-void Canvas_draw(Canvas *canv, const v2 pixel, const float z, const v3 color) {
-  const int x = pixel[0];
-  const int y = pixel[1];
-
+void zbuf_draw(Zbuf zbuf, const int x, const int y, const float z) {
   if (   x < 0
       || x >= SCREEN_WIDTH
       || y < 0
@@ -63,28 +37,14 @@ void Canvas_draw(Canvas *canv, const v2 pixel, const float z, const v3 color) {
 
   // Overwrite on z == zbuf[x][y] so that things
   // can be given explicit priority by being drawn later 
-  if (z <= canv->zbuf[LOC(x, y)]) {
-    canv->cbuf[LOC(x, y)] = color;
-    canv->zbuf[LOC(x, y)] = z;
+  if (z <= zbuf[x][y]) {
+    zbuf[x][y] = z; 
+    G_point(x, y);
   }
 }
 
-void Canvas_merge(Canvas *dest, Canvas *source) {
-  for (int x = 0; x < SCREEN_WIDTH; x++) {
-    for (int y = 0; y < SCREEN_HEIGHT; y++) {
-      const v2 pixel = { x, y };
-      Canvas_draw(dest, pixel, source->zbuf[LOC(x, y)], source->cbuf[LOC(x, y)]);
-    }
-  }
-}
-
-void Canvas_flush(Canvas *canv) {
-  for (int x = 0; x < SCREEN_WIDTH; x++) {
-    for (int y = 0; y < SCREEN_HEIGHT; y++) {
-      G_rgbv(canv->cbuf[LOC(x, y)]);
-      G_point(x, y);
-    }
-  }
+void zbuf_drawv(Zbuf zbuf, const v2 pixel, const float z) {
+  zbuf_draw(zbuf, pixel[0], pixel[1], z);
 }
 
 
