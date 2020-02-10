@@ -429,8 +429,6 @@ void prepare_3d_lab() {
 }
 
 
-DYN_INIT(LongList, long);
-
 int main(const int argc, const char **argv) {
 
   // == Setup == //
@@ -439,7 +437,7 @@ int main(const int argc, const char **argv) {
   G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
   draw_init();
 
-  show_help();
+  //show_help();
 
   light_source = make_small_figure();
   nicely_place_figure(light_source);

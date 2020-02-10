@@ -18,7 +18,7 @@
 
 float clamp(float x, float lo, float hi);
 
-void Line_render(const Line *line, Zbuf zbuf) {
+void Line_render(const Line *line, Canvas *canvas, const v3 color) {
   const v2 px0 = pixel_coords(line->p0);
   const v2 pxf = pixel_coords(line->pf);
 
@@ -29,7 +29,7 @@ void Line_render(const Line *line, Zbuf zbuf) {
     if (0 <= t && t <= 1) {
       const v3 point = line->p0 + t * (line->pf - line->p0);
       const v2 pixel = pixel_coords(point);
-      zbuf_draw(zbuf, pixel, point[2]);
+      Canvas_draw(canvas, pixel, point[2], color);
     }
   }
 
@@ -40,7 +40,7 @@ void Line_render(const Line *line, Zbuf zbuf) {
     if (0 <= t && t <= 1) {
       const v3 point = line->p0 + t * (line->pf - line->p0);
       const v2 pixel = pixel_coords(point);
-      zbuf_draw(zbuf, pixel, point[2]);
+      Canvas_draw(canvas, pixel, point[2], color);
     }
   }
 
@@ -109,7 +109,7 @@ v3 Polygon_calc_color(const Polygon *polygon, const v3 light_source_loc, const v
   return inherent_rgb;
 }
 
-void Polygon_render_as_is(const Polygon *polygon, Zbuf zbuf) {
+void Polygon_render_as_is(const Polygon *polygon, Canvas *canvas, const v3 color) {
 
   // Find the pixel coordinates of all the points of the polygon
   v2 pixels[polygon->length];
@@ -130,10 +130,10 @@ void Polygon_render_as_is(const Polygon *polygon, Zbuf zbuf) {
   }
 
   // Range of iteration
-  const int x_lo = (int) clamp(floor(min_px), 0, SCREEN_WIDTH);
-  const int x_hi = (int) clamp( ceil(max_px), 0, SCREEN_WIDTH);
-  const int y_lo = (int) clamp(floor(min_py), 0, SCREEN_HEIGHT);
-  const int y_hi = (int) clamp( ceil(max_py), 0, SCREEN_HEIGHT);
+  const int x_lo = (int) clamp(floor(min_px), 0, SCREEN_WIDTH  - 1);
+  const int x_hi = (int) clamp( ceil(max_px), 0, SCREEN_WIDTH  - 1);
+  const int y_lo = (int) clamp(floor(min_py), 0, SCREEN_HEIGHT - 1);
+  const int y_hi = (int) clamp( ceil(max_py), 0, SCREEN_HEIGHT - 1);
 
   // Find the plane of the polygon
   Plane polygon_plane;
@@ -195,7 +195,7 @@ void Polygon_render_as_is(const Polygon *polygon, Zbuf zbuf) {
 #endif
 
         const float z = intersection[2];
-        zbuf_draw(zbuf, px, z);
+        Canvas_draw(canvas, px, z, color);
 
       }
 
@@ -310,7 +310,7 @@ void Polygon_clip(Polygon *polygon) {
   Polygon_clip_with_plane(polygon, &yon_plane);
 }
 
-void Polygon_render(const Polygon *polygon, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
+void Polygon_render(const Polygon *polygon, const int is_focused, const v3 light_source_loc, Canvas *canvas, v3 color) {
   // focused: is the polygongon part of the focused polyhedron? (NOT part of the halo)
 
   Polygon clipped;
@@ -320,27 +320,20 @@ void Polygon_render(const Polygon *polygon, const int is_focused, const v3 light
     Polygon_clip(&clipped);
   }
 
+  if (DO_LIGHT_MODEL) {
+    color = Polygon_calc_color(&clipped, light_source_loc, color);
+  }
+
   if (clipped.length != 0) {
     // Only render if there are points
     // (Some render subroutines require a minimum point count)
 
     if (DO_POLY_FILL) {
-      v3 rgb = { 0.8, 0.5, 0.8 };
-
-      if (DO_LIGHT_MODEL) {
-        rgb = Polygon_calc_color(&clipped, light_source_loc, rgb);
-      }
-
-      G_rgbv(rgb);
-      Polygon_render_as_is(&clipped, zbuf);
+      Polygon_render_as_is(&clipped, canvas, color);
     }
 
     if (DO_WIREFRAME) {
-      if (is_focused && !DO_POLY_FILL) {
-        G_rgb(1, 0, 0);
-      } else {
-        G_rgb(.3, .3, .3);
-      }
+      const v3 line_color = (is_focused && !DO_HALO) ? (v3) { 1, 0, 0 } : (v3) { .3, .3, .3 };
 
       for (int point_idx = 0; point_idx < clipped.length; point_idx++) {
         const v3 p0 = Polygon_get(&clipped, point_idx);
@@ -348,7 +341,7 @@ void Polygon_render(const Polygon *polygon, const int is_focused, const v3 light
 
         Line line;
         Line_between(&line, p0, pf);
-        Line_render(&line, zbuf);
+        Line_render(&line, canvas, line_color);
       }
     }
 
@@ -356,12 +349,71 @@ void Polygon_render(const Polygon *polygon, const int is_focused, const v3 light
 
 }
 
-void Polyhedron_render(const Polyhedron *polyhedron, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
+int iclamp(int x, int lo, int hi) {
+  if (x < lo) return lo;
+  if (x > hi) return hi;
+  return x;
+}
+
+void draw_halo(Canvas *canvas) {
+  // Draw a halo around the contents of the given canvas
+
+  Canvas *halo_canvas = Canvas_new();
+
+  const int halo_width = 5;
+  const v3 halo_color = { 1, 0, 0 };
+
+  for (int x = 0; x < SCREEN_WIDTH; x++) {
+    for (int y = 0; y < SCREEN_HEIGHT; y++) {
+
+      // Only draw halo around points of the polygon
+      if (canvas->zbuf[LOC(x, y)] == INFINITY) continue;
+
+      // Loop over pixels in square around (x, y)
+      // each pixel is called a 'surrounding pixel' wth an 'sx' and 'sy'
+      const int sx_lo = iclamp(x - halo_width, 0, SCREEN_WIDTH  - 1);
+      const int sx_hi = iclamp(x + halo_width, 0, SCREEN_WIDTH  - 1);
+      const int sy_lo = iclamp(y - halo_width, 0, SCREEN_HEIGHT - 1);
+      const int sy_hi = iclamp(y + halo_width, 0, SCREEN_HEIGHT - 1);
+      for (int sx = sx_lo; sx <= sx_hi; sx++) {
+        for (int sy = sy_lo; sy <= sy_hi; sy++) {
+
+          // Don't overwrite existing pixels
+          if (canvas->zbuf[LOC(sx, sy)] != INFINITY) continue;
+
+          const v2 spixel = { sx, sy };
+          // Draw with the z-value of the point around which we're surrounding
+          const int sz = canvas->zbuf[LOC(x, y)];
+          Canvas_draw(halo_canvas, spixel, sz, halo_color);
+
+        }
+      }
+
+    }
+  }
+
+  Canvas_merge(canvas, halo_canvas);
+  Canvas_destroy(halo_canvas);
+
+}
+
+void Polyhedron_render(const Polyhedron *polyhedron, const int is_focused, const v3 light_source_loc, Canvas *canvas, const v3 color) {
+
+  Canvas *polyhedron_canvas = Canvas_new();
+
   for (int i = 0; i < polyhedron->length; i++) {
     const Polygon *polygon = Polyhedron_get(polyhedron, i);
     if (shouldnt_render(polygon)) continue;
-    Polygon_render(polygon, is_focused, light_source_loc, zbuf);
+    Polygon_render(polygon, is_focused, light_source_loc, polyhedron_canvas, color);
   }
+
+  if (is_focused && DO_HALO) {
+    draw_halo(polyhedron_canvas);
+  }
+
+  Canvas_merge(canvas, polyhedron_canvas);
+  Canvas_destroy(polyhedron_canvas);
+
 }
 
 int point_in_bounds(const v3 point) {
@@ -372,26 +424,22 @@ int point_in_bounds(const v3 point) {
   return 1;
 }
 
-void Locus_render(const Locus *locus, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
-  if (is_focused) {
-    G_rgb(1, 0, 0);
-  } else {
-    G_rgb(.3, .3, .3);
-  }
+void Locus_render(const Locus *locus, const int is_focused, const v3 light_source_loc, Canvas *canvas, v3 color) {
+  if (is_focused) color = (v3) { 1, 0, 0 };
 
   for (int i = 0; i < locus->length; i++) {
     const v3 point = Locus_get(locus, i);
     if (DO_CLIPPING && !point_in_bounds(point)) continue;
 
     const v2 pixel = pixel_coords(point);
-    zbuf_draw(zbuf, pixel, point[2]);
+    Canvas_draw(canvas, pixel, point[2], color);
   }
 }
 
-void Figure_render(const Figure *figure, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
+void Figure_render(const Figure *figure, const int is_focused, const v3 light_source_loc, Canvas *canvas, const v3 color) {
   switch (figure->kind) {
-    case fk_Polyhedron: return Polyhedron_render(figure->impl.polyhedron, is_focused, light_source_loc, zbuf);
-    case fk_Locus: return Locus_render(figure->impl.locus, is_focused, light_source_loc, zbuf);
+    case fk_Polyhedron: return Polyhedron_render(figure->impl.polyhedron, is_focused, light_source_loc, canvas, color);
+    case fk_Locus: return Locus_render(figure->impl.locus, is_focused, light_source_loc, canvas, color);
   }
 }
 
@@ -410,8 +458,9 @@ void render_figures(Figure *figures[], const int figure_count, const Figure *foc
     light_source_loc = Figure_center(light_source);
   }
 
-  Zbuf zbuf;
-  zbuf_init(zbuf);
+  Canvas *canvas = Canvas_new();
+
+  const v3 color = { .3, .3, .3 };
 
   for (int figure_i = 0; figure_i < figure_count; figure_i++) {
     const Figure *figure = figures[figure_i];
@@ -420,11 +469,13 @@ void render_figures(Figure *figures[], const int figure_count, const Figure *foc
     memcpy(&clone, figure, sizeof(Figure));
 
     Figure_transform(&clone, to_eyespace);
-    Figure_render(&clone, figure == focused_figure, light_source_loc, zbuf);
+    Figure_render(&clone, figure == focused_figure, light_source_loc, canvas, color);
   }
+
+  Canvas_flush(canvas);
+  Canvas_destroy(canvas);
 
 }
 
 
 #endif // render_c_INCLUDED
-
