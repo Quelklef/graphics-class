@@ -429,22 +429,42 @@ void display_halo(Zbuf zbuf, Zbuf zrecord) {
       // Only iterate over drawn pixels
       if (zrecord[x][y] == INFINITY) continue;
 
-      // Iterate over surrounding pixels, denoted by the prefix s-
+      {
+        // Also only iterate over pixels that are not surrounded on all sides
+        // with another drawn pixel
+        const int sx_lo = iclamp(x - 1, 0, SCREEN_WIDTH  - 1);
+        const int sx_hi = iclamp(x + 1, 0, SCREEN_WIDTH  - 1);
+        const int sy_lo = iclamp(y - 1, 0, SCREEN_HEIGHT - 1);
+        const int sy_hi = iclamp(y + 1, 0, SCREEN_HEIGHT - 1);
 
-      const int sx_lo = iclamp(x - halo_width, 0, SCREEN_WIDTH  - 1);
-      const int sx_hi = iclamp(x + halo_width, 0, SCREEN_WIDTH  - 1);
-      const int sy_lo = iclamp(y - halo_width, 0, SCREEN_HEIGHT - 1);
-      const int sy_hi = iclamp(y + halo_width, 0, SCREEN_HEIGHT - 1);
+        for (int sx = sx_lo; sx <= sx_hi; sx++) {
+          for (int sy = sy_lo; sy <= sy_hi; sy++) {
+            if (sx == 0 && sy == 0) continue;
+            if (zrecord[sx][sy] == INFINITY) goto draw;
+          }
+        }
 
-      for (int sx = sx_lo; sx <= sx_hi; sx++) {
-        for (int sy = sy_lo; sy <= sy_hi; sy++) {
+        continue;
+      }
 
-          // Don't overwrite existing point
-          if (zrecord[sx][sy] != INFINITY) continue;
+      draw:
+      {
+        // Iterate over surrounding pixels, denoted by the prefix s-
+        const int sx_lo = iclamp(x - halo_width, 0, SCREEN_WIDTH  - 1);
+        const int sx_hi = iclamp(x + halo_width, 0, SCREEN_WIDTH  - 1);
+        const int sy_lo = iclamp(y - halo_width, 0, SCREEN_HEIGHT - 1);
+        const int sy_hi = iclamp(y + halo_width, 0, SCREEN_HEIGHT - 1);
 
-          const float z = zrecord[x][y];
-          zbuf_draw(zbuf, sx, sy, z);
+        for (int sx = sx_lo; sx <= sx_hi; sx++) {
+          for (int sy = sy_lo; sy <= sy_hi; sy++) {
 
+            // Don't overwrite existing point
+            if (zrecord[sx][sy] != INFINITY) continue;
+
+            const float z = zrecord[x][y];
+            zbuf_draw(zbuf, sx, sy, z);
+
+          }
         }
       }
 
