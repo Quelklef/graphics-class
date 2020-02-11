@@ -5,5 +5,5 @@ if [ "$#" = 0 ]; then
   exit
 fi
 
-clang -I./libgfx ./libgfx/*.o "$@" -lm -lX11
+clang -I./libgfx "$@" ./libgfx/*.o -lm -lX11
 
