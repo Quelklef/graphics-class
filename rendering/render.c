@@ -57,30 +57,31 @@ int shouldnt_render(const Polygon *polygon) {
   return BACKFACE_ELIMINATION_SIGN * v3_dot(T, N) < 0;
 }
 
-float Polygon_calc_intensity(const Polygon *polygon, const v3 light_source_loc) {
-  const v3 polygon_center = Polygon_center(polygon);
-  const v3 to_light = v3_normalize(light_source_loc - polygon_center);
+float calc_intensity(const v3 p0, v3 normal, const v3 light_source_loc) {
+  /* Given a point in space, a vector normal to the surface on which the point
+   * lies, and the location of the light source, calculate the intensity of the poitn
+   */
+  const v3 to_light = v3_normalize(light_source_loc - p0);
 
-  v3 polygon_normal = Polygon_normal(polygon);
   // Make sure normal is going correct direction
-  if (v3_dot(polygon_normal, to_light) < 0) {
-    polygon_normal = -polygon_normal;
+  if (v3_dot(normal, to_light) < 0) {
+    normal *= -1;
   }
 
-  const float cos_alpha = v3_dot(polygon_normal, to_light);
+  const float cos_alpha = v3_dot(normal, to_light);
   const float cos_alpha_0 = fmax(0, cos_alpha);
 
   const v3 observer = { 0, 0, 0 };
-  const v3 to_observer = v3_normalize(observer - polygon_center);
+  const v3 to_observer = v3_normalize(observer - p0);
 
   // If observer is on other side of polygongon, no reflected light is seen.
-  const float A = v3_dot(polygon_normal, to_light);
-  const float B = v3_dot(polygon_normal, to_observer);
+  const float A = v3_dot(normal, to_light);
+  const float B = v3_dot(normal, to_observer);
   if (sgn(A) != sgn(B)) {
     return AMBIENT;
   }
 
-  const v3 scaled_normal = polygon_normal * (float) (2 * cos_alpha);
+  const v3 scaled_normal = normal * (float) (2 * cos_alpha);
   const v3 reflection = -to_light + scaled_normal;
 
   const float cos_beta = v3_dot(reflection, to_observer);
@@ -91,8 +92,8 @@ float Polygon_calc_intensity(const Polygon *polygon, const v3 light_source_loc) 
          + (1 - AMBIENT - DIFFUSE_MAX) * pow(cos_beta_0, SPECULAR_POWER);
 }
 
-v3 Polygon_calc_color(const Polygon *polygon, const v3 light_source_loc, const v3 inherent_rgb) {
-  const float intensity = Polygon_calc_intensity(polygon, light_source_loc);
+v3 calc_color(const v3 p0, const v3 normal, const v3 light_source_loc, const v3 inherent_rgb) {
+  const float intensity = calc_intensity(p0, normal, light_source_loc);
   const float full = AMBIENT + DIFFUSE_MAX;
 
   if (intensity > full) {
@@ -107,6 +108,15 @@ v3 Polygon_calc_color(const Polygon *polygon, const v3 light_source_loc, const v
 
   // intensity == full
   return inherent_rgb;
+}
+
+v3 Polygon_calc_color(const Polygon *polygon, const v3 light_source_loc, const v3 inherent_rgb) {
+  return calc_color(
+    Polygon_center(polygon),
+    Polygon_normal(polygon),
+    light_source_loc,
+    inherent_rgb
+  );
 }
 
 void Polygon_render_as_is(const Polygon *polygon, Zbuf zbuf, Zbuf zrecord) {
