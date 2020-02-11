@@ -180,13 +180,12 @@ void Polygon_render_as_is(const Polygon *polygon, Zbuf zbuf, Zbuf zrecord) {
 
       // There is an infinite line of values with
       // the desired pixel coordinates.
-      Line line;
-      pixel_coords_inv(&line, px);
+      Line *line = pixel_coords_inv(px);
 
       // Now find the point on it that intersects with the polygon
       v3 intersection;
       const int found_intersection =
-        Plane_intersect_line_M(&intersection, &polygon_plane, &line);
+        Plane_intersect_line_M(&intersection, &polygon_plane, line);
 
 #ifdef DEBUG
       if (!found_intersection) {

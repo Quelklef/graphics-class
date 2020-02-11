@@ -453,7 +453,7 @@ int main(const int argc, const char **argv) {
   // == Teardown == //
 
   FigureList_destroy(figures);
-
+  draw_close();
   G_close();
 
 }

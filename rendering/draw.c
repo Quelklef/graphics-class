@@ -60,13 +60,6 @@ float H_over_m;
 float m_over_H;
 float H_times_m;
 
-void draw_init() {
-  H = tan(HALF_ANGLE);
-  H_over_m = H / m;
-  m_over_H = m / H;
-  H_times_m = H * m;
-}
-
 v2 pixel_coords(const v3 point) {
   /* Find the pixel coordinates on the screen of a given  (x, y, z) point. */
   const v3 prime = point / point[2] * m_over_H + m;
@@ -80,10 +73,46 @@ v3 pixel_coords_inv_z(const v2 pixel, const float z) {
   return (v3) { result[0], result[1], z };
 }
 
-void pixel_coords_inv(Line *result, const v2 pixel) {
+void pixel_coords_inv_line(Line *result, const v2 pixel) {
   const v3 p0 = pixel_coords_inv_z(pixel, 0);
   const v3 p1 = pixel_coords_inv_z(pixel, 1);
   Line_between(result, p0, p1);
+}
+
+Line *pixel_coords_inv_cache[SCREEN_WIDTH][SCREEN_HEIGHT];
+
+Line *pixel_coords_inv(const v2 pixel) {
+  const int x = pixel[0];
+  const int y = pixel[1];
+  return pixel_coords_inv_cache[x][y];
+}
+
+
+void draw_init() {
+  // initialize constants
+  H = tan(HALF_ANGLE);
+  H_over_m = H / m;
+  m_over_H = m / H;
+  H_times_m = H * m;
+
+  // initialize inv cache
+  for (int x = 0; x < SCREEN_WIDTH; x++) {
+    for (int y = 0; y < SCREEN_HEIGHT; y++) {
+      const v2 pixel = { x, y };
+      Line *line = malloc(sizeof(Line));
+      pixel_coords_inv_line(line, pixel);
+      pixel_coords_inv_cache[x][y] = line;
+    }
+  }
+}
+
+void draw_close() {
+  for (int x = 0; x < SCREEN_WIDTH; x++) {
+    for (int y = 0; y < SCREEN_HEIGHT; y++) {
+      Line *line = pixel_coords_inv_cache[x][y];
+      free(line);
+    }
+  }
 }
 
 #endif // draw_c_INCLUDED
