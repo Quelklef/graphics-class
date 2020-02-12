@@ -73,16 +73,11 @@ void Figure_transform(Figure *figure, const _Mat transformation) {
   }
 }
 
-void Figure_bounds_M(
-  float *min_x, float *max_x,
-  float *min_y, float *max_y,
-  float *min_z, float *max_z,
-  const Figure *figure
-) {
+void Figure_bounds_M(v3 *lows, v3 *highs, const Figure *figure) {
   switch (figure->kind) {
-    case fk_Polyhedron: return Polyhedron_bounds_M(min_x, max_x, min_y, max_y, min_z, max_z, figure->impl.polyhedron);
-    case fk_Locus: return Locus_bounds_M(min_x, max_x, min_y, max_y, min_z, max_z, figure->impl.locus);
-    case fk_Intersector: return Intersector_bounds_M(min_x, max_x, min_y, max_y, min_z, max_z, figure->impl.intersector);
+  case fk_Polyhedron :return Polyhedron_bounds_M(lows, highs, figure->impl.polyhedron);
+  case fk_Locus: return Locus_bounds_M(lows, highs, figure->impl.locus);
+  case fk_Intersector: return Intersector_bounds_M(lows, highs, figure->impl.intersector);
   }
 }
 
@@ -98,12 +93,12 @@ void Figure_destroy(Figure *figure) {
 // == Derived functions == //
 
 v3 Figure_center(const Figure *figure) {
-  float min_x, max_x, min_y, max_y, min_z, max_z;
-  Figure_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, figure);
+  v3 lows, highs;
+  Figure_bounds_M(&lows, &highs, figure);
   return (v3) {
-    min_x / 2 + max_x / 2,
-    min_y / 2 + max_y / 2,
-    min_z / 2 + max_z / 2
+    lows[0] / 2 + highs[0] / 2,
+    lows[1] / 2 + highs[1] / 2,
+    lows[2] / 2 + highs[2] / 2
   };
 }
 
@@ -116,9 +111,9 @@ void Figure_move_to(Figure *figure, const v3 target) {
 void nicely_place_figure(Figure *figure) {
   // Move the figure to somewhere nice
 
-  float min_x, max_x, min_y, max_y, min_z, max_z;
-  Figure_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, figure);
-  const float width = max_z - min_z;
+  v3 lows, highs;
+  Figure_bounds_M(&lows, &highs, figure);
+  const float width = highs[2] - lows[2];
 
   // We choose that "somewhere nice" means that x=y=0 and the closest z value is at some z
   const float desired_z = 15;
@@ -134,12 +129,10 @@ Figure *make_small_figure() {
   return figure;
 }
 
-void Figure_size_M(float *result_x_size, float *result_y_size, float *result_z_size, Figure *figure) {
-  float min_x, max_x, min_y, max_y, min_z, max_z;
-  Figure_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, figure);
-  *result_x_size = max_x - min_x;
-  *result_y_size = max_y - min_y;
-  *result_z_size = max_z - min_z;
+v3 Figure_size(Figure *figure) {
+  v3 lows, highs;
+  Figure_bounds_M(&lows, &highs, figure);
+  return highs - lows;
 }
 
 

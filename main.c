@@ -63,15 +63,14 @@ void on_key(Figure *figure, const char key) {
 
   // Relative transformations
 
-  float figure_x_size, figure_y_size, figure_z_size;
-  Figure_size_M(&figure_x_size, &figure_y_size, &figure_z_size, figure);
+  v3 sizes = Figure_size(figure);
 
-  const _Mat translate_backwards_rel = Mat_translate(0, 0, -rel_speed * figure_z_size);
-  const _Mat translate_forwards_rel  = Mat_translate(0, 0, +rel_speed * figure_z_size);
-  const _Mat translate_left_rel      = Mat_translate(-rel_speed * figure_x_size, 0, 0);
-  const _Mat translate_right_rel     = Mat_translate(+rel_speed * figure_x_size, 0, 0);
-  const _Mat translate_up_rel        = Mat_translate(0, +rel_speed * figure_y_size, 0);
-  const _Mat translate_down_rel      = Mat_translate(0, -rel_speed * figure_y_size, 0);
+  const _Mat translate_backwards_rel = Mat_translate(0, 0, -rel_speed * sizes[0]);
+  const _Mat translate_forwards_rel  = Mat_translate(0, 0, +rel_speed * sizes[0]);
+  const _Mat translate_left_rel      = Mat_translate(-rel_speed * sizes[1], 0, 0);
+  const _Mat translate_right_rel     = Mat_translate(+rel_speed * sizes[1], 0, 0);
+  const _Mat translate_up_rel        = Mat_translate(0, +rel_speed * sizes[2], 0);
+  const _Mat translate_down_rel      = Mat_translate(0, -rel_speed * sizes[2], 0);
 
   const v3 figure_center = Figure_center(figure);
 
@@ -267,9 +266,6 @@ void display_state() {
   // Draw indices for each figure
   for (int figure_i = 0; figure_i < figures->length; figure_i++) {
     const Figure *figure = FigureList_get(figures, figure_i);
-
-    float min_x, max_x, min_y, max_y, min_z, max_z;
-    Figure_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, figure);
 
     const v3 center = Figure_center(figure);
     const v2 pixel = pixel_coords(center);

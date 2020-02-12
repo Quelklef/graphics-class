@@ -69,26 +69,9 @@ int Intersector_intersect(v3 *result, Intersector *intersector, const Line *line
   return 1;
 }
 
-void Intersector_bounds_M(
-  float *min_x, float *max_x,
-  float *min_y, float *max_y,
-  float *min_z, float *max_z,
-  const Intersector *intersector
-) {
-
-  v3 min = intersector->min_corner;
-  v3 max = intersector->max_corner;
-
-  min = v3_transform(min, intersector->transformation);
-  max = v3_transform(max, intersector->transformation);
-
-  *min_x = min[0];
-  *min_y = min[1];
-  *min_z = min[2];
-
-  *max_x = max[0];
-  *max_y = max[1];
-  *max_z = max[2];
+void Intersector_bounds_M(v3 *lows, v3 *highs, const Intersector *intersector) {
+  *lows  = v3_transform(intersector->min_corner, intersector->transformation);
+  *highs = v3_transform(intersector->max_corner, intersector->transformation);
 }
 
 

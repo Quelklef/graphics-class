@@ -71,12 +71,7 @@ Locus *Locus_from_points(const int point_count, ...) {
   return locus;
 }
 
-void Locus_bounds_M(
-      float *result_min_x, float *result_max_x,
-      float *result_min_y, float *result_max_y,
-      float *result_min_z, float *result_max_z,
-      const Locus *locus
-    ) {
+void Locus_bounds_M(v3 *lows, v3 *highs, const Locus *locus) {
 
 #ifdef DEBUG
   if (locus->length == 0) {
@@ -87,21 +82,13 @@ void Locus_bounds_M(
 
   if (locus->length == 1) {
     const v3 point = Locus_get(locus, 0);
-    *result_min_x = point[0];
-    *result_max_x = point[0];
-    *result_min_y = point[1];
-    *result_max_y = point[1];
-    *result_min_z = point[2];
-    *result_max_z = point[2];
+    *lows = point;
+    *highs = point;
     return;
   }
 
-  *result_min_x = +DBL_MAX;
-  *result_max_x = -DBL_MAX;
-  *result_min_y = +DBL_MAX;
-  *result_max_y = -DBL_MAX;
-  *result_min_z = +DBL_MAX;
-  *result_max_z = -DBL_MAX;
+  *lows  = (v3) { +DBL_MAX, +DBL_MAX, +DBL_MAX };
+  *highs = (v3) { -DBL_MAX, -DBL_MAX, -DBL_MAX };
 
   for (int i = 0; i < locus->length; i++) {
     const v3 point = Locus_get(locus, i);
@@ -110,12 +97,12 @@ void Locus_bounds_M(
     const float y = point[1];
     const float z = point[2];
 
-         if (x < *result_min_x) *result_min_x = x;
-    else if (x > *result_max_x) *result_max_x = x;
-         if (y < *result_min_y) *result_min_y = y;
-    else if (y > *result_max_y) *result_max_y = y;
-         if (z < *result_min_z) *result_min_z = z;
-    else if (z > *result_max_z) *result_max_z = z;
+         if (x < (*lows )[0]) (*lows )[0] = x;
+    else if (x > (*highs)[0]) (*highs)[0] = x;
+         if (y < (*lows )[1]) (*lows )[1] = y;
+    else if (y > (*highs)[1]) (*highs)[1] = y;
+         if (z < (*lows )[2]) (*lows )[2] = z;
+    else if (z > (*highs)[2]) (*highs)[2] = z;
   }
 }
 
