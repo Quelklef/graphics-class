@@ -559,7 +559,7 @@ void pixel_bounds_M(v2 *lows2, v2 *highs2, v3 lows3, v3 highs3) {
 
 void Intersector_render(Intersector *intersector, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
 
-  if (is_focused)
+  if (is_focused && !DO_HALO)
     G_rgb(1, 0, 0);
   else
     G_rgb(.8, .5, .8);
@@ -572,6 +572,9 @@ void Intersector_render(Intersector *intersector, const int is_focused, const v3
   v2 lows2, highs2;
   pixel_bounds_M(&lows2, &highs2, lows3, highs3);
 
+  Zbuf zrecord;
+  zbuf_init(zrecord);
+
   for (int px = lows2[0]; px <= highs2[0]; px++) {
     for (int py = lows2[1]; py <= highs2[1]; py++) {
 
@@ -582,10 +585,16 @@ void Intersector_render(Intersector *intersector, const int is_focused, const v3
 
       if (got_intersection) {
         const float z = intersection[2];
+        zbuf_draw(zrecord, px, py, z);
         zbuf_draw(zbuf, px, py, z);
       }
 
     }
+  }
+
+  if (is_focused && DO_HALO) {
+    G_rgb(1, 0, 0);
+    display_halo(zbuf, zrecord);
   }
 
 }
