@@ -4,6 +4,7 @@
 // Functions relating to rendering stuff
 
 #include <math.h>
+#include <limits.h>
 
 #include "observer.c"
 #include "draw.c"
@@ -521,10 +522,91 @@ void Locus_render(const Locus *locus, const int is_focused, const v3 light_sourc
   }
 }
 
+void pixel_bounds_M(
+  int *min_px, int *max_px,
+  int *min_py, int *max_py,
+
+  const float min_x, const float max_x,
+  const float min_y, const float max_y,
+  const float min_z, const float max_z
+) {
+  // Given a 3D bounding box, calculate
+  // the 2D bounding box the for the shape when it's drawn
+
+  const v2 p1 = pixel_coords((v3) { min_x, min_y, min_z });
+  const v2 p2 = pixel_coords((v3) { min_x, min_y, max_z });
+  const v2 p3 = pixel_coords((v3) { min_x, max_y, min_z });
+  const v2 p4 = pixel_coords((v3) { min_x, max_y, max_z });
+  const v2 p5 = pixel_coords((v3) { max_x, min_y, min_z });
+  const v2 p6 = pixel_coords((v3) { max_x, min_y, max_z });
+  const v2 p7 = pixel_coords((v3) { max_x, max_y, min_z });
+  const v2 p8 = pixel_coords((v3) { max_x, max_y, max_z });
+
+  const v2 all[8] = {p1, p2, p3, p4, p5, p6, p7, p8};
+
+  *min_px = INT_MAX;
+  *max_px = INT_MIN;
+  *min_py = INT_MAX;
+  *max_py = INT_MIN;
+
+  for (int i = 0; i < 8; i++) {
+    const int px = (int) all[i][0];
+    const int py = (int) all[i][1];
+
+    if (px < *min_px) *min_px = px;
+    if (px > *max_px) *max_px = px;
+    if (py < *min_py) *min_py = py;
+    if (py > *max_py) *max_py = py;
+  }
+
+  *min_px = iclamp(*min_px, 0, SCREEN_WIDTH  - 1);
+  *max_px = iclamp(*max_px, 0, SCREEN_WIDTH  - 1);
+  *min_py = iclamp(*min_py, 0, SCREEN_HEIGHT - 1);
+  *max_py = iclamp(*max_py, 0, SCREEN_HEIGHT - 1);
+
+}
+
+void Intersector_render(Intersector *intersector, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
+
+  if (is_focused)
+    G_rgb(1, 0, 0);
+  else
+    G_rgb(.8, .5, .8);
+
+  // First find pixel bounding box
+
+  float min_x, max_x, min_y, max_y, min_z, max_z;
+  Intersector_bounds_M(&min_x, &max_x, &min_y, &max_y, &min_z, &max_z, intersector);
+
+  int min_px, max_px, min_py, max_py;
+  pixel_bounds_M(
+    &min_px, &max_px, &min_py, &max_py,
+    min_x, max_x, min_y, max_y, min_z, max_z
+  );
+
+  for (int px = min_px; px <= max_px; px++) {
+    for (int py = min_py; py <= max_py; py++) {
+
+      const Line *zline = pixel_coords_inv((v2) { px, py });
+
+      v3 intersection;
+      const int got_intersection = Intersector_intersect(&intersection, intersector, zline);
+
+      if (got_intersection) {
+        const float z = intersection[2];
+        zbuf_draw(zbuf, px, py, z);
+      }
+
+    }
+  }
+
+}
+
 void Figure_render(const Figure *figure, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
   switch (figure->kind) {
     case fk_Polyhedron: return Polyhedron_render(figure->impl.polyhedron, is_focused, light_source_loc, zbuf);
     case fk_Locus: return Locus_render(figure->impl.locus, is_focused, light_source_loc, zbuf);
+    case fk_Intersector: return Intersector_render(figure->impl.intersector, is_focused, light_source_loc, zbuf);
   }
 }
 

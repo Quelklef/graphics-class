@@ -391,6 +391,43 @@ v3 vase_f(float t, float s) {
   return (v3) { x, y, z };
 }
 
+int sphere_intersect(v3 *result, Line *line) {
+  const v3 d = Line_vector(line);
+  const v3 s = line->p0;
+
+  const float A = pow(d[0], 2) + pow(d[1], 2) + pow(d[2], 2);
+  const float B = 2 * (s[0] * d[0] + s[1] * d[1] + s[2] * d[2]);
+  const float C = pow(s[0], 2) + pow(s[1], 2) + pow(s[2], 2) - 1;
+
+  const float t1 = (-B + sqrt(pow(B, 2) - 4 * A * C)) / (2 * A);
+  const float t2 = (-B - sqrt(pow(B, 2) - 4 * A * C)) / (2 * A);
+
+  if (isnan(t1) && isnan(t2)) {
+    return 0;
+  }
+
+  const v3 p1 = s + t1 * d;
+  const v3 p2 = s + t2 * d;
+
+  if (isnan(t1) && !isnan(t2)) {
+    *result = p1;
+    return 1;
+  }
+
+  if (isnan(t2) && !isnan(t1)) {
+    *result = p2;
+    return 1;
+  }
+
+  if (p1[2] < p2[2]) {
+    *result = p1;
+    return 1;
+  } else {
+    *result = p2;
+    return 1;
+  }
+}
+
 void prepare_3d_lab() {
 
   Figure *sphere1 = Figure_from_Polyhedron(Polyhedron_from_parametric(
@@ -414,6 +451,15 @@ void prepare_3d_lab() {
 
   nicely_place_figure(sphere2);
   FigureList_append(figures, sphere2);
+
+  Figure *sphere3 = Figure_from_Intersector(Intersector_new(
+    &sphere_intersect,
+    (v3) { -1, -1, -1 },
+    (v3) { 1, 1, 1 }
+  ));
+
+  nicely_place_figure(sphere3);
+  FigureList_append(figures, sphere3);
 
   Figure *vase = Figure_from_Polyhedron(Polyhedron_from_parametric(
     vase_f,

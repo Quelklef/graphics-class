@@ -18,5 +18,10 @@ v3 Line_vector(const Line *line) {
   return line->pf - line->p0;
 }
 
+void Line_transform(Line *line, _Mat transformation) {
+  line->p0 = v3_transform(line->p0, transformation);
+  line->pf = v3_transform(line->pf, transformation);
+}
+
 #endif // line_c_INCLUDED
 
