@@ -19,11 +19,11 @@ Project structure:
 - `shapes/` contains code for representing 2d and 3d objects:
   - `v2.c` is a 2d vector
   - `v3.c` is a 3d vector
-  - `polygon.c` is a polygon
-  - `polyhedron.c` is a collection of polygons
-  - `plane.c` is a 2d plane embedded in 3d space
-  - `locus.c` is a collection of free-floating 3d points
   - `line.c` is a line embedded in 3d space
+  - `plane.c` is a 2d plane embedded in 3d space
+  - `polygon.c` is a polygon
+  - `locus.c` is a collection of free-floating 3d points
+  - `polyhedron.c` is a collection of polygons
   - `figure.c` is a wrapper type that combines loci and polyhedra. The `figure` type is the type that gets rendered; the rendering code interacts mostly with `figure`.
 - `util/` contains miscellaneous code
   - `dyn.c` is a generic-type variable-length heap-allocated list
