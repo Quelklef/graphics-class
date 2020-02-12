@@ -24,7 +24,8 @@ Project structure:
   - `polygon.c` is a polygon
   - `locus.c` is a collection of free-floating 3d points
   - `polyhedron.c` is a collection of polygons
-  - `figure.c` is a wrapper type that combines loci and polyhedra. The `figure` type is the type that gets rendered; the rendering code interacts mostly with `figure`.
+  - `intersector.c` is a representation of a shape as a function that takes a line and returns all intersections between the shape and that line
+  - `figure.c` is a union type that combines loci, polyhedra, and intersectors.
 - `util/` contains miscellaneous code
   - `dyn.c` is a generic-type variable-length heap-allocated list
   - `misc.c` is other miscellaneous stuff
