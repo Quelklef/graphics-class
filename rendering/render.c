@@ -570,16 +570,25 @@ int Intersector_normal(v3 *result, const Intersector *intersector, const v3 poin
   static const float epsilon = 1;
 
   v3 right;
-  const int got_right = Intersector_z(&right, intersector, pixel + (v2) { epsilon, 0 });
+  int got_right = Intersector_z(&right, intersector, pixel + (v2) { epsilon, 0 });
+  // It's possible tht due to floating-point imprecision, `right` is no different
+  // from `point`. We consider this to be a failure to get `right`. If we didn't,
+  // we risk returning the zero vector from this function.
+  // (If this check isn't inlcuded, some weird shit happens when rendering e.g. a sphere.
+  // see the git tag cool-bug-1)
+  if (got_right && v3_eq(right, point)) got_right = 0;
 
   v3 bottom;
-  const int got_bottom = Intersector_z(&bottom, intersector, pixel + (v2) { 0, epsilon });
+  int got_bottom = Intersector_z(&bottom, intersector, pixel + (v2) { 0, epsilon });
+  if (got_bottom && v3_eq(bottom, point)) got_bottom = 0;
 
   v3 left;
-  const int got_left = Intersector_z(&left, intersector, pixel + (v2) { -epsilon, 0 });
+  int got_left = Intersector_z(&left, intersector, pixel + (v2) { -epsilon, 0 });
+  if (got_left && v3_eq(left, point)) got_left = 0;
 
   v3 top;
-  const int got_top = Intersector_z(&top, intersector, pixel + (v2) { 0, -epsilon });
+  int got_top = Intersector_z(&top, intersector, pixel + (v2) { 0, -epsilon });
+  if (got_top && v3_eq(top, point)) got_top = 0;
 
        if (got_right  && got_bottom) *result = v3_cross(right  - point, bottom - point);
   else if (got_bottom && got_left  ) *result = v3_cross(bottom - point, left   - point);
@@ -587,7 +596,7 @@ int Intersector_normal(v3 *result, const Intersector *intersector, const v3 poin
   else if (got_top    && got_right ) *result = v3_cross(top    - point, right  - point);
   else return 0;
 
-  if ((*result)[0] == 0 && (*result)[1] == 0 && (*result)[2] == 0) return 0;
+  if (v3_eq(*result, v3_zero)) return 0;
 
   *result = v3_normalize(*result);
   return 1;

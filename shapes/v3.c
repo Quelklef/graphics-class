@@ -13,7 +13,7 @@ float v3_dot(v3 a, v3 b) {
   return a[0] * b[0] + a[1] * b[1] + a[2] * b[2];
 }
 
-v3 v3_cross(v3 a, v3 b) {
+v3 v3_cross(const v3 a, const v3 b) {
   return (v3) {
     a[1] * b[2] - b[1] * a[2],
     b[0] * a[2] - a[0] * b[2],
@@ -55,5 +55,11 @@ v3 v3_transform(v3 v, const _Mat transformation) {
 
   return (v3) { result_x, result_y, result_z };
 }
+
+int v3_eq(const v3 a, const v3 b) {
+  return a[0] == b[0] && a[1] == b[1] && a[2] == b[2];
+}
+
+static const v3 v3_zero = { 0, 0, 0 };
 
 #endif // v3_c_INCLUDED
