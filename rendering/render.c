@@ -557,6 +557,50 @@ void pixel_bounds_M(v2 *lows2, v2 *highs2, v3 lows3, v3 highs3) {
 
 }
 
+int Intersector_z(v3 *result, const Intersector *intersector, const v2 pixel) {
+  const Line *zline = pixel_coords_inv(pixel);
+  const int got_intersection = Intersector_intersect(result, intersector, zline);
+  return got_intersection;
+}
+
+int Intersector_normal(v3 *result, const Intersector *intersector, const v3 point) {
+
+  const v2 pixel = pixel_coords(point);
+
+  static const float epsilon = 1;
+
+  v3 right;
+  const int got_right = Intersector_z(&right, intersector, pixel + (v2) { epsilon, 0 });
+
+  v3 bottom;
+  const int got_bottom = Intersector_z(&bottom, intersector, pixel + (v2) { 0, epsilon });
+
+  v3 left;
+  const int got_left = Intersector_z(&left, intersector, pixel + (v2) { -epsilon, 0 });
+
+  v3 top;
+  const int got_top = Intersector_z(&top, intersector, pixel + (v2) { 0, -epsilon });
+
+       if (got_right  && got_bottom) *result = v3_cross(right  - point, bottom - point);
+  else if (got_bottom && got_left  ) *result = v3_cross(bottom - point, left   - point);
+  else if (got_left   && got_top   ) *result = v3_cross(left   - point, top    - point);
+  else if (got_top    && got_right ) *result = v3_cross(top    - point, right  - point);
+  else return 0;
+
+  if ((*result)[0] == 0 && (*result)[1] == 0 && (*result)[2] == 0) return 0;
+
+  *result = v3_normalize(*result);
+  return 1;
+
+}
+
+v3 Intersector_calc_color(const Intersector *intersector, const v3 point, const v3 light_source_loc, const v3 inherent_rgb) {
+  v3 normal;
+  const int got_normal = Intersector_normal(&normal, intersector, point);
+  if (!got_normal) return inherent_rgb;
+  return calc_color(point, normal, light_source_loc, inherent_rgb);
+}
+
 void Intersector_render(Intersector *intersector, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
 
   if (is_focused && !DO_HALO)
@@ -578,16 +622,26 @@ void Intersector_render(Intersector *intersector, const int is_focused, const v3
   for (int px = lows2[0]; px <= highs2[0]; px++) {
     for (int py = lows2[1]; py <= highs2[1]; py++) {
 
-      const Line *zline = pixel_coords_inv((v2) { px, py });
-
       v3 intersection;
-      const int got_intersection = Intersector_intersect(&intersection, intersector, zline);
+      const int got_intersection = Intersector_z(&intersection, intersector, (v2) { px, py });
+      if (!got_intersection) continue;
 
-      if (got_intersection) {
-        const float z = intersection[2];
-        zbuf_draw(zrecord, px, py, z);
-        zbuf_draw(zbuf, px, py, z);
-      }
+  v3 normal;
+  const int got_normal = Intersector_normal(&normal, intersector, intersection);
+  if (got_normal) {
+  Line line;
+  Line_between(&line, intersection, intersection + normal);
+  G_rgb(0, 0, 1);
+  //Line_render(&line, zbuf);
+  }
+
+      v3 color = { .8, .5, .8 };
+      color = Intersector_calc_color(intersector, intersection, light_source_loc, color);
+      G_rgbv(color);
+
+      const float z = intersection[2];
+      zbuf_draw(zrecord, px, py, z);
+      zbuf_draw(zbuf, px, py, z);
 
     }
   }

@@ -53,7 +53,7 @@ void Intersector_transform(Intersector *intersector, const _Mat transformation) 
   Mat_mult_M(intersector->transformation, intersector->transformation, transformation);
 }
 
-int Intersector_intersect(v3 *result, Intersector *intersector, const Line *line) {
+int Intersector_intersect(v3 *result, const Intersector *intersector, const Line *line) {
   _Mat inverse;
   Mat_inv_M(inverse, intersector->transformation);
 

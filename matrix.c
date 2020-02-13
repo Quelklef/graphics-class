@@ -92,7 +92,7 @@ void Mat_scale(_Mat m, float c) {
     { 0     , 0      , 1, 0 }, \
     { 0     , 0      , 0, 1 } }
 
-float Mat_det(_Mat m) {
+float Mat_det(const _Mat m) {
   return m[0][0] * ( m[1][1] * m[2][2] * m[3][3] + m[1][2] * m[2][3] * m[3][1] + m[1][3] * m[2][1] * m[3][2]
                      - ( m[1][3] * m[2][2] * m[3][1] + m[1][2] * m[2][1] * m[3][3] + m[1][1] * m[2][3] * m[3][2] ) )
        - m[1][0] * ( m[0][1] * m[2][2] * m[3][3] + m[0][2] * m[2][3] * m[3][1] + m[0][3] * m[2][1] * m[3][2]
@@ -103,7 +103,7 @@ float Mat_det(_Mat m) {
                      - ( m[0][3] * m[1][2] * m[2][1] + m[0][2] * m[1][1] * m[2][3] + m[0][1] * m[1][3] * m[2][2] ) );
 }
 
-void Mat_adj_M(_Mat result, _Mat m) {
+void Mat_adj_M(_Mat result, const _Mat m) {
 
   _Mat c;
   Mat_clone_M(c, m);
@@ -174,7 +174,7 @@ void Mat_adj_M(_Mat result, _Mat m) {
 
 }
 
-void Mat_inv_M(_Mat result, _Mat m) {
+void Mat_inv_M(_Mat result, const _Mat m) {
   Mat_adj_M(result, m);
   Mat_scale(result, 1 / Mat_det(m));
 }
