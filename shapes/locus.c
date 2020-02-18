@@ -9,14 +9,19 @@
 #include "v3.c"
 #include "polyhedron.c"
 
+typedef struct {
+  v3 color;
+  v3 point;
+} ColoredPoint;
+
 #include "../util/dyn.c"
-DYN_INIT(Locus, v3)
+DYN_INIT(Locus, ColoredPoint)
 
 void Locus_transform(Locus *locus, const _Mat transformation) {
   for (int i = 0; i < locus->length; i++) {
-    const v3 point = Locus_get(locus, i);
-    const v3 transformed = v3_transform(point, transformation);
-    Locus_set(locus, i, transformed);
+    ColoredPoint clp = Locus_get(locus, i);
+    clp.point = v3_transform(clp.point, transformation);
+    Locus_set(locus, i, clp);
   }
 }
 
@@ -25,7 +30,10 @@ void Locus_destroy(Locus *locus) {
 }
 
 Locus *Locus_from_parametric(
+  // Paramatric definition of the shape
   v3 (*f)(float t, float s),
+  // Parallel parametric function giving colors
+  v3 (*color_f)(float t, float s),
 
   const float t0,
   const float tf,
@@ -47,8 +55,12 @@ Locus *Locus_from_parametric(
     for (int s_idx = 0; s_idx < s_count; s_idx++) {
       const float t = t0 + t_idx * dt;
       const float s = s0 + s_idx * ds;
+
       const v3 point = f(t, s);
-      Locus_append(locus, point);
+      const v3 color = color_f(t, s);
+
+      ColoredPoint clp = { .point = point, .color = color };
+      Locus_append(locus, clp);
     }
   }
 
@@ -56,15 +68,16 @@ Locus *Locus_from_parametric(
 
 }
 
-Locus *Locus_from_points(const int point_count, ...) {
+Locus *Locus_from_points(const int point_count, const v3 rgb, ...) {
   va_list args;
-  va_start(args, point_count);
+  va_start(args, rgb);
 
   Locus *locus = Locus_new(point_count);
 
   for (int i = 0; i < point_count; i++) {
     const v3 point = va_arg(args, v3);
-    Locus_append(locus, point);
+    ColoredPoint clp = { .point = point, .color = rgb };
+    Locus_append(locus, clp);
   }
 
   va_end(args);
@@ -81,7 +94,7 @@ void Locus_bounds_M(v3 *lows, v3 *highs, const Locus *locus) {
 #endif
 
   if (locus->length == 1) {
-    const v3 point = Locus_get(locus, 0);
+    const v3 point = Locus_get(locus, 0).point;
     *lows = point;
     *highs = point;
     return;
@@ -91,7 +104,7 @@ void Locus_bounds_M(v3 *lows, v3 *highs, const Locus *locus) {
   *highs = (v3) { -DBL_MAX, -DBL_MAX, -DBL_MAX };
 
   for (int i = 0; i < locus->length; i++) {
-    const v3 point = Locus_get(locus, i);
+    const v3 point = Locus_get(locus, i).point;
 
     const float x = point[0];
     const float y = point[1];

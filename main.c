@@ -377,6 +377,10 @@ v3 sphere_g(float t, float s) {
   return (v3) { x, y, z };
 }
 
+v3 const_purple(float t, float s) {
+  return (v3) { .8, .5, .8 };
+}
+
 v3 vase_f(float t, float s) {
   const float r = sqrt(1 + s * s);
 
@@ -439,6 +443,7 @@ void prepare_3d_lab() {
 
   Figure *sphere2 = Figure_from_Locus(Locus_from_parametric(
     sphere_g,
+    const_purple,
     0, 2 * M_PI, 100,
     1,
     -1, 1, 100,

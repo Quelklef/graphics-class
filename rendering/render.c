@@ -510,11 +510,13 @@ int point_in_bounds(const v3 point) {
 }
 
 void Locus_render(const Locus *locus, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
-  if (is_focused) G_rgb(1, 0, 0);
-  else G_rgb(.8, .5, .8);
-
   for (int i = 0; i < locus->length; i++) {
-    const v3 point = Locus_get(locus, i);
+    const ColoredPoint clp = Locus_get(locus, i);
+    const v3 point = clp.point;
+
+    if (is_focused) G_rgb(1, 0, 0);
+    else G_rgbv(clp.color);
+
     if (DO_CLIPPING && !point_in_bounds(point)) continue;
 
     const v2 pixel = pixel_coords(point);
