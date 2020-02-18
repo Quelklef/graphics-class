@@ -377,8 +377,34 @@ v3 sphere_g(float t, float s) {
   return (v3) { x, y, z };
 }
 
-v3 const_purple(float t, float s) {
-  return (v3) { .8, .5, .8 };
+#include "xwd/xwd_tools.c"
+
+v3 mandelbrot(float t, float s) {
+
+  static int mandelbrot_initialized = 0;
+  static int id;
+  static int width;
+  static int height;
+
+  if (!mandelbrot_initialized) {
+
+    id = init_xwd_map_from_file("xwd/mandelbrot.xwd");
+
+    int dim[2];
+    get_xwd_map_dimensions(id, dim);
+    width = dim[0];
+    height = dim[1];
+
+    mandelbrot_initialized = 1;
+  }
+
+  double rgb[3];
+  const int x = (int) round(t / (2 * M_PI) * width);
+  const int y = (int) round((s + 1) / 2 * height);
+  get_xwd_map_color(id, x, y, rgb);
+
+  return (v3) { (float) rgb[0], (float) rgb[1], (float) rgb[2] };
+
 }
 
 v3 vase_f(float t, float s) {
@@ -443,10 +469,10 @@ void prepare_3d_lab() {
 
   Figure *sphere2 = Figure_from_Locus(Locus_from_parametric(
     sphere_g,
-    const_purple,
-    0, 2 * M_PI, 100,
+    mandelbrot,
+    0, 2 * M_PI, 500,
     1,
-    -1, 1, 100,
+    -1, 1, 500,
     0
   ));
 

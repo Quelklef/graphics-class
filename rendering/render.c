@@ -514,7 +514,8 @@ void Locus_render(const Locus *locus, const int is_focused, const v3 light_sourc
     const ColoredPoint clp = Locus_get(locus, i);
     const v3 point = clp.point;
 
-    if (is_focused) G_rgb(1, 0, 0);
+    // Paint image onto shape, no lighting
+    if (is_focused) G_rgbv(1 - (clp.color - 1) * (clp.color - 1));  // Make brighter
     else G_rgbv(clp.color);
 
     if (DO_CLIPPING && !point_in_bounds(point)) continue;
