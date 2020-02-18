@@ -590,10 +590,10 @@ int Intersector_normal(v3 *result, const Intersector *intersector, const v3 poin
   int got_top = Intersector_z(&top, intersector, pixel + (v2) { 0, -epsilon });
   if (got_top && v3_eq(top, point)) got_top = 0;
 
-       if (got_right  && got_bottom) *result = v3_cross(right  - point, bottom - point);
-  else if (got_bottom && got_left  ) *result = v3_cross(bottom - point, left   - point);
-  else if (got_left   && got_top   ) *result = v3_cross(left   - point, top    - point);
-  else if (got_top    && got_right ) *result = v3_cross(top    - point, right  - point);
+       if (got_right  && got_bottom) *result = v3_cross(bottom - point, right  - point);
+  else if (got_bottom && got_left  ) *result = v3_cross(left   - point, bottom - point);
+  else if (got_left   && got_top   ) *result = v3_cross(top    - point, left   - point);
+  else if (got_top    && got_right ) *result = v3_cross(right  - point, top    - point);
   else return 0;
 
   if (v3_eq(*result, v3_zero)) return 0;
@@ -634,15 +634,6 @@ void Intersector_render(Intersector *intersector, const int is_focused, const v3
       v3 intersection;
       const int got_intersection = Intersector_z(&intersection, intersector, (v2) { px, py });
       if (!got_intersection) continue;
-
-  v3 normal;
-  const int got_normal = Intersector_normal(&normal, intersector, intersection);
-  if (got_normal) {
-  Line line;
-  Line_between(&line, intersection, intersection + normal);
-  G_rgb(0, 0, 1);
-  //Line_render(&line, zbuf);
-  }
 
       v3 color = { .8, .5, .8 };
       color = Intersector_calc_color(intersector, intersection, light_source_loc, color);
