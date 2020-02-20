@@ -6,6 +6,7 @@
 #include "matrix.c"
 #include "shapes/figure.c"
 #include "shapes/v2.c"
+#include "shapes/instances.c"
 #include "rendering/draw.c"
 #include "rendering/render.c"
 
@@ -319,15 +320,6 @@ void draw_box() {
   G_fill_rectangle(0               , 0                , 1           , SCREEN_HEIGHT);
 }
 
-void load_files(const char **filenames, const int file_count) {
-  for (int i = 0; i < file_count; i++) {
-    const char *filename = filenames[i];
-    Polyhedron *polyhedron = load_polyhedron(filename);
-    Figure *figure = Figure_from_Polyhedron(polyhedron);
-    FigureList_append(figures, figure);
-  }
-}
-
 void event_loop() {
   Figure *focused_figure = NULL;
 
@@ -352,175 +344,47 @@ void event_loop() {
   } while ((key = G_wait_key()) != 'e');
 }
 
-
-
-
-
-
-
-
-v3 sphere_f(float t, float s) {
-  const float x = cos(t) * sin(s);
-  const float y = cos(s);
-  const float z = sin(t) * sin(s);
-
-  return (v3) { x, y, z };
-}
-
-v3 sphere_g(float t, float s) {
-  const float r = sqrt(1 - s * s);
-
-  const float x = r * cos(t);
-  const float y = s;
-  const float z = r * sin(t);
-
-  return (v3) { x, y, z };
-}
-
-#include "xwd/xwd_tools.c"
-
-v3 mandelbrot(float t, float s) {
-
-  static int mandelbrot_initialized = 0;
-  static int id;
-  static int width;
-  static int height;
-
-  if (!mandelbrot_initialized) {
-
-    id = init_xwd_map_from_file("xwd/mandelbrot.xwd");
-
-    int dim[2];
-    get_xwd_map_dimensions(id, dim);
-    width = dim[0];
-    height = dim[1];
-
-    mandelbrot_initialized = 1;
-  }
-
-  double rgb[3];
-  const int x = (int) round(t / (2 * M_PI) * width);
-  const int y = (int) round((s + 1) / 2 * height);
-  get_xwd_map_color(id, x, y, rgb);
-
-  return (v3) { (float) rgb[0], (float) rgb[1], (float) rgb[2] };
-
-}
-
-v3 vase_f(float t, float s) {
-  const float r = sqrt(1 + s * s);
-
-  const float x = r * cos(t);
-  const float y = s;
-  const float z = r * sin(t);
-
-  return (v3) { x, y, z };
-}
-
-int sphere_intersect(v3 *result, Line *line) {
-  const v3 d = Line_vector(line);
-  const v3 s = line->p0;
-
-  const float A = pow(d[0], 2) + pow(d[1], 2) + pow(d[2], 2);
-  const float B = 2 * (s[0] * d[0] + s[1] * d[1] + s[2] * d[2]);
-  const float C = pow(s[0], 2) + pow(s[1], 2) + pow(s[2], 2) - 1;
-
-  const float t1 = (-B + sqrt(pow(B, 2) - 4 * A * C)) / (2 * A);
-  const float t2 = (-B - sqrt(pow(B, 2) - 4 * A * C)) / (2 * A);
-
-  if (isnan(t1) && isnan(t2)) {
-    return 0;
-  }
-
-  const v3 p1 = s + t1 * d;
-  const v3 p2 = s + t2 * d;
-
-  if (isnan(t1) && !isnan(t2)) {
-    *result = p1;
-    return 1;
-  }
-
-  if (isnan(t2) && !isnan(t1)) {
-    *result = p2;
-    return 1;
-  }
-
-  if (p1[2] < p2[2]) {
-    *result = p1;
-    return 1;
-  } else {
-    *result = p2;
-    return 1;
-  }
-}
-
-void prepare_3d_lab() {
-
-  Figure *sphere1 = Figure_from_Polyhedron(Polyhedron_from_parametric(
-    sphere_f,
-    0, 2 * M_PI, 50,
-    1,
-    0, 2 * M_PI, 50,
-    1
-  ));
-
-  nicely_place_figure(sphere1);
-  FigureList_append(figures, sphere1);
-
-  Figure *sphere2 = Figure_from_Locus(Locus_from_parametric(
-    sphere_g,
-    mandelbrot,
-    0, 2 * M_PI, 500,
-    1,
-    -1, 1, 500,
-    0
-  ));
-
-  nicely_place_figure(sphere2);
-  FigureList_append(figures, sphere2);
-
-  Figure *sphere3 = Figure_from_Intersector(Intersector_new(
-    &sphere_intersect,
-    (v3) { -1, -1, -1 },
-    (v3) { 1, 1, 1 }
-  ));
-
-  nicely_place_figure(sphere3);
-  FigureList_append(figures, sphere3);
-
-  Figure *vase = Figure_from_Polyhedron(Polyhedron_from_parametric(
-    vase_f,
-    0, 2 * M_PI, 25,
-    1,
-    -2, 2, 25,
-    0
-  ));
-
-  nicely_place_figure(vase);
-  FigureList_append(figures, vase);
-
-}
-
-
 int main(const int argc, const char **argv) {
 
   // == Setup == //
 
-  figures = FigureList_new(1);
+  figures = FigureList_new(argc);
   G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
   draw_init();
 
-  //show_help();
+  show_help();
 
   light_source = make_small_figure();
   Figure_move_to(light_source, (v3) { 0, 0, 0 });
   FigureList_append(figures, light_source);
 
-  load_files(&argv[1], argc - 1);
+  // Parse command-line args
+  for (int i = 1; i < argc; i++) {
+    const char *arg = argv[i];
+    const int is_path = strchr(arg, '/') != NULL;
+
+    Figure *figure;
+    if (is_path) {
+      // load a polyhedron from a filname
+      const char *filename = arg;
+      Polyhedron *polyhedron = load_polyhedron(filename);
+      figure = Figure_from_Polyhedron(polyhedron);
+      nicely_place_figure(figure);
+    } else {
+      // get a premade figure
+      const char *key = arg;
+      figure = figure_instance_lookup(key);
+
+      if (figure == NULL) {
+        printf("Unrecognized path or figure name '%s'\n", arg);
+        exit(1);
+      }
+    }
+    FigureList_append(figures, figure);
+  }
 
   // == Main == //
 
-  prepare_3d_lab();
   event_loop();
 
   // == Teardown == //
