@@ -656,20 +656,25 @@ void Intersector_render(Intersector *intersector, const int is_focused, const v3
 
 }
 
+void Observer_render(const Observer *observer, const int is_focused, const v3 light_source_loc, const Zbuf zbuf) {
+  return;
+}
+
 void Figure_render(const Figure *figure, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
   switch (figure->kind) {
-    case fk_Polyhedron: return Polyhedron_render(figure->impl.polyhedron, is_focused, light_source_loc, zbuf);
-    case fk_Locus: return Locus_render(figure->impl.locus, is_focused, light_source_loc, zbuf);
+    case fk_Polyhedron : return Polyhedron_render (figure->impl.polyhedron , is_focused, light_source_loc, zbuf);
+    case fk_Locus      : return Locus_render      (figure->impl.locus      , is_focused, light_source_loc, zbuf);
     case fk_Intersector: return Intersector_render(figure->impl.intersector, is_focused, light_source_loc, zbuf);
+    case fk_Observer   : return Observer_render   (figure->impl.observer   , is_focused, light_source_loc, zbuf);
   }
 }
 
 
 
-void render_figures(Figure *figures[], const int figure_count, const Figure *focused_figure, const Figure *light_source) {
+void render_figures(Figure *figures[], const int figure_count, const Figure *focused_figure, const Observer *observer, const Figure *light_source) {
 
   _Mat to_eyespace;
-  calc_eyespace_matrix_M(to_eyespace);
+  calc_eyespace_matrix_M(to_eyespace, observer);
 
   v3 light_source_loc;
   if (light_source == NULL) {

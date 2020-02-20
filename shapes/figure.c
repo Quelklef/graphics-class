@@ -4,19 +4,22 @@
 #include "locus.c"
 #include "polyhedron.c"
 #include "intersector.c"
+#include "observer_figure.c"
 
 typedef enum {
   fk_Polyhedron,
   fk_Locus,
-  fk_Intersector
+  fk_Intersector,
+  fk_Observer
 } FigureKind;
 
 typedef struct {
   FigureKind kind;
   struct {
-    Polyhedron *polyhedron;
-    Locus *locus;
+    Polyhedron  *polyhedron;
+    Locus       *locus;
     Intersector *intersector;
+    Observer    *observer;
   } impl;
 } Figure;
 
@@ -62,6 +65,20 @@ Figure *Figure_from_Intersector(Intersector *intersector) {
   return figure;
 }
 
+Figure *Figure_from_Observer(Observer *observer) {
+#ifdef DEBUG
+  if (observer == NULL) {
+    printf("will not wrap null observer\n");
+    exit(1);
+  }
+#endif
+
+  Figure *figure = malloc(sizeof(Figure));
+  figure->kind = fk_Observer;
+  figure->impl.observer = observer;
+  return figure;
+}
+
 
 // == Lifted functions == //
 
@@ -70,14 +87,16 @@ void Figure_transform(Figure *figure, const _Mat transformation) {
     case fk_Polyhedron: return Polyhedron_transform(figure->impl.polyhedron, transformation);
     case fk_Locus: return Locus_transform(figure->impl.locus, transformation);
     case fk_Intersector: return Intersector_transform(figure->impl.intersector, transformation);
+    case fk_Observer: return Observer_transform(figure->impl.observer, transformation);
   }
 }
 
 void Figure_bounds_M(v3 *lows, v3 *highs, const Figure *figure) {
   switch (figure->kind) {
-  case fk_Polyhedron :return Polyhedron_bounds_M(lows, highs, figure->impl.polyhedron);
-  case fk_Locus: return Locus_bounds_M(lows, highs, figure->impl.locus);
-  case fk_Intersector: return Intersector_bounds_M(lows, highs, figure->impl.intersector);
+    case fk_Polyhedron :return Polyhedron_bounds_M(lows, highs, figure->impl.polyhedron);
+    case fk_Locus: return Locus_bounds_M(lows, highs, figure->impl.locus);
+    case fk_Intersector: return Intersector_bounds_M(lows, highs, figure->impl.intersector);
+    case fk_Observer: return Observer_bounds_M(lows, highs, figure->impl.observer);
   }
 }
 
@@ -86,6 +105,7 @@ void Figure_destroy(Figure *figure) {
     case fk_Polyhedron: return Polyhedron_destroy(figure->impl.polyhedron);
     case fk_Locus: return Locus_destroy(figure->impl.locus);
     case fk_Intersector: return Intersector_destroy(figure->impl.intersector);
+    case fk_Observer: return Observer_destroy(figure->impl.observer);
   }
 }
 
