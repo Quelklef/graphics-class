@@ -7,8 +7,6 @@ To run, execute `./build.sh main.c && ./a.out xyz/sphere.xyz`. Play around with 
 
 The CLI is simple. Each argument is the name of a shape which is created when the program is run. The shape names can either be paths to `.xyz` files or any of the names listed at the bottom of `shapes/instances.c`, such as `polysphere_1` and `polysphere_2`. Paths to `.xyz` files must contain a forward slash.
 
-Some predefind shapes, and `rendering/observer.c` are included in `xyz/`. To place them in the world, run like `./a.out xyz/<shape1>.xyz xyz/<shape2>.xyz ...`.
-
 Project structure:
 - `main.c` is the top-level file
 - `matrix.c` is matrix code
