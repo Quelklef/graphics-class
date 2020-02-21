@@ -3,14 +3,16 @@ graphics-class
 
 Repo for my graphics class.
 
-To run, execute `./build.sh main.c && ./a.out`. Play around with it for a bit.
+To run, execute `./build.sh main.c && ./a.out xyz/sphere.xyz`. Play around with it for a bit.
 
-Some predefind shapes are included in `xyz/`. To place them in the world, run like `./a.out xyz/<shape1>.xyz xyz/<shape2>.xyz ...`.
+The CLI is simple. Each argument is the name of a shape which is created when the program is run. The shape names can either be paths to `.xyz` files or any of the names listed at the bottom of `shapes/instances.c`, such as `polysphere_1` and `polysphere_2`. Paths to `.xyz` files must contain a forward slash.
+
+Some predefind shapes, and `rendering/observer.c` are included in `xyz/`. To place them in the world, run like `./a.out xyz/<shape1>.xyz xyz/<shape2>.xyz ...`.
 
 Project structure:
 - `main.c` is the top-level file
 - `matrix.c` is matrix code
-- `globals.c` is most of the program state. Some also exists in `main.c`, `controls.c`, and `rendering/observer.c`.
+- `state.c` is most of the program state. Some also exists in `controls.c`.
 - `controls.c` is for handling user input
 - `libgfx/` contains an X11 wrapper that my professor supplied us. The main entry point is `libgfx/libgfx.h`. This code is very lightly modified by me from my professor's source. I mostly removed unused files, moved things around, and renamed it.
 - `rendering/` contains rendering code:

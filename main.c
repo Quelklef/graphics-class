@@ -2,27 +2,13 @@
 
 #include <libgfx.h>
 
-#include "globals.c"
+#include "state.c"
 #include "matrix.c"
 #include "shapes/figure.c"
 #include "shapes/v2.c"
 #include "shapes/instances.c"
 #include "rendering/draw.c"
 #include "rendering/render.c"
-
-#include "util/dyn.c"
-DYN_INIT(FigureList, Figure*)
-
-// All figures in the world
-FigureList *figures;
-// The light source
-Figure *light_source = NULL;
-// The currently focused figure
-Figure *focused_figure = NULL;
-
-// Observer
-Observer *observer;
-Figure *observer_figure;
 
 void FigureList_destroy(FigureList *figures) {
   for (int polyhedron_idx = 0; polyhedron_idx < figures->length; polyhedron_idx++) {

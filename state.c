@@ -2,13 +2,16 @@
 #define globals_c_INCLUDED
 
 #include <math.h>
+#include "shapes/figure.c"
+
+#define DEGREES(deg) ((float) (deg) / 180 * M_PI)
+#define min(x, y) ((x) < (y) ? (x) : (y))
+
+
+// == Rendering Parameters == //
 
 const int SCREEN_WIDTH = 800;
 const int SCREEN_HEIGHT = 800;
-
-#define DEGREES(deg) ((float) (deg) / 180 * M_PI)
-
-#define min(x, y) ((x) < (y) ? (x) : (y))
 
 float HALF_ANGLE                = DEGREES(30);
 
@@ -30,6 +33,24 @@ int   SPECULAR_POWER            = 50;
 float HITHER                    = 1;
 //Threshold for which objects too far from the observer aren't shown
 float YON                       = 30;
+
+
+// == Current World State == //
+
+#include "util/dyn.c"
+DYN_INIT(FigureList, Figure*);
+
+// All the figures in the world
+FigureList *figures;
+// The light source
+Figure *light_source = NULL;
+// The currently focused figure
+Figure *focused_figure = NULL;
+
+// The observer
+Observer *observer;
+Figure *observer_figure;
+
 
 #endif // globals_c_INCLUDED
 

@@ -1,5 +1,5 @@
-#ifndef controls_c_IMPORTED
-#define controls_c_IMPORTED
+#ifndef controls_c_INCLUDED
+#define controls_c_INCLUDED
 
 // This file contains the program state relating
 // to user input and controls and also handles
@@ -9,13 +9,16 @@
 int render_overlay = 0;
 
 // What is the currently selected parameter?
-static const int param_HALF_ANGLE     = 1;
-static const int param_AMBIENT        = 2;
-static const int param_DIFFUSE_MAX    = 3;
-static const int param_SPECULAR_POWER = 4;
-static const int param_HITHER         = 5;
-static const int param_YON            = 6;
-int current_parameter = 0;
+typedef enum {
+  param_HALF_ANGLE,
+  param_AMBIENT,
+  param_DIFFUSE_MAX,
+  param_SPECULAR_POWER,
+  param_HITHER,
+  param_YON,
+} Parameter;
+
+Parameter selected_parameter = param_HALF_ANGLE;
 
 // Two ways to move a figure: with an absolute distance
 const float abs_speed = 0.5;
@@ -174,19 +177,19 @@ void on_key(const char key) {
     case '/': BACKFACE_ELIMINATION_SIGN *= -1; break;
     case '`': render_overlay = !render_overlay; break;
 
-    case 'H': current_parameter = param_HALF_ANGLE;     break;
-    case 'B': current_parameter = param_AMBIENT;        break;
-    case 'M': current_parameter = param_DIFFUSE_MAX;    break;
-    case 'P': current_parameter = param_SPECULAR_POWER; break;
-    case 'T': current_parameter = param_HITHER;         break;
-    case 'Y': current_parameter = param_YON;            break;
+    case 'H': selected_parameter = param_HALF_ANGLE;     break;
+    case 'B': selected_parameter = param_AMBIENT;        break;
+    case 'M': selected_parameter = param_DIFFUSE_MAX;    break;
+    case 'P': selected_parameter = param_SPECULAR_POWER; break;
+    case 'T': selected_parameter = param_HITHER;         break;
+    case 'Y': selected_parameter = param_YON;            break;
   }
 
   if (key == '=' || key == '-' || key == '+' || key == '_') {
     const int sign = (key == '=' || key == '+') ? 1 : -1;
     const int is_fast = key == '+' || key == '_';
 
-    switch(current_parameter) {
+    switch(selected_parameter) {
     case param_HALF_ANGLE    : HALF_ANGLE     += sign * (is_fast ? 0.50 : 0.01);
     case param_AMBIENT       : AMBIENT        += sign * (is_fast ? 0.5  : 0.05);
     case param_DIFFUSE_MAX   : DIFFUSE_MAX    += sign * (is_fast ? 0.5  : 0.05);
@@ -223,7 +226,7 @@ void on_key(const char key) {
   { \
     char *left; \
     char *right; \
-    if (current_parameter == code) { \
+    if (selected_parameter == code) { \
       left = "["; \
       right = "] "; \
     } else { \
@@ -311,4 +314,4 @@ void show_help() {
 }
 
 
-#endif
+#endif // controls_c_INCLUDED
