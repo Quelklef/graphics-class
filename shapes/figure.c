@@ -1,14 +1,14 @@
 #ifndef figure_c_INCLUDED
 #define figure_c_INCLUDED
 
-#include "locus.c"
+#include "lattice.c"
 #include "polyhedron.c"
 #include "intersector.c"
 #include "observer_figure.c"
 
 typedef enum {
   fk_Polyhedron,
-  fk_Locus,
+  fk_Lattice,
   fk_Intersector,
   fk_Observer
 } FigureKind;
@@ -17,7 +17,7 @@ typedef struct {
   FigureKind kind;
   struct {
     Polyhedron  *polyhedron;
-    Locus       *locus;
+    Lattice       *lattice;
     Intersector *intersector;
     Observer    *observer;
   } impl;
@@ -37,17 +37,17 @@ Figure *Figure_from_Polyhedron(Polyhedron *polyhedron) {
   return figure;
 }
 
-Figure *Figure_from_Locus(Locus *locus) {
+Figure *Figure_from_Lattice(Lattice *lattice) {
 #ifdef DEBUG
-  if (locus == NULL) {
-    printf("will not wrap null locus\n");
+  if (lattice == NULL) {
+    printf("will not wrap null lattice\n");
     exit(1);
   }
 #endif
 
   Figure *figure = malloc(sizeof(Figure));
-  figure->kind = fk_Locus;
-  figure->impl.locus = locus;
+  figure->kind = fk_Lattice;
+  figure->impl.lattice = lattice;
   return figure;
 }
 
@@ -85,7 +85,7 @@ Figure *Figure_from_Observer(Observer *observer) {
 void Figure_transform(Figure *figure, const _Mat transformation) {
   switch (figure->kind) {
     case fk_Polyhedron: return Polyhedron_transform(figure->impl.polyhedron, transformation);
-    case fk_Locus: return Locus_transform(figure->impl.locus, transformation);
+    case fk_Lattice: return Lattice_transform(figure->impl.lattice, transformation);
     case fk_Intersector: return Intersector_transform(figure->impl.intersector, transformation);
     case fk_Observer: return Observer_transform(figure->impl.observer, transformation);
   }
@@ -94,7 +94,7 @@ void Figure_transform(Figure *figure, const _Mat transformation) {
 void Figure_bounds_M(v3 *lows, v3 *highs, const Figure *figure) {
   switch (figure->kind) {
     case fk_Polyhedron :return Polyhedron_bounds_M(lows, highs, figure->impl.polyhedron);
-    case fk_Locus: return Locus_bounds_M(lows, highs, figure->impl.locus);
+    case fk_Lattice: return Lattice_bounds_M(lows, highs, figure->impl.lattice);
     case fk_Intersector: return Intersector_bounds_M(lows, highs, figure->impl.intersector);
     case fk_Observer: return Observer_bounds_M(lows, highs, figure->impl.observer);
   }
@@ -103,7 +103,7 @@ void Figure_bounds_M(v3 *lows, v3 *highs, const Figure *figure) {
 void Figure_destroy(Figure *figure) {
   switch (figure->kind) {
     case fk_Polyhedron: return Polyhedron_destroy(figure->impl.polyhedron);
-    case fk_Locus: return Locus_destroy(figure->impl.locus);
+    case fk_Lattice: return Lattice_destroy(figure->impl.lattice);
     case fk_Intersector: return Intersector_destroy(figure->impl.intersector);
     case fk_Observer: return Observer_destroy(figure->impl.observer);
   }
@@ -143,9 +143,21 @@ void nicely_place_figure(Figure *figure) {
 
 Figure *make_small_figure() {
   /* Make a small polyhedron. No specified size or shape. Just small. */
-  const v3 point = { 0, 0, 0 };
-  Locus *locus = Locus_from_points(1, point);
-  Figure *figure = Figure_from_Locus(locus);
+
+  const float scale = 0.1;	
+
+  const v3 p0 = scale * (v3) { 0, 0, 0 };	
+  const v3 p1 = scale * (v3) { 1, 0, 1 };	
+  const v3 p2 = scale * (v3) { 1, 1, 0 };	
+  const v3 p3 = scale * (v3) { 0, 1, 1 };	
+
+  Polygon *polygon0 = Polygon_from_points(3,     p1, p2, p3);	
+  Polygon *polygon1 = Polygon_from_points(3, p0,     p2, p3);	
+  Polygon *polygon2 = Polygon_from_points(3, p0, p1,     p3);	
+  Polygon *polygon3 = Polygon_from_points(3, p0, p1, p2    );	
+
+  Polyhedron *polyhedron = Polyhedron_from_polygons(4, polygon0, polygon1, polygon2, polygon3);	
+  Figure *figure = Figure_from_Polyhedron(polyhedron);
   return figure;
 }
 

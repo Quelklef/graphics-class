@@ -509,10 +509,10 @@ int point_in_bounds(const v3 point) {
   return 1;
 }
 
-void Locus_render(const Locus *locus, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
-  for (int i = 0; i < locus->length; i++) {
-    const ColoredPoint clp = Locus_get(locus, i);
-    const v3 point = clp.point;
+void Lattice_render(const Lattice *lattice, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
+  for (int i = 0; i < lattice->points->length; i++) {
+    const ColoredPoint clp = LatticePoints_get(lattice->points, i);
+    const v3 point = clp.position;
 
     // Paint image onto shape, no lighting
     if (is_focused) G_rgbv(1 - (clp.color - 1) * (clp.color - 1));  // Make brighter
@@ -663,7 +663,7 @@ void Observer_render(const Observer *observer, const int is_focused, const v3 li
 void Figure_render(const Figure *figure, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
   switch (figure->kind) {
     case fk_Polyhedron : return Polyhedron_render (figure->impl.polyhedron , is_focused, light_source_loc, zbuf);
-    case fk_Locus      : return Locus_render      (figure->impl.locus      , is_focused, light_source_loc, zbuf);
+    case fk_Lattice    : return Lattice_render    (figure->impl.lattice    , is_focused, light_source_loc, zbuf);
     case fk_Intersector: return Intersector_render(figure->impl.intersector, is_focused, light_source_loc, zbuf);
     case fk_Observer   : return Observer_render   (figure->impl.observer   , is_focused, light_source_loc, zbuf);
   }
