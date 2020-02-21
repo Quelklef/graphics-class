@@ -10,7 +10,8 @@ Some predefind shapes are included in `xyz/`. To place them in the world, run li
 Project structure:
 - `main.c` is the top-level file
 - `matrix.c` is matrix code
-- `globals.c` is most of the program state. Some also exists in `main.c` and `rendering/observer.c`.
+- `globals.c` is most of the program state. Some also exists in `main.c`, `controls.c`, and `rendering/observer.c`.
+- `controls.c` is for handling user input
 - `libgfx/` contains an X11 wrapper that my professor supplied us. The main entry point is `libgfx/libgfx.h`. This code is very lightly modified by me from my professor's source. I mostly removed unused files, moved things around, and renamed it.
 - `rendering/` contains rendering code:
   - `observer.c` is for transforming figures from world space into eye space
@@ -22,7 +23,7 @@ Project structure:
   - `line.c` is a line embedded in 3d space
   - `plane.c` is a 2d plane embedded in 3d space
   - `polygon.c` is a polygon
-  - `locus.c` is a collection of free-floating 3d points
+  - `lattice.c` is a 2D square lattice deformed into a 3D shape
   - `polyhedron.c` is a collection of polygons
   - `intersector.c` is a representation of a shape as a function that takes a line and returns all intersections between the shape and that line
   - `figure.c` is a union type that combines loci, polyhedra, and intersectors.
