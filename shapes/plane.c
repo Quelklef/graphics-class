@@ -33,7 +33,7 @@ void Plane_from_points(Plane *result, v3 a, v3 b, v3 c) {
 void Plane_from_polygon(Plane *result, const Polygon *polygon) {
 #ifdef DEBUG
   if (polygon->length < 3) {
-    printf("Error in Plane_from_polygon: polygon requires >= 3 points!\n");
+    printf("Error in Plane_from_polygon: polygon requires >= 3 points, not %zu!\n", polygon->length);
     exit(1);
   }
 #endif

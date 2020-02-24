@@ -338,15 +338,15 @@ void Polygon_render(
     Polygon_clip(&clipped);
   }
 
+  // Only render if there are points
+  // (Some render subroutines require a minimum point count)
+  if (clipped.length == 0) return;
+
   v3 color = { .8, .5, .8 };
   if (DO_LIGHT_MODEL) {
     color = Polygon_calc_color(&clipped, light_source_loc, color);
   }
   G_rgbv(color);
-
-  // Only render if there are points
-  // (Some render subroutines require a minimum point count)
-  if (clipped.length == 0) return;
 
   if (DO_POLY_FILL) {
     Polygon_render_as_is(&clipped, zbuf, zrecord);

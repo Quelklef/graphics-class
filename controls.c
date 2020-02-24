@@ -93,6 +93,8 @@ void make_dependent_movements(Figure *figure) {
 
 void on_key(const char key) {
 
+  // == Commands that don't require `focused_figure != NULL` == //
+
   switch(key) {
 
     // Switch to moving observer rather than object
@@ -114,56 +116,6 @@ void on_key(const char key) {
       if (fig_idx < figures->length) {
         focused_figure = FigureList_get(figures, fig_idx);
       }
-      break;
-
-    // Figure-independent movements
-    case 'W': Figure_transform(focused_figure, translate_forwards_abs ); break;
-    case 'S': Figure_transform(focused_figure, translate_backwards_abs); break;
-    case 'D': Figure_transform(focused_figure, translate_right_abs    ); break;
-    case 'A': Figure_transform(focused_figure, translate_left_abs     ); break;
-    case 'F': Figure_transform(focused_figure, translate_down_abs     ); break;
-    case 'R': Figure_transform(focused_figure, translate_up_abs       ); break;
-
-    // Figure-dependent movements
-    case 'w':
-    case 'a':
-    case 's':
-    case 'd':
-    case 'o':
-    case 'p':
-    case 'k':
-    case 'l':
-    case 'm':
-    case ',':
-    case '[':
-    case ']':
-    case 'O':
-      make_dependent_movements(focused_figure);
-      switch(key) {
-        case 'w': Figure_transform(focused_figure, translate_forwards_rel ); break;
-        case 's': Figure_transform(focused_figure, translate_backwards_rel); break;
-        case 'd': Figure_transform(focused_figure, translate_right_rel    ); break;
-        case 'a': Figure_transform(focused_figure, translate_left_rel     ); break;
-        case 'f': Figure_transform(focused_figure, translate_down_rel     ); break;
-        case 'r': Figure_transform(focused_figure, translate_up_rel       ); break;
-
-        case 'o': Figure_transform(focused_figure, rotate_x_positive  ); break;
-        case 'p': Figure_transform(focused_figure, rotate_x_negative  ); break;
-        case 'k': Figure_transform(focused_figure, rotate_y_positive  ); break;
-        case 'l': Figure_transform(focused_figure, rotate_y_negative  ); break;
-        case 'm': Figure_transform(focused_figure, rotate_z_positive  ); break;
-        case ',': Figure_transform(focused_figure, rotate_z_negative  ); break;
-
-        case '[': Figure_transform(focused_figure, scale_down         ); break;
-        case ']': Figure_transform(focused_figure, scale_up           ); break;
-
-        case 'O': Figure_transform(focused_figure, translate_to_origin); break;
-      }
-      break;
-
-    case 'L': ;
-      const v3 figure_center = Figure_center(focused_figure);
-      printf("Object at (%f, %f, %f)\n", figure_center[0], figure_center[1], figure_center[2]);
       break;
 
     // Parameters
@@ -204,6 +156,66 @@ void on_key(const char key) {
     }
   }
 
+  // == Commands that require that `focused_figure != NULL` == //
+
+  // Noop otherwise
+  if (focused_figure == NULL) return;
+
+  switch(key) {
+
+    // Figure-independent movements
+    case 'W': Figure_transform(focused_figure, translate_forwards_abs ); break;
+    case 'S': Figure_transform(focused_figure, translate_backwards_abs); break;
+    case 'D': Figure_transform(focused_figure, translate_right_abs    ); break;
+    case 'A': Figure_transform(focused_figure, translate_left_abs     ); break;
+    case 'F': Figure_transform(focused_figure, translate_down_abs     ); break;
+    case 'R': Figure_transform(focused_figure, translate_up_abs       ); break;
+
+    // Figure-dependent movements
+    case 'w':
+    case 'a':
+    case 's':
+    case 'd':
+    case 'f':
+    case 'r':
+    case 'o':
+    case 'p':
+    case 'k':
+    case 'l':
+    case 'm':
+    case ',':
+    case '[':
+    case ']':
+    case 'O':
+      make_dependent_movements(focused_figure);
+      switch(key) {
+        case 'w': Figure_transform(focused_figure, translate_forwards_rel ); break;
+        case 's': Figure_transform(focused_figure, translate_backwards_rel); break;
+        case 'd': Figure_transform(focused_figure, translate_right_rel    ); break;
+        case 'a': Figure_transform(focused_figure, translate_left_rel     ); break;
+        case 'f': Figure_transform(focused_figure, translate_down_rel     ); break;
+        case 'r': Figure_transform(focused_figure, translate_up_rel       ); break;
+
+        case 'o': Figure_transform(focused_figure, rotate_x_positive  ); break;
+        case 'p': Figure_transform(focused_figure, rotate_x_negative  ); break;
+        case 'k': Figure_transform(focused_figure, rotate_y_positive  ); break;
+        case 'l': Figure_transform(focused_figure, rotate_y_negative  ); break;
+        case 'm': Figure_transform(focused_figure, rotate_z_positive  ); break;
+        case ',': Figure_transform(focused_figure, rotate_z_negative  ); break;
+
+        case '[': Figure_transform(focused_figure, scale_down         ); break;
+        case ']': Figure_transform(focused_figure, scale_up           ); break;
+
+        case 'O': Figure_transform(focused_figure, translate_to_origin); break;
+      }
+      break;
+
+    case 'L': ;
+      const v3 figure_center = Figure_center(focused_figure);
+      printf("Object at (%f, %f, %f)\n", figure_center[0], figure_center[1], figure_center[2]);
+      break;
+
+  }
 
 }
 

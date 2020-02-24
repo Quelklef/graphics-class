@@ -84,6 +84,12 @@ Line *pixel_coords_inv_cache[SCREEN_WIDTH][SCREEN_HEIGHT];
 Line *pixel_coords_inv(const v2 pixel) {
   const int x = pixel[0];
   const int y = pixel[1];
+#ifdef DEBUG
+  if (x < 0 || x >= SCREEN_WIDTH || y < 0 || y >= SCREEN_HEIGHT) {
+    printf("pixel (%d, %d) is out-of-bounds\n", x, y);
+    exit(1);
+  }
+#endif
   return pixel_coords_inv_cache[x][y];
 }
 
