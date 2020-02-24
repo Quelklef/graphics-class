@@ -86,7 +86,7 @@ Lattice *Lattice_from_parametric(
       const v3 color = color_f(t, s);
 
       ColoredPoint clp = { .position = point, .color = color };
-      Lattice_set(lattice, t, s, clp);
+      Lattice_set(lattice, t_idx, s_idx, clp);
     }
   }
 

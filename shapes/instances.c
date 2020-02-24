@@ -1,6 +1,8 @@
 #ifndef instances_c_IMPORTED
 #define instances_c_IMPORTED
 
+#include "../xwd/xwd_tools.c"
+
 // Example instances of shapes
 
 // == Polyhedral sphere == //
@@ -134,6 +136,56 @@ Figure *vase() {
 }
 
 
+// == Mandelbrot on a sphere == //
+
+v3 mandel_sphere_parameterization(float t, float s) {
+  const float x = cos(t) * sin(s);
+  const float y = cos(s);
+  const float z = sin(t) * sin(s);
+  return (v3) { x, y, z };
+}
+
+
+v3 mandel_img_parameterization(float u, float v) {
+  static int img_initialized = 0;
+
+  static int id;
+  static int width;
+  static int height;
+
+  if (!img_initialized) {
+    id = init_xwd_map_from_file("xwd/mandelbrot.xwd");
+    int dims[2];
+    get_xwd_map_dimensions(id, dims);
+    width = dims[0];
+    height = dims[1];
+    img_initialized = 1;
+  }
+
+  u = u / (2 * M_PI);
+  v = v / (2 * M_PI);
+
+  const int x = (int) floor(u * width);
+  const int y = (int) floor(v * height);
+  double rgb[3];
+  get_xwd_map_color(id, x, y, rgb);
+
+  return (v3) { rgb[0], rgb[1], rgb[2] };
+}
+
+Figure *mandelbrot() {
+  Figure *mandelbrot = Figure_from_Lattice(Lattice_from_parametric(
+    mandel_sphere_parameterization,
+    mandel_img_parameterization,
+    0, 2 * M_PI, 500, 1,
+    0, 2 * M_PI, 500, 1
+  ));
+
+  nicely_place_figure(mandelbrot);
+  return mandelbrot;
+}
+
+
 // == Lookup table == //
 
 Figure *figure_instance_lookup(const char *key) {
@@ -141,6 +193,7 @@ Figure *figure_instance_lookup(const char *key) {
   else if (strcmp(key, "polysphere_2") == 0) return polyhedral_sphere_2();
   else if (strcmp(key, "isphere"     ) == 0) return intersector_sphere();
   else if (strcmp(key, "vase"        ) == 0) return vase();
+  else if (strcmp(key, "mandelbrot"  ) == 0) return mandelbrot();
   return NULL;
 }
 

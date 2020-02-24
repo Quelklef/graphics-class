@@ -58,7 +58,7 @@ int main(const int argc, const char **argv) {
   G_init_graphics(SCREEN_WIDTH, SCREEN_HEIGHT);
   draw_init();
 
-  show_help();
+  //show_help();
 
   observer = Observer_new();
   observer_figure = Figure_from_Observer(observer);
