@@ -63,6 +63,7 @@ float calc_intensity(const v3 p0, v3 normal, const v3 light_source_loc) {
    * lies, and the location of the light source, calculate the intensity of the poitn
    */
   const v3 to_light = v3_normalize(light_source_loc - p0);
+  normal = v3_normalize(normal);
 
   // Make sure normal is going correct direction
   if (v3_dot(normal, to_light) < 0) {
@@ -510,18 +511,31 @@ int point_in_bounds(const v3 point) {
 }
 
 void Lattice_render(const Lattice *lattice, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
-  for (int i = 0; i < lattice->points->length; i++) {
-    const ColoredPoint clp = LatticePoints_get(lattice->points, i);
-    const v3 point = clp.position;
+  for (int x = 0; x < lattice->width; x++) {
+    for (int y = 0; y < lattice->height; y++) {
 
-    // Paint image onto shape, no lighting
-    if (is_focused) G_rgbv(1 - (clp.color - 1) * (clp.color - 1));  // Make brighter
-    else G_rgbv(clp.color);
+      const ColoredPoint clp = Lattice_get(lattice, x, y);
+      const v3 point = clp.position;
 
-    if (DO_CLIPPING && !point_in_bounds(point)) continue;
+      if (DO_CLIPPING && !point_in_bounds(point)) continue;
 
-    const v2 pixel = pixel_coords(point);
-    zbuf_drawv(zbuf, pixel, point[2]);
+      v3 color = clp.color;
+      if (is_focused) {
+        // if focused, make brighter
+        color = 1 - (color - 1) * (color - 1);
+      } else {
+        // else, apply lighting
+        const v3 right_pt = Lattice_get(lattice, (x + 1) % lattice->width, y).position;
+        const v3 down_pt = Lattice_get(lattice, x, (y + 1) % lattice->height).position;
+        const v3 normal = v3_cross(down_pt - point, right_pt - point);
+        color = calc_color(point, normal, light_source_loc, color);
+      }
+      G_rgbv(color);
+
+      const v2 pixel = pixel_coords(point);
+      zbuf_drawv(zbuf, pixel, point[2]);
+
+    }
   }
 }
 

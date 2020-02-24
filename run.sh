@@ -28,6 +28,6 @@ for arg in "$@"; do
 
 done
 
-./build.sh "${compile_args[@]}"
+./build.sh "${compile_args[@]}" || exit
 echo "run command: ./a.out ${exec_args[@]}"
 ./a.out "${exec_args[@]}"

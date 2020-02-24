@@ -177,8 +177,8 @@ Figure *mandelbrot() {
   Figure *mandelbrot = Figure_from_Lattice(Lattice_from_parametric(
     mandel_sphere_parameterization,
     mandel_img_parameterization,
-    0, 2 * M_PI, 500, 1,
-    0, 2 * M_PI, 500, 1
+    0, 2 * M_PI, 300, 1,
+    0, 2 * M_PI, 300, 1
   ));
 
   nicely_place_figure(mandelbrot);
