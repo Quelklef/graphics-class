@@ -19,6 +19,11 @@
 
 float clamp(float x, float lo, float hi);
 
+void v3_render(const v3 v, Zbuf zbuf) {
+  const v2 px = pixel_coords(v);
+  zbuf_drawv(zbuf, px, v[2]);
+}
+
 void Line_render(const Line *line, Zbuf zbuf) {
   const v2 px0 = pixel_coords(line->p0);
   const v2 pxf = pixel_coords(line->pf);
@@ -674,7 +679,40 @@ void Observer_render(const Observer *observer, const int is_focused, const v3 li
   return;
 }
 
+void render_bounds(const Figure *figure, Zbuf zbuf) {
+
+  G_rgb(0, 1, 0);
+
+  v3 lows;
+  v3 highs;
+  Figure_bounds_M(&lows, &highs, figure);
+
+  const v3 lll = lows;
+  const v3 llh = { lows[0], lows[1], highs[2] };
+  const v3 lhl = { lows[0], highs[1], lows[2] };
+  const v3 lhh = { lows[0], highs[1], highs[2] };
+  const v3 hll = { highs[0], lows[1], lows[2] };
+  const v3 hlh = { highs[0], lows[1], highs[2] };
+  const v3 hhl = { highs[0], highs[1], lows[2] };
+  const v3 hhh = highs;
+
+  Line lll_hll; Line_between(&lll_hll, lll, hll); Line_render(&lll_hll, zbuf);
+  Line lll_lhl; Line_between(&lll_lhl, lll, lhl); Line_render(&lll_lhl, zbuf);
+  Line lll_llh; Line_between(&lll_llh, lll, llh); Line_render(&lll_llh, zbuf);
+  Line hhh_lhh; Line_between(&hhh_lhh, hhh, lhh); Line_render(&hhh_lhh, zbuf);
+  Line hhh_hlh; Line_between(&hhh_hlh, hhh, hlh); Line_render(&hhh_hlh, zbuf);
+  Line hhh_hhl; Line_between(&hhh_hhl, hhh, hhl); Line_render(&hhh_hhl, zbuf);
+  Line hll_hlh; Line_between(&hll_hlh, hll, hlh); Line_render(&hll_hlh, zbuf);
+  Line hll_hhl; Line_between(&hll_hhl, hll, hhl); Line_render(&hll_hhl, zbuf);
+  Line lhl_lhh; Line_between(&lhl_lhh, lhl, lhh); Line_render(&lhl_lhh, zbuf);
+  Line lhl_hhl; Line_between(&lhl_hhl, lhl, hhl); Line_render(&lhl_hhl, zbuf);
+  Line llh_lhh; Line_between(&llh_lhh, llh, lhh); Line_render(&llh_lhh, zbuf);
+  Line llh_hlh; Line_between(&llh_hlh, llh, hlh); Line_render(&llh_hlh, zbuf);
+
+}
+
 void Figure_render(const Figure *figure, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
+  render_bounds(figure, zbuf);
   switch (figure->kind) {
     case fk_Polyhedron : return Polyhedron_render (figure->impl.polyhedron , is_focused, light_source_loc, zbuf);
     case fk_Lattice    : return Lattice_render    (figure->impl.lattice    , is_focused, light_source_loc, zbuf);

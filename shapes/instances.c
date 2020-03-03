@@ -59,22 +59,14 @@ Figure *polyhedral_sphere_2() {
 }
 
 
-// == Interector sphere == //
-
-int sphere_intersect(v3 *result, Line *line) {
-  const v3 d = Line_vector(line);
-  const v3 s = line->p0;
-
-  const float A = pow(d[0], 2) + pow(d[1], 2) + pow(d[2], 2);
-  const float B = 2 * (s[0] * d[0] + s[1] * d[1] + s[2] * d[2]);
-  const float C = pow(s[0], 2) + pow(s[1], 2) + pow(s[2], 2) - 1;
-
-  const float t1 = (-B + sqrt(pow(B, 2) - 4 * A * C)) / (2 * A);
-  const float t2 = (-B - sqrt(pow(B, 2) - 4 * A * C)) / (2 * A);
+int return_closest(v3 *result, const Line *line, const float t1, const float t2) {
 
   if (isnan(t1) && isnan(t2)) {
     return 0;
   }
+
+  const v3 s = line->p0;
+  const v3 d = Line_vector(line);
 
   const v3 p1 = s + t1 * d;
   const v3 p2 = s + t2 * d;
@@ -96,6 +88,24 @@ int sphere_intersect(v3 *result, Line *line) {
     *result = p2;
     return 1;
   }
+
+}
+
+
+// == Interector sphere == //
+
+int sphere_intersect(v3 *result, Line *line) {
+  const v3 d = Line_vector(line);
+  const v3 s = line->p0;
+
+  const float A = pow(d[0], 2) + pow(d[1], 2) + pow(d[2], 2);
+  const float B = 2 * (s[0] * d[0] + s[1] * d[1] + s[2] * d[2]);
+  const float C = pow(s[0], 2) + pow(s[1], 2) + pow(s[2], 2) - 1;
+
+  const float t1 = (-B + sqrt(pow(B, 2) - 4 * A * C)) / (2 * A);
+  const float t2 = (-B - sqrt(pow(B, 2) - 4 * A * C)) / (2 * A);
+
+  return return_closest(result, line, t1, t2);
 }
 
 Figure *intersector_sphere() {
@@ -107,6 +117,57 @@ Figure *intersector_sphere() {
 
   nicely_place_figure(sphere);
   return sphere;
+}
+
+
+// == Intersector Cylinder == //
+
+const float cyl_height = 4;
+const float cyl_radius = 1;
+
+int cylinder_intersect(v3 *result, Line *line) {
+
+  const v3 s = line->p0;
+  const v3 d = Line_vector(line);
+
+  const float A = (pow(s[2], 2) + pow(s[1], 2)    ) / pow(cyl_radius, 2) - 1;
+  const float B = (2 * (s[2] * d[2] + s[1] * d[1])) / pow(cyl_radius, 2);
+  const float C = (pow(d[2], 2) + pow(d[1], 2)    ) / pow(cyl_radius, 2);
+
+  const float t1 = (-B + sqrt(pow(B, 2) - 4 * A * C)) / (2 * A);
+  const float t2 = (-B - sqrt(pow(B, 2) - 4 * A * C)) / (2 * A);
+
+  // so far we've been working with the cylinder as if it's infinite
+  // clip off the ends
+  const float t_bound_lo = (-cyl_height / 2 - s[0]) / d[0];
+  const float t_bound_hi = (+cyl_height / 2 - s[0]) / d[0];
+  const int t1_valid = t_bound_lo <= t1 && t1 <= t_bound_hi;
+  const int t2_valid = t_bound_lo <= t2 && t2 <= t_bound_hi;
+
+  // TODO: make return_closest varargs and replace the 2nd and 3d cases with it
+  if (t1_valid && t2_valid) {
+    return return_closest(result, line, t1, t2);
+  } else if (t1_valid) {
+    *result = line->p0 + t1 * Line_vector(line);
+    return 1;
+  } else if (t2_valid) {
+    *result = line->p0 + t2 * Line_vector(line);
+    return 1;
+  } else {
+    return 0;
+  }
+
+}
+
+Figure *intersector_cylinder() {
+  Figure *cyl = Figure_from_Intersector(Intersector_new(
+    &cylinder_intersect,
+    (v3) { -cyl_height / 2, -cyl_radius, -cyl_radius },
+    (v3) { +cyl_height / 2, +cyl_radius, +cyl_radius }
+  ));
+
+  nicely_place_figure(cyl);
+  return cyl;
 }
 
 
@@ -192,6 +253,7 @@ Figure *figure_instance_lookup(const char *key) {
        if (strcmp(key, "polysphere_1") == 0) return polyhedral_sphere_1();
   else if (strcmp(key, "polysphere_2") == 0) return polyhedral_sphere_2();
   else if (strcmp(key, "isphere"     ) == 0) return intersector_sphere();
+  else if (strcmp(key, "icyl"        ) == 0) return intersector_cylinder();
   else if (strcmp(key, "vase"        ) == 0) return vase();
   else if (strcmp(key, "mandelbrot"  ) == 0) return mandelbrot();
   return NULL;
