@@ -19,6 +19,7 @@ int   DO_WIREFRAME              = 1;
 int   DO_BACKFACE_ELIMINATION   = 0;
 int   DO_HALO                   = 1;
 int   DO_CLIPPING               = 1;
+int   DO_BOUNDING_BOXES         = 0;
 
 int   BACKFACE_ELIMINATION_SIGN = 1;
 

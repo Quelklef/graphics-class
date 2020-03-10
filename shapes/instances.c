@@ -130,9 +130,10 @@ int cylinder_intersect(v3 *result, Line *line) {
   const v3 s = line->p0;
   const v3 d = Line_vector(line);
 
-  const float A = (pow(s[2], 2) + pow(s[1], 2)    ) / pow(cyl_radius, 2) - 1;
-  const float B = (2 * (s[2] * d[2] + s[1] * d[1])) / pow(cyl_radius, 2);
-  const float C = (pow(d[2], 2) + pow(d[1], 2)    ) / pow(cyl_radius, 2);
+  const float r2 = cyl_radius * cyl_radius;
+  const float A = ( pow(d[1], 2) + pow(d[2], 2) ) / r2;
+  const float B = 2 * (s[1] * d[1] + s[2] * d[2]) / r2;
+  const float C = ( pow(s[1], 2) + pow(s[2], 2) ) / r2 - 1;
 
   const float t1 = (-B + sqrt(pow(B, 2) - 4 * A * C)) / (2 * A);
   const float t2 = (-B - sqrt(pow(B, 2) - 4 * A * C)) / (2 * A);
@@ -141,16 +142,18 @@ int cylinder_intersect(v3 *result, Line *line) {
   // clip off the ends
   const float t_bound_lo = (-cyl_height / 2 - s[0]) / d[0];
   const float t_bound_hi = (+cyl_height / 2 - s[0]) / d[0];
-  const int t1_valid = t_bound_lo <= t1 && t1 <= t_bound_hi;
-  const int t2_valid = t_bound_lo <= t2 && t2 <= t_bound_hi;
+  const v3 p1 = s + t1 * d;
+  const v3 p2 = s + t2 * d;
+  const int t1_in_bounds = -cyl_height / 2 <= p1[0] && p1[0] <= +cyl_height / 2;
+  const int t2_in_bounds = -cyl_height / 2 <= p2[0] && p2[0] <= +cyl_height / 2;
 
   // TODO: make return_closest varargs and replace the 2nd and 3d cases with it
-  if (t1_valid && t2_valid) {
+  if (t1_in_bounds && t2_in_bounds) {
     return return_closest(result, line, t1, t2);
-  } else if (t1_valid) {
+  } else if (t1_in_bounds) {
     *result = line->p0 + t1 * Line_vector(line);
     return 1;
-  } else if (t2_valid) {
+  } else if (t2_in_bounds) {
     *result = line->p0 + t2 * Line_vector(line);
     return 1;
   } else {

@@ -580,6 +580,10 @@ void pixel_bounds_M(v2 *lows2, v2 *highs2, v3 lows3, v3 highs3) {
 }
 
 int Intersector_z(v3 *result, const Intersector *intersector, const v2 pixel) {
+  // quickfail on out-of-bounds
+  if (pixel[0] < 0 || pixel[0] >= SCREEN_WIDTH || pixel[1] < 0 || pixel[1] >= SCREEN_HEIGHT) {
+    return 0;
+  }
   const Line *zline = pixel_coords_inv(pixel);
   const int got_intersection = Intersector_intersect(result, intersector, zline);
   return got_intersection;
@@ -712,7 +716,11 @@ void render_bounds(const Figure *figure, Zbuf zbuf) {
 }
 
 void Figure_render(const Figure *figure, const int is_focused, const v3 light_source_loc, Zbuf zbuf) {
-  render_bounds(figure, zbuf);
+
+  if (DO_BOUNDING_BOXES) {
+    render_bounds(figure, zbuf);
+  }
+
   switch (figure->kind) {
     case fk_Polyhedron : return Polyhedron_render (figure->impl.polyhedron , is_focused, light_source_loc, zbuf);
     case fk_Lattice    : return Lattice_render    (figure->impl.lattice    , is_focused, light_source_loc, zbuf);

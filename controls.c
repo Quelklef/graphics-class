@@ -125,6 +125,7 @@ void on_key(const char key) {
     case '$': DO_LIGHT_MODEL          = !DO_LIGHT_MODEL;          break;
     case '%': DO_HALO                 = !DO_HALO;                 break;
     case '^': DO_CLIPPING             = !DO_CLIPPING;             break;
+    case '&': DO_BOUNDING_BOXES       = !DO_BOUNDING_BOXES;       break;
 
     case '/': BACKFACE_ELIMINATION_SIGN *= -1; break;
     case '`': render_overlay = !render_overlay; break;
@@ -267,6 +268,7 @@ void display_state() {
   draw_stringf(20, SCREEN_HEIGHT - 160, "($) Light : %d", DO_LIGHT_MODEL);
   draw_stringf(20, SCREEN_HEIGHT - 180, "(%%) Halos : %d", DO_HALO);
   draw_stringf(20, SCREEN_HEIGHT - 200, "(^) Clip  : %d", DO_CLIPPING);
+  draw_stringf(20, SCREEN_HEIGHT - 220, "(&) Boxes : %d", DO_BOUNDING_BOXES);
 
   draw_stringf(20, 140, "Use +/- to adjust ");
   draw_param(20, 120, "H", param_HALF_ANGLE    , "HAngle : %lf      ", HALF_ANGLE);
@@ -313,6 +315,7 @@ void show_help() {
   printf("  %%    - Enable/disable halos\n");
   printf("  /    - Change backface elimination sign\n");
   printf("  ^    - Enable/disable clipping\n");
+  printf("  &    - Enable/disable bounding boxes\n");
   printf("\n");
   printf("Scalar parameters:\n");
   printf("  -+   - Adjust parameter (use shift for fast)\n");
