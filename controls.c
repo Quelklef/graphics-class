@@ -328,5 +328,4 @@ void show_help() {
   printf("\n");
 }
 
-
 #endif // controls_c_INCLUDED
